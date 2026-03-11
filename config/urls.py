@@ -31,6 +31,7 @@ urlpatterns = [
     path("ia/", include("apps.ia.urls")),
     path("jornadas/", include("apps.jornadas.urls")),
     path("calendario/", include("apps.calendario_promocional.urls")),
+    path("sistema/", include("apps.core.urls")),
 ]
 
 if settings.DEBUG:

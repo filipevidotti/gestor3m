@@ -638,7 +638,9 @@ def uazapi_webhook(request):
         if "/messages/" in url_path:
             event = "messages.upsert"
         elif "/chats" in url_path:
-            event = "chats.upsert"
+            # /chats duplica o evento /messages — ignorar para evitar duplicatas
+            logger.debug("UAZAPI webhook /chats ignorado (duplicata)")
+            return JsonResponse({"status": "ok"})
         elif "/groups" in url_path:
             event = "groups.update"
 
@@ -761,13 +763,16 @@ def _extrair_remetente(data):
         msg_data = msg_data[0] if msg_data else {}
 
     chat = data.get("chat", {})
+    message = data.get("message", {})
 
     push_name = (
         data.get("pushName", "")
         or msg_data.get("pushName", "")
         or msg_data.get("senderName", "")
-        # UAZAPI GO: chat.wa_name como fallback
+        # UAZAPI GO: chat.wa_contactName ou chat.wa_name
         or chat.get("wa_contactName", "")
+        or chat.get("wa_name", "")
+        or chat.get("name", "")
     )
 
     participant = (
@@ -776,7 +781,14 @@ def _extrair_remetente(data):
         or msg_data.get("participant", "")
         # UAZAPI GO: chat.wa_lastMessageSender
         or chat.get("wa_lastMessageSender", "")
+        # message.key.participant
+        or (message.get("key", {}).get("participant", "") if isinstance(message, dict) else "")
     )
+
+    # Se participant é um LID (@lid), não serve como telefone legível
+    # Mas o push_name pode não estar disponível — usar nome do chat como fallback
+    if not push_name and participant and "@lid" in participant:
+        push_name = chat.get("wa_name", "") or chat.get("name", "")
 
     return push_name, participant
 

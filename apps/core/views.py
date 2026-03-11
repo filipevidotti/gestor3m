@@ -397,12 +397,15 @@ def grupos_sincronizar(request):
     agora = timezone.now()
 
     for g in grupos_api:
-        # Normalizar campos (a API pode usar nomes diferentes)
-        gid = g.get("id") or g.get("jid") or g.get("groupId", "")
-        nome = g.get("subject") or g.get("name") or g.get("groupName", "Sem nome")
-        desc = g.get("desc") or g.get("description", "")
+        # Campos UAZAPI: JID, Name, Topic, ParticipantCount, Participants
+        gid = g.get("JID") or g.get("jid") or g.get("id") or g.get("groupId", "")
+        nome = g.get("Name") or g.get("subject") or g.get("name", "Sem nome")
+        desc = g.get("Topic") or g.get("desc") or g.get("description", "")
         foto = g.get("profilePicUrl") or g.get("imgUrl", "")
-        size = g.get("size") or g.get("participants", 0)
+        size = g.get("ParticipantCount") or g.get("size", 0)
+        participants = g.get("Participants") or g.get("participants")
+        if isinstance(participants, list) and not size:
+            size = len(participants)
         if isinstance(size, list):
             size = len(size)
 

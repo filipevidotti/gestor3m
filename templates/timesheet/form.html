@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ form_title }} — Timesheet — 3M Control{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">{{ form_title }}</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente *</label>
+                    <select name="cliente" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                        <option value="">Selecione...</option>
+                        {% for c in clientes %}
+                        <option value="{{ c.pk }}" {% if dados.cliente == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.empresa }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data *</label>
+                    <input type="date" name="data" value="{{ dados.data }}" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria *</label>
+                    <select name="categoria" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                        {% for val, label in categorias %}
+                        <option value="{{ val }}" {% if dados.categoria == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hora Início *</label>
+                    <input type="time" name="hora_inicio" value="{{ dados.hora_inicio }}" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hora Fim *</label>
+                    <input type="time" name="hora_fim" value="{{ dados.hora_fim }}" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
+                    <textarea name="descricao" rows="3" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange" placeholder="O que foi feito nesse período...">{{ dados.descricao }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'timesheet:listar' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">Cancelar</a>
+            <button type="submit" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Salvar
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

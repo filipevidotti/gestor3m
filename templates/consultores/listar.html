@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Equipe - 3M Control{% endblock %}
+{% block page_title %}Equipe{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ tab: '{{ tab }}' }">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Equipe</h1>
+        <div>
+            <a x-show="tab === 'consultores'" href="{% url 'consultores:criar' %}" class="px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                Novo Consultor
+            </a>
+            <a x-show="tab === 'vendedores'" x-cloak href="{% url 'consultores:criar_vendedor' %}" class="px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                Novo Vendedor
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 dark:border-gray-700/50">
+        <nav class="flex gap-6">
+            <button @click="tab = 'consultores'"
+                    :class="tab === 'consultores' ? 'border-brand-orange text-brand-orange' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                    class="pb-3 text-sm font-medium border-b-2 transition">
+                Consultores <span class="ml-1 text-xs bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full">{{ consultores|length }}</span>
+            </button>
+            <button @click="tab = 'vendedores'"
+                    :class="tab === 'vendedores' ? 'border-brand-orange text-brand-orange' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
+                    class="pb-3 text-sm font-medium border-b-2 transition">
+                Vendedores <span class="ml-1 text-xs bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full">{{ vendedores|length }}</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Consultores -->
+    <div x-show="tab === 'consultores'" x-transition>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for consultor in consultores %}
+            <a href="{% url 'consultores:detalhe' consultor.pk %}" class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/50 transition block">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-bold text-lg">
+                        {{ consultor.usuario.first_name.0 }}{{ consultor.usuario.last_name.0 }}
+                    </div>
+                    <div>
+                        <h3 class="text-gray-900 dark:text-white font-semibold">{{ consultor.usuario.get_full_name }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ consultor.especialidade|default:"Consultor" }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Clientes ativos</span>
+                    <span class="text-gray-900 dark:text-white font-semibold">{{ consultor.clientes_ativos }} / {{ consultor.max_clientes }}</span>
+                </div>
+                <div class="mt-2 w-full bg-gray-50 dark:bg-dark rounded-full h-2">
+                    <div class="bg-brand-orange h-2 rounded-full" style="width: {% widthratio consultor.clientes_ativos consultor.max_clientes 100 %}%"></div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="col-span-full text-center py-12">
+                <p class="text-gray-500 dark:text-gray-400">Nenhum consultor cadastrado</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Vendedores -->
+    <div x-show="tab === 'vendedores'" x-cloak x-transition>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for vendedor in vendedores %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-lg">
+                        {{ vendedor.first_name.0 }}{{ vendedor.last_name.0 }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-gray-900 dark:text-white font-semibold truncate">{{ vendedor.get_full_name }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ vendedor.email }}</p>
+                    </div>
+                </div>
+                {% if vendedor.telefone %}
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    {{ vendedor.telefone }}
+                </p>
+                {% endif %}
+                <div class="flex gap-2">
+                    <a href="{% url 'consultores:editar_vendedor' vendedor.pk %}" class="flex-1 text-center px-3 py-2 bg-gray-100 dark:bg-dark-200/50 text-gray-600 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-dark-200 transition">
+                        Editar
+                    </a>
+                    <form method="post" action="{% url 'consultores:excluir_vendedor' vendedor.pk %}" class="flex-1"
+                          onsubmit="return confirm('Desativar este vendedor?')">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full px-3 py-2 bg-red-500/10 text-red-400 text-sm rounded-lg hover:bg-red-500/20 transition">
+                            Desativar
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-12">
+                <p class="text-gray-500 dark:text-gray-400">Nenhum vendedor cadastrado</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

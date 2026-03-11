@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Nova Pesquisa NPS — 3M Control{% endblock %}
+{% block page_title %}Nova Pesquisa NPS{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título *</label>
+                    <input type="text" name="titulo" value="{{ dados.titulo }}" required placeholder="Ex: Satisfação Q1 2026" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
+                    <textarea name="descricao" rows="3" placeholder="Detalhes opcionais..." class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">{{ dados.descricao }}</textarea>
+                </div>
+            </div>
+            <p class="mt-4 text-xs text-gray-400">Ao criar, convites serão gerados para todos os clientes ativos.</p>
+        </div>
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'nps:listar' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium">Cancelar</a>
+            <button type="submit" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">Criar Pesquisa</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

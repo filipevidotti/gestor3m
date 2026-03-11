@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}CRM — Kanban — 3M Control{% endblock %}
+{% block page_title %}CRM — Funil de Vendas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'crm:listar' %}" class="px-3 py-1.5 bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-xs hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                Lista
+            </a>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Arraste para mover oportunidades</p>
+        </div>
+        {% if user.is_gestor %}
+        <a href="{% url 'crm:config_etapas' %}" class="px-3 py-1.5 bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-xs border border-gray-200 dark:border-gray-700/50 hover:bg-dark-200/80 transition">
+            Configurar Etapas
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="flex gap-4 overflow-x-auto pb-4" x-data="crmKanban()">
+        {% for coluna in colunas %}
+        <div class="flex-shrink-0 w-72 bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50"
+             @drop.prevent="onDrop($event, {{ coluna.etapa.pk|default:'null' }})"
+             @dragover.prevent>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    {% if coluna.etapa %}
+                    <div class="w-3 h-3 rounded-full" style="background: {{ coluna.etapa.cor }}"></div>
+                    <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">{{ coluna.etapa.nome }}</h3>
+                    {% else %}
+                    <div class="w-3 h-3 rounded-full bg-gray-600"></div>
+                    <h3 class="text-sm font-display font-semibold text-gray-500 dark:text-gray-400">Sem etapa</h3>
+                    {% endif %}
+                </div>
+                <span class="text-xs text-gray-400 dark:text-gray-500">{{ coluna.oportunidades|length }}</span>
+            </div>
+            <div class="p-3 space-y-2 min-h-[200px]">
+                {% for op in coluna.oportunidades %}
+                <div class="bg-gray-50 dark:bg-dark rounded-lg border border-gray-200 dark:border-gray-700/50 p-3 cursor-grab hover:border-brand-orange/50 transition"
+                     draggable="true"
+                     @dragstart="onDragStart($event, {{ op.pk }})">
+                    <a href="{% url 'crm:detalhe_lead' op.lead.pk %}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-brand-orange">
+                        {{ op.titulo }}
+                    </a>
+                    <p class="text-xs text-gray-400 mt-1">{{ op.lead.nome }}</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xs text-gray-400 dark:text-gray-500">{{ op.responsavel.get_full_name }}</span>
+                        {% if op.valor_estimado %}
+                        <span class="text-xs font-medium text-green-400">R$ {{ op.valor_estimado|floatformat:"0" }}</span>
+                        {% endif %}
+                    </div>
+                    {% if op.previsao_fechamento %}
+                    <p class="text-xs text-gray-500 mt-1">Prev: {{ op.previsao_fechamento|date:"d/m/Y" }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function crmKanban() {
+    return {
+        draggedId: null,
+        onDragStart(e, opId) {
+            this.draggedId = opId;
+            e.dataTransfer.effectAllowed = 'move';
+        },
+        async onDrop(e, etapaId) {
+            if (!this.draggedId) return;
+            const response = await fetch('{% url "crm:kanban_mover" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ oportunidade_id: this.draggedId, etapa_id: etapaId })
+            });
+            if (response.ok) {
+                location.reload();
+            }
+            this.draggedId = null;
+        }
+    }
+}
+</script>
+{% endblock %}

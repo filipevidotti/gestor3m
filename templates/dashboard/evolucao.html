@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Evolução — {{ cliente }} — 3M Control{% endblock %}
+{% block page_title %}Evolução do Cliente{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ cliente.empresa }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Evolução completa do cliente</p>
+        </div>
+        <a href="{% url 'clientes:detalhe' cliente.pk %}" class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Voltar
+        </a>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Score Atual</p>
+            <p class="text-2xl font-display font-bold {% if score_atual >= 7 %}text-success{% elif score_atual >= 5 %}text-warning{% else %}text-danger{% endif %} mt-1">{{ score_atual }}/10</p>
+            <div class="flex items-center mt-1">
+                {% if variacao > 0 %}
+                <svg class="w-4 h-4 text-success mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                <span class="text-xs text-success font-medium">+{{ variacao }} pts</span>
+                {% elif variacao < 0 %}
+                <svg class="w-4 h-4 text-danger mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                <span class="text-xs text-danger font-medium">{{ variacao }} pts</span>
+                {% else %}
+                <span class="text-xs text-gray-400">sem variação</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Diagnósticos</p>
+            <p class="text-2xl font-display font-bold text-gray-900 dark:text-white mt-1">{{ total_diagnosticos }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">realizados</p>
+        </div>
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tarefas Concluídas</p>
+            <p class="text-2xl font-display font-bold text-success mt-1">{{ total_tarefas_concluidas }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">no total</p>
+        </div>
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reuniões</p>
+            <p class="text-2xl font-display font-bold text-gray-900 dark:text-white mt-1">{{ total_reunioes }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">realizadas</p>
+        </div>
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Checklists (Média)</p>
+            <p class="text-2xl font-display font-bold {% if checklists_score >= 80 %}text-success{% elif checklists_score >= 50 %}text-warning{% else %}text-danger{% endif %} mt-1">{{ checklists_score }}%</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">score médio</p>
+        </div>
+    </div>
+
+    <!-- Charts Row 1: Score Evolution + Radar -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Score Evolution (Line) -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Evolução do Score</h3>
+            <div class="relative h-64">
+                <canvas id="chartScoreEvolucao"></canvas>
+            </div>
+        </div>
+
+        <!-- Radar: Categorias Antes vs Depois -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Categorias: Primeiro vs Atual</h3>
+            <div class="relative h-64">
+                <canvas id="chartRadarCategorias"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Tarefas + Reunioes -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Tarefas por Mês -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Tarefas por Mês</h3>
+            <div class="relative h-64">
+                <canvas id="chartTarefas"></canvas>
+            </div>
+        </div>
+
+        <!-- Reuniões por Mês -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Reuniões por Mês</h3>
+            <div class="relative h-64">
+                <canvas id="chartReunioes"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline de Marcos -->
+    {% if marcos %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-6">Marcos da Jornada</h3>
+        <div class="relative">
+            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+            <div class="space-y-6">
+                {% for marco in marcos %}
+                <div class="relative flex items-start gap-4 pl-10">
+                    <div class="absolute left-2 w-5 h-5 rounded-full bg-brand-orange border-2 border-white dark:border-dark-100 flex items-center justify-center">
+                        <div class="w-2 h-2 rounded-full bg-white"></div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ marco.titulo }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ marco.data }} — {{ marco.tipo }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    const textColor = isDark ? '#9ca3af' : '#6b7280';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    // Score Evolution (Line)
+    const scoresData = {{ scores_mensal_json|safe }};
+    if (scoresData.length > 0) {
+        new Chart(document.getElementById('chartScoreEvolucao'), {
+            type: 'line',
+            data: {
+                labels: scoresData.map(d => d.label),
+                datasets: [{
+                    label: 'Score',
+                    data: scoresData.map(d => d.score),
+                    borderColor: '#FE8103',
+                    backgroundColor: 'rgba(254,129,3,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#FE8103',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 0, max: 10, grid: { color: gridColor } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Radar: Categorias
+    const catPrimeiro = {{ categorias_primeiro_json|safe }};
+    const catAtual = {{ categorias_atual_json|safe }};
+    const labels = Object.keys(catAtual).length ? Object.keys(catAtual) : Object.keys(catPrimeiro);
+    if (labels.length > 0) {
+        new Chart(document.getElementById('chartRadarCategorias'), {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Primeiro',
+                        data: labels.map(l => catPrimeiro[l] || 0),
+                        borderColor: '#D83341',
+                        backgroundColor: 'rgba(216,51,65,0.1)',
+                        pointBackgroundColor: '#D83341',
+                    },
+                    {
+                        label: 'Atual',
+                        data: labels.map(l => catAtual[l] || 0),
+                        borderColor: '#22C55E',
+                        backgroundColor: 'rgba(34,197,94,0.1)',
+                        pointBackgroundColor: '#22C55E',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        min: 0, max: 10,
+                        ticks: { stepSize: 2, color: textColor },
+                        grid: { color: gridColor },
+                        angleLines: { color: gridColor },
+                        pointLabels: { color: textColor, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Tarefas por Mês (Stacked Bar)
+    const tarefasData = {{ tarefas_mensal_json|safe }};
+    if (tarefasData.length > 0) {
+        new Chart(document.getElementById('chartTarefas'), {
+            type: 'bar',
+            data: {
+                labels: tarefasData.map(d => d.label),
+                datasets: [
+                    {
+                        label: 'Concluídas',
+                        data: tarefasData.map(d => d.concluidas),
+                        backgroundColor: '#22C55E',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Total',
+                        data: tarefasData.map(d => d.total - d.concluidas),
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, beginAtZero: true, grid: { color: gridColor } }
+                }
+            }
+        });
+    }
+
+    // Reuniões por Mês (Bar)
+    const reunioesData = {{ reunioes_mensal_json|safe }};
+    if (reunioesData.length > 0) {
+        new Chart(document.getElementById('chartReunioes'), {
+            type: 'bar',
+            data: {
+                labels: reunioesData.map(d => d.label),
+                datasets: [{
+                    label: 'Reuniões',
+                    data: reunioesData.map(d => d.total),
+                    backgroundColor: '#3B82F6',
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, grid: { color: gridColor }, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

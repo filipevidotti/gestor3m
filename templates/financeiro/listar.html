@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Financeiro - 3M Control{% endblock %}
+{% block page_title %}Financeiro{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Contratos</h1>
+        <a href="{% url 'financeiro:criar' %}" class="inline-flex items-center px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Novo Contrato
+        </a>
+    </div>
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Plano</th>
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Vencimento</th>
+                    <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acoes</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for contrato in contratos %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                    <td class="px-6 py-4 text-gray-700 dark:text-gray-200 font-medium">{{ contrato.cliente.empresa }}</td>
+                    <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ contrato.plano }}</td>
+                    <td class="px-6 py-4 text-emerald-400 font-semibold">R$ {{ contrato.valor|floatformat:2 }}</td>
+                    <td class="px-6 py-4 text-gray-500 dark:text-gray-400">Dia {{ contrato.dia_vencimento }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <a href="{% url 'financeiro:detalhe' contrato.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-orange">
+                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">Nenhum contrato ativo</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

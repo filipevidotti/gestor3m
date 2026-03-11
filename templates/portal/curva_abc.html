@@ -1,0 +1,123 @@
+{% extends "base_portal.html" %}
+{% block title %}Curva ABC — Portal 3M{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Curva ABC</h1>
+            {% if upload_atual %}
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ upload_atual.data_referencia|date:"d/m/Y" }} — {{ upload_atual.get_periodo_display }} — {{ comparativo|length }} anúncios</p>
+            {% endif %}
+        </div>
+        {% if uploads.count > 1 %}
+        <select onchange="window.location.href='?upload='+this.value"
+            class="px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-brand-orange">
+            {% for u in uploads %}
+            <option value="{{ u.pk }}" {% if upload_atual and u.pk == upload_atual.pk %}selected{% endif %}>
+                {{ u.data_referencia|date:"d/m/Y" }} ({{ u.get_periodo_display }})
+            </option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </div>
+
+    {% if comparativo %}
+    {% if chart_labels|length > 1 %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Evolução do Faturamento Total</h3>
+        <canvas id="chartFaturamento" height="80"></canvas>
+    </div>
+    {% endif %}
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Classe</th>
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">MLB</th>
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Título</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estoque</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Preço</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Qtd</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Faturamento</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">% Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                    {% for c in comparativo %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
+                                {% if c.item.classe == 'A' %}bg-emerald-500/10 text-emerald-400
+                                {% elif c.item.classe == 'B' %}bg-amber-500/10 text-amber-400
+                                {% else %}bg-red-500/10 text-red-400{% endif %}">{{ c.item.classe }}</span>
+                            {% if c.classe_mudou %}<span class="text-xs text-gray-400 ml-1">({{ c.anterior.classe }})</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-xs font-mono text-gray-600 dark:text-gray-300">{{ c.item.mlb }}</td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ c.item.titulo|truncatechars:40 }}</td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">
+                            {{ c.item.estoque }}
+                            {% if c.est_diff is not None and c.est_diff != 0 %}
+                            <span class="text-xs ml-1 {% if c.est_diff > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">{% if c.est_diff > 0 %}+{% endif %}{{ c.est_diff }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">R$ {{ c.item.preco_atual|floatformat:2 }}</td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">
+                            {{ c.item.quantidade }}
+                            {% if c.qtd_diff is not None and c.qtd_diff != 0 %}
+                            <span class="text-xs ml-1 {% if c.qtd_diff > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">{% if c.qtd_diff > 0 %}+{% endif %}{{ c.qtd_diff }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right font-medium text-gray-900 dark:text-white">
+                            R$ {{ c.item.faturamento|floatformat:2 }}
+                            {% if c.fat_diff is not None and c.fat_diff != 0 %}
+                            <br><span class="text-xs {% if c.fat_diff > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">{% if c.fat_diff > 0 %}+{% endif %}{{ c.fat_diff|floatformat:2 }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">{{ c.item.percentual_total|floatformat:2 }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <h3 class="text-lg font-display font-medium text-gray-500 dark:text-gray-400 mb-2">Nenhum dado disponível</h3>
+        <p class="text-sm text-gray-400 dark:text-gray-500">Seu consultor ainda não publicou dados de Curva ABC.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% if chart_labels|length > 1 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    new Chart(document.getElementById('chartFaturamento').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Faturamento Total (R$)',
+                data: {{ chart_faturamento|safe }},
+                borderColor: '#FE8103', backgroundColor: 'rgba(254,129,3,0.1)',
+                borderWidth: 2, fill: true, tension: 0.3,
+                pointBackgroundColor: '#FE8103', pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: false, grid: { color: 'rgba(107,114,128,0.1)' }, ticks: { color: '#9CA3AF' } },
+                x: { grid: { display: false }, ticks: { color: '#9CA3AF' } }
+            }
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

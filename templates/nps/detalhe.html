@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}{{ pesquisa.titulo }} — NPS — 3M Control{% endblock %}
+{% block page_title %}NPS: {{ pesquisa.titulo }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'nps:listar' %}" class="text-xs text-gray-400 hover:text-brand-orange transition">&larr; Voltar</a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white mt-1">{{ pesquisa.titulo }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ pesquisa.created_at|date:"d/m/Y" }} — {{ distribuicao.total }} respostas</p>
+        </div>
+        <form method="post" action="{% url 'nps:enviar' pesquisa.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-success/10 text-success border border-success/20 rounded-lg text-sm font-medium hover:bg-success/20 transition" onclick="return confirm('Enviar pesquisa via WhatsApp para {{ pendentes.count }} clientes pendentes?')">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                Enviar WhatsApp ({{ pendentes.count }})
+            </button>
+        </form>
+    </div>
+
+    <!-- NPS Score + Distribuição -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 text-center">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">NPS Score</p>
+            {% if nps is not None %}
+            <p class="text-4xl font-display font-bold mt-2 {% if nps >= 50 %}text-success{% elif nps >= 0 %}text-warning{% else %}text-danger{% endif %}">{{ nps }}</p>
+            {% else %}
+            <p class="text-4xl font-display font-bold mt-2 text-gray-400">—</p>
+            {% endif %}
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 text-center">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Promotores (9-10)</p>
+            <p class="text-3xl font-display font-bold text-success mt-2">{{ distribuicao.promotores }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 text-center">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Neutros (7-8)</p>
+            <p class="text-3xl font-display font-bold text-warning mt-2">{{ distribuicao.neutros }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 text-center">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Detratores (0-6)</p>
+            <p class="text-3xl font-display font-bold text-danger mt-2">{{ distribuicao.detratores }}</p>
+        </div>
+    </div>
+
+    <!-- Gráfico de notas -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Distribuição de Notas</h3>
+        <div class="relative h-48">
+            <canvas id="chartNotas"></canvas>
+        </div>
+    </div>
+
+    <!-- Respostas -->
+    {% if respondidas %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">Respostas ({{ respondidas.count }})</h3>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/50">
+            {% for r in respondidas %}
+            <div class="px-6 py-4 flex items-start gap-4">
+                <span class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
+                    {% if r.nota >= 9 %}bg-success/10 text-success
+                    {% elif r.nota >= 7 %}bg-warning/10 text-warning
+                    {% else %}bg-danger/10 text-danger{% endif %}">
+                    {{ r.nota }}
+                </span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ r.cliente.empresa }}</p>
+                    {% if r.comentario %}
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ r.comentario }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-400 mt-1">{{ r.respondido_em|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const notas = {{ notas_dist_json|safe }};
+
+    const colors = notas.map((_, i) => {
+        if (i <= 6) return '#EF4444';
+        if (i <= 8) return '#FE8103';
+        return '#22C55E';
+    });
+
+    new Chart(document.getElementById('chartNotas'), {
+        type: 'bar',
+        data: {
+            labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            datasets: [{
+                data: notas,
+                backgroundColor: colors,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' } }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

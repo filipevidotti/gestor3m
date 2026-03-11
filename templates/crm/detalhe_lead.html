@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}{{ lead.nome }} — CRM — 3M Control{% endblock %}
+{% block page_title %}{{ lead.nome }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex items-start justify-between">
+        <div>
+            <a href="{% url 'crm:listar' %}" class="text-xs text-gray-400 hover:text-brand-orange transition">&larr; Voltar aos Leads</a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white mt-2">{{ lead.nome }}</h1>
+            <div class="flex items-center gap-3 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {% if lead.empresa %}<span>{{ lead.empresa }}</span>{% endif %}
+                <span class="px-2 py-0.5 bg-gray-100 dark:bg-dark-200 rounded-full text-xs">{{ lead.get_origem_display }}</span>
+                {% if lead.convertido %}
+                <span class="px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full text-xs">Convertido</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex gap-2">
+            {% if not lead.convertido %}
+            <a href="{% url 'crm:converter_lead' lead.pk %}" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                Converter em Cliente
+            </a>
+            {% endif %}
+            <a href="{% url 'crm:editar_lead' lead.pk %}" class="px-3 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Coluna principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Info card -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4">Informações</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-400">Telefone</span>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ lead.telefone|default:"—" }}</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">E-mail</span>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ lead.email|default:"—" }}</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Nicho</span>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ lead.nicho|default:"—" }}</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Responsável</span>
+                        <p class="text-gray-900 dark:text-white font-medium">{{ lead.responsavel.get_full_name }}</p>
+                    </div>
+                </div>
+                {% if lead.observacoes %}
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700/50">
+                    <span class="text-xs text-gray-400">Observações</span>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap">{{ lead.observacoes }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Oportunidades -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">Oportunidades</h3>
+                    <a href="{% url 'crm:criar_oportunidade' lead.pk %}" class="px-3 py-1 bg-brand-orange text-white rounded-lg text-xs hover:bg-orange-600 transition">+ Nova</a>
+                </div>
+                {% for op in oportunidades %}
+                <div class="flex items-center justify-between py-3 {% if not forloop.last %}border-b border-gray-200 dark:border-gray-700/50{% endif %}">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ op.titulo }}</p>
+                        <div class="flex items-center gap-2 mt-1">
+                            {% if op.etapa %}
+                            <span class="px-2 py-0.5 rounded-full text-xs font-medium" style="background: {{ op.etapa.cor }}20; color: {{ op.etapa.cor }}">{{ op.etapa.nome }}</span>
+                            {% endif %}
+                            {% if op.valor_estimado %}
+                            <span class="text-xs text-green-400">R$ {{ op.valor_estimado|floatformat:"2" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="{% url 'crm:editar_oportunidade' op.pk %}" class="text-xs text-gray-400 hover:text-brand-orange transition">Editar</a>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-400 text-center py-4">Nenhuma oportunidade</p>
+                {% endfor %}
+            </div>
+
+            <!-- Timeline -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4">Atividades</h3>
+
+                <!-- Form nova atividade -->
+                <form method="post" action="{% url 'crm:adicionar_atividade' lead.pk %}" class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700/50">
+                    {% csrf_token %}
+                    <div class="flex gap-2 mb-2">
+                        <select name="tipo" class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                            {% for val, label in atividade_form.fields.tipo.choices %}
+                            <option value="{{ val }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <textarea name="descricao" rows="2" required placeholder="Registrar atividade..." class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"></textarea>
+                        <button type="submit" class="self-end px-4 py-2 bg-brand-orange text-white rounded-lg text-sm hover:bg-orange-600 transition">Salvar</button>
+                    </div>
+                </form>
+
+                <div class="space-y-4">
+                    {% for atv in atividades %}
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs flex-shrink-0
+                            {% if atv.tipo == 'nota' %}bg-gray-100 dark:bg-dark-200 text-gray-400
+                            {% elif atv.tipo == 'ligacao' %}bg-blue-500/10 text-blue-400
+                            {% elif atv.tipo == 'email' %}bg-purple-500/10 text-purple-400
+                            {% elif atv.tipo == 'reuniao' %}bg-green-500/10 text-green-400
+                            {% elif atv.tipo == 'whatsapp' %}bg-emerald-500/10 text-emerald-400
+                            {% else %}bg-amber-500/10 text-amber-400{% endif %}">
+                            {% if atv.tipo == 'nota' %}N{% elif atv.tipo == 'ligacao' %}L{% elif atv.tipo == 'email' %}E{% elif atv.tipo == 'reuniao' %}R{% elif atv.tipo == 'whatsapp' %}W{% else %}M{% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-medium text-gray-900 dark:text-white">{{ atv.autor.get_full_name }}</span>
+                                <span class="text-xs text-gray-400">{{ atv.created_at|date:"d/m/Y H:i" }}</span>
+                                <span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-dark-200 text-gray-400">{{ atv.get_tipo_display }}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">{{ atv.descricao }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-400 text-center py-4">Nenhuma atividade registrada</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Ações rápidas -->
+            {% if not lead.convertido %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 space-y-2">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase mb-3">Ações</h3>
+                <a href="{% url 'crm:agendar_reuniao' lead.pk %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200 transition w-full">
+                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Agendar Reunião
+                </a>
+                <form method="post" action="{% url 'crm:criar_proposta' lead.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200 transition w-full text-left">
+                        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Criar Proposta
+                    </button>
+                </form>
+                <a href="{% url 'crm:criar_oportunidade' lead.pk %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200 transition w-full">
+                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Nova Oportunidade
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Lembretes -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase mb-3">Lembretes</h3>
+                {% for lem in lembretes %}
+                <div class="flex items-center gap-2 py-2 text-sm {% if not forloop.last %}border-b border-gray-200 dark:border-gray-700/50{% endif %}">
+                    <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div>
+                        <p class="text-gray-700 dark:text-gray-300">{{ lem.descricao }}</p>
+                        <p class="text-xs text-gray-400">{{ lem.data_hora|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-gray-400">Sem lembretes pendentes</p>
+                {% endfor %}
+
+                <!-- Form lembrete -->
+                <form method="post" action="{% url 'crm:criar_lembrete' lead.pk %}" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700/50 space-y-2">
+                    {% csrf_token %}
+                    <input type="datetime-local" name="data_hora" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                    <input type="text" name="descricao" required placeholder="Descrição do lembrete..." class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                    <button type="submit" class="w-full px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs hover:bg-amber-600 transition">Agendar Lembrete</button>
+                </form>
+            </div>
+
+            <!-- Excluir -->
+            {% if not lead.convertido %}
+            <form method="post" action="{% url 'crm:excluir_lead' lead.pk %}" onsubmit="return confirm('Excluir este lead?')">
+                {% csrf_token %}
+                <button type="submit" class="w-full px-3 py-2 bg-red-500/10 text-red-400 rounded-lg text-sm hover:bg-red-500/20 transition">Excluir Lead</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

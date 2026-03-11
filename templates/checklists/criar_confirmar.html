@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Atribuir Checklist — {{ cliente.empresa }} — 3M Control{% endblock %}
+{% block page_title %}Atribuir Checklist: {{ cliente.empresa }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl space-y-6">
+    <a href="{% url 'checklists:criar' cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">
+        &larr; Voltar para seleção
+    </a>
+
+    <!-- Checklist selecionado -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ template.nome }}</h3>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ template.total_itens }} itens &middot; {{ template.get_tipo_display }}</p>
+                {% if template.descricao %}
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ template.descricao }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário da tarefa -->
+    <form method="post" action="{% url 'checklists:criar' cliente.pk %}" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" name="template" value="{{ template.pk }}">
+        <input type="hidden" name="step" value="confirm">
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-1">Tarefa para o Cliente</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-5">Uma tarefa será criada automaticamente para o seller preencher este checklist.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Descrição da tarefa <span class="text-red-400">*</span></label>
+                    <textarea name="tarefa_descricao" rows="3"
+                        class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent placeholder-gray-500"
+                        placeholder="Ex: Preencher checklist completo da operação">Preencher checklist: {{ template.nome }}</textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Prioridade</label>
+                        <select name="tarefa_prioridade"
+                            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent">
+                            <option value="baixa">Baixa</option>
+                            <option value="media" selected>Média</option>
+                            <option value="alta">Alta</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Prazo</label>
+                        <input type="date" name="tarefa_prazo"
+                            class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'checklists:criar' cliente.pk %}" class="px-4 py-2.5 bg-dark-200 hover:bg-dark-200/80 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700/50 transition">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 focus:ring-offset-dark">
+                Atribuir Checklist + Criar Tarefa
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

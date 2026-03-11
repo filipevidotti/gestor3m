@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Configurar Pipeline — 3M Control{% endblock %}
+{% block page_title %}Configurar Pipeline{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-3xl">
+    <div class="flex items-center justify-between">
+        <a href="{% url 'clientes:pipeline' %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange">&larr; Voltar ao Pipeline</a>
+    </div>
+
+    <!-- Etapas existentes -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Etapas do Pipeline</h3>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for etapa in etapas %}
+            <div class="px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded-full" style="background: {{ etapa.cor }}"></div>
+                    <div>
+                        <p class="text-sm text-gray-900 dark:text-white font-medium">{{ etapa.nome }}</p>
+                        {% if etapa.descricao %}<p class="text-xs text-gray-400 dark:text-gray-500">{{ etapa.descricao }}</p>{% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Ordem: {{ etapa.ordem }}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ etapa.clientes.count }} clientes</span>
+                    <a href="{% url 'clientes:pipeline_config_editar' etapa.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-orange">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    <form method="post" action="{% url 'clientes:pipeline_config_excluir' etapa.pk %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-500 dark:text-gray-400 hover:text-red-400" onclick="return confirm('Remover esta etapa?')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">Nenhuma etapa criada</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Adicionar etapa -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4">Nova Etapa</h3>
+        <form method="post" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nome *</label>
+                <input type="text" name="nome" required class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange" placeholder="Ex: Treinamento">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Descricao</label>
+                <input type="text" name="descricao" class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange" placeholder="Opcional">
+            </div>
+            <div class="flex gap-3">
+                <div class="flex-1">
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cor</label>
+                    <input type="color" name="cor" value="#3b82f6" class="w-full h-[38px] bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg cursor-pointer">
+                </div>
+                <div class="w-20">
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+                    <input type="number" name="ordem" value="0" class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

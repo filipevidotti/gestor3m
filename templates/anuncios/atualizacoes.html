@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Atualizações — {{ cliente.empresa }} — 3M Control{% endblock %}
+{% block page_title %}Atualizações de Anúncios: {{ cliente.empresa }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'clientes:detalhe' cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; {{ cliente.empresa }}</a>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white mt-1">Anúncios para Atualizar</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ feitos }}/{{ total }} concluídos</p>
+        </div>
+        <a href="{% url 'anuncios:atualizacoes_upload' cliente.pk %}" class="px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+            Upload Planilha
+        </a>
+    </div>
+
+    <!-- Barra de progresso -->
+    {% if total > 0 %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+        <div class="flex items-center justify-between text-sm mb-2">
+            <span class="text-gray-600 dark:text-gray-300">Progresso</span>
+            <span class="font-semibold text-gray-900 dark:text-white">{% widthratio feitos total 100 %}%</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-dark-200 rounded-full h-2">
+            <div class="bg-brand-orange rounded-full h-2 transition-all" style="width: {% widthratio feitos total 100 %}%"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filtros -->
+    <div class="flex gap-2">
+        <a href="?filtro=todos" class="px-3 py-1.5 rounded-lg text-xs font-medium transition {% if filtro == 'todos' %}bg-brand-orange text-white{% else %}bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-200/80{% endif %}">Todos ({{ total }})</a>
+        <a href="?filtro=pendentes" class="px-3 py-1.5 rounded-lg text-xs font-medium transition {% if filtro == 'pendentes' %}bg-brand-orange text-white{% else %}bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-200/80{% endif %}">Pendentes ({{ pendentes_count }})</a>
+        <a href="?filtro=concluidos" class="px-3 py-1.5 rounded-lg text-xs font-medium transition {% if filtro == 'concluidos' %}bg-brand-orange text-white{% else %}bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-200/80{% endif %}">Concluídos ({{ feitos }})</a>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">MLB</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Título</th>
+                    <th class="text-center px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Foto</th>
+                    <th class="text-center px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Vídeo</th>
+                    <th class="text-center px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for an in anuncios %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                    <td class="px-5 py-4 text-xs font-mono text-gray-600 dark:text-gray-300">{{ an.mlb }}</td>
+                    <td class="px-5 py-4 text-gray-700 dark:text-gray-200">{{ an.titulo|truncatechars:50 }}</td>
+                    <td class="px-5 py-4 text-center">
+                        {% if an.precisa_foto %}
+                            {% if an.foto_feito %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">Feito</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400">Pendente</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="text-xs text-gray-400">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-center">
+                        {% if an.precisa_video %}
+                            {% if an.video_feito %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">Feito</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400">Pendente</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="text-xs text-gray-400">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-center">
+                        {% if an.concluido %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">Concluído</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">Pendente</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-5 py-12 text-center text-gray-500 dark:text-gray-400">Nenhum anúncio encontrado</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

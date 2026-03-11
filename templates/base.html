@@ -1,0 +1,315 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full"
+      x-data="{ darkMode: localStorage.getItem('theme') === 'dark' || !localStorage.getItem('theme') }"
+      :class="darkMode ? 'dark' : ''"
+      x-init="$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'))">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}3M Control{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#8C103C',
+                            red: '#D83341',
+                            orange: '#FE8103',
+                        },
+                        primary: {
+                            50: '#FFF7ED',
+                            100: '#FFEDD5',
+                            200: '#FED7AA',
+                            300: '#FDBA74',
+                            400: '#FB923C',
+                            500: '#FE8103',
+                            600: '#EA580C',
+                            700: '#C2410C',
+                            800: '#9A3412',
+                            900: '#7C2D12',
+                        },
+                        dark: {
+                            DEFAULT: '#0F172A',
+                            100: '#1E293B',
+                            200: '#334155',
+                            300: '#475569',
+                        },
+                        danger: '#EF4444',
+                        warning: '#FE8103',
+                        success: '#22C55E',
+                    },
+                    fontFamily: {
+                        display: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
+                        body: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Red Hat Display', system-ui, sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50 dark:bg-dark text-gray-800 dark:text-gray-200 font-body" x-data="{ sidebarOpen: true }">
+    {% if user.is_authenticated %}
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white dark:bg-dark-100 border-r border-gray-200 dark:border-gray-700/50 flex flex-col transition-all duration-300"
+               :class="sidebarOpen ? 'w-64' : 'w-20'">
+            <!-- Logo -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700/50">
+                <div class="flex items-center gap-3">
+                    <img x-show="darkMode" src="{% static 'img/logo-branca.png' %}" alt="3M Consultoria" class="h-10 w-auto" x-cloak>
+                    <img x-show="!darkMode" src="{% static 'img/logo-original.png' %}" alt="3M Consultoria" class="h-10 w-auto">
+                    <div x-show="sidebarOpen" x-transition>
+                        <h1 class="font-display font-bold text-gray-900 dark:text-white text-lg leading-tight">Control</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">3M Consultoria</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-3 space-y-1 overflow-y-auto"
+                 x-data="{
+                     menuComercial: JSON.parse(localStorage.getItem('menu_comercial') ?? 'true'),
+                     menuConsultoria: JSON.parse(localStorage.getItem('menu_consultoria') ?? 'true'),
+                     menuGestao: JSON.parse(localStorage.getItem('menu_gestao') ?? 'true')
+                 }"
+                 x-effect="localStorage.setItem('menu_comercial', menuComercial); localStorage.setItem('menu_consultoria', menuConsultoria); localStorage.setItem('menu_gestao', menuGestao)">
+
+                {% if 'dashboard' in modulos_usuario %}
+                <a href="{% url 'dashboard:meu_dia' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.url_name == 'meu_dia' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span x-show="sidebarOpen">Meu Dia</span>
+                </a>
+                <a href="{% url 'dashboard:index' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.url_name == 'index' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span x-show="sidebarOpen">Dashboard</span>
+                </a>
+                {% endif %}
+
+                <!-- ── COMERCIAL ── -->
+                {% if 'crm' in modulos_usuario or 'propostas' in modulos_usuario or 'agenda' in modulos_usuario %}
+                <div x-show="sidebarOpen">
+                    <button @click="menuComercial = !menuComercial" class="w-full flex items-center justify-between px-3 py-2 mt-3 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Comercial</span>
+                        <svg :class="menuComercial && 'rotate-180'" class="w-3.5 h-3.5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                </div>
+                <div x-show="menuComercial || !sidebarOpen" x-collapse class="space-y-1">
+                    {% if 'crm' in modulos_usuario %}
+                    <a href="{% url 'crm:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'crm' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        <span x-show="sidebarOpen">CRM</span>
+                    </a>
+                    {% endif %}
+                    {% if 'propostas' in modulos_usuario %}
+                    <a href="{% url 'propostas:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'propostas' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span x-show="sidebarOpen">Propostas</span>
+                    </a>
+                    {% endif %}
+                    {% if 'agenda' in modulos_usuario %}
+                    <a href="{% url 'agenda:visualizar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'agenda' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span x-show="sidebarOpen">Agenda</span>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- ── CONSULTORIA ── -->
+                {% if 'clientes' in modulos_usuario or 'pipeline' in modulos_usuario or 'consultores' in modulos_usuario or 'diagnosticos' in modulos_usuario or 'checklists' in modulos_usuario or 'tarefas' in modulos_usuario or 'reunioes' in modulos_usuario or 'treinamentos' in modulos_usuario or 'jornadas' in modulos_usuario %}
+                <div x-show="sidebarOpen">
+                    <button @click="menuConsultoria = !menuConsultoria" class="w-full flex items-center justify-between px-3 py-2 mt-3 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Consultoria</span>
+                        <svg :class="menuConsultoria && 'rotate-180'" class="w-3.5 h-3.5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                </div>
+                <div x-show="menuConsultoria || !sidebarOpen" x-collapse class="space-y-1">
+                    {% if 'clientes' in modulos_usuario %}
+                    <a href="{% url 'clientes:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'clientes' and request.resolver_match.url_name != 'pipeline' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span x-show="sidebarOpen">Clientes</span>
+                    </a>
+                    {% endif %}
+                    {% if 'pipeline' in modulos_usuario %}
+                    <a href="{% url 'clientes:pipeline' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.url_name == 'pipeline' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+                        <span x-show="sidebarOpen">Pipeline</span>
+                    </a>
+                    {% endif %}
+                    {% if 'consultores' in modulos_usuario %}
+                    <a href="{% url 'consultores:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'consultores' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <span x-show="sidebarOpen">Equipe</span>
+                    </a>
+                    {% endif %}
+                    {% if 'diagnosticos' in modulos_usuario %}
+                    <a href="{% url 'diagnosticos:template_listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'diagnosticos' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span x-show="sidebarOpen">Diagnósticos</span>
+                    </a>
+                    {% endif %}
+                    {% if 'checklists' in modulos_usuario %}
+                    <a href="{% url 'checklists:template_listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'checklists' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        <span x-show="sidebarOpen">Checklists</span>
+                    </a>
+                    {% endif %}
+                    {% if 'tarefas' in modulos_usuario %}
+                    <a href="{% url 'tarefas:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'tarefas' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span x-show="sidebarOpen">Tarefas</span>
+                    </a>
+                    {% endif %}
+                    {% if 'reunioes' in modulos_usuario %}
+                    <a href="{% url 'reunioes:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'reunioes' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span x-show="sidebarOpen">Reuniões</span>
+                    </a>
+                    {% endif %}
+                    {% if 'treinamentos' in modulos_usuario %}
+                    <a href="{% url 'treinamentos:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'treinamentos' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        <span x-show="sidebarOpen">Treinamentos</span>
+                    </a>
+                    {% endif %}
+                    {% if 'jornadas' in modulos_usuario %}
+                    <a href="{% url 'jornadas:config_templates' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'jornadas' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                        <span x-show="sidebarOpen">Jornadas</span>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- ── GESTÃO ── -->
+                {% if 'financeiro' in modulos_usuario or 'timesheet' in modulos_usuario or 'nps' in modulos_usuario or 'relatorios' in modulos_usuario or 'conhecimento' in modulos_usuario or 'gamificacao' in modulos_usuario %}
+                <div x-show="sidebarOpen">
+                    <button @click="menuGestao = !menuGestao" class="w-full flex items-center justify-between px-3 py-2 mt-3 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Gestão</span>
+                        <svg :class="menuGestao && 'rotate-180'" class="w-3.5 h-3.5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                </div>
+                <div x-show="menuGestao || !sidebarOpen" x-collapse class="space-y-1">
+                    {% if 'financeiro' in modulos_usuario %}
+                    <a href="{% url 'financeiro:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'financeiro' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span x-show="sidebarOpen">Financeiro</span>
+                    </a>
+                    {% endif %}
+                    {% if 'timesheet' in modulos_usuario %}
+                    <a href="{% url 'timesheet:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'timesheet' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span x-show="sidebarOpen">Timesheet</span>
+                    </a>
+                    {% endif %}
+                    {% if 'nps' in modulos_usuario %}
+                    <a href="{% url 'nps:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'nps' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                        <span x-show="sidebarOpen">NPS</span>
+                    </a>
+                    {% endif %}
+                    {% if 'relatorios' in modulos_usuario %}
+                    <a href="{% url 'relatorios:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'relatorios' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span x-show="sidebarOpen">Relatórios</span>
+                    </a>
+                    {% endif %}
+                    {% if 'conhecimento' in modulos_usuario %}
+                    <a href="{% url 'conhecimento:listar' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'conhecimento' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        <span x-show="sidebarOpen">Conhecimento</span>
+                    </a>
+                    {% endif %}
+                    {% if 'gamificacao' in modulos_usuario %}
+                    <a href="{% url 'gamificacao:ranking' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition {% if request.resolver_match.app_name == 'gamificacao' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-600 dark:text-gray-300{% endif %}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                        <span x-show="sidebarOpen">Ranking</span>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </nav>
+
+            <!-- User -->
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700/50">
+                <div class="flex items-center gap-3 px-3 py-2">
+                    <div class="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-semibold text-sm">
+                        {{ user.first_name.0 }}{{ user.last_name.0 }}
+                    </div>
+                    <div x-show="sidebarOpen" class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate text-gray-900 dark:text-white">{{ user.get_full_name }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ user.get_role_display }}</p>
+                    </div>
+                    <form method="post" action="{% url 'accounts:logout' %}" x-show="sidebarOpen">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-400 hover:text-danger transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top bar -->
+            <header class="h-16 bg-white dark:bg-dark-100/50 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between px-6">
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <h2 class="text-lg font-display font-semibold text-gray-900 dark:text-white">{% block page_title %}Dashboard{% endblock %}</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Dark/Light Toggle -->
+                    <button @click="darkMode = !darkMode" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+                        <svg x-show="darkMode" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+                    <!-- Notifications -->
+                    <a href="{% url 'notificacoes:listar' %}" class="relative text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                {% if messages %}
+                <div class="mb-4 space-y-2">
+                    {% for message in messages %}
+                    <div class="px-4 py-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-green-50 dark:bg-success/10 text-green-800 dark:text-success border border-green-200 dark:border-success/20{% elif message.tags == 'error' %}bg-red-50 dark:bg-danger/10 text-red-800 dark:text-danger border border-red-200 dark:border-danger/20{% elif message.tags == 'warning' %}bg-orange-50 dark:bg-warning/10 text-orange-800 dark:text-warning border border-orange-200 dark:border-warning/20{% else %}bg-gray-50 dark:bg-dark-200/50 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700/50{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    {% block public_content %}{% endblock %}
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

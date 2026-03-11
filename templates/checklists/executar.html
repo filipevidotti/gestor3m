@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Executar: {{ checklist.template.nome }} — 3M Control{% endblock %}
+{% block page_title %}{{ checklist.template.nome }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header com progresso -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'checklists:listar' checklist.cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar</a>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ checklist.cliente.empresa }} &middot; {{ checklist.executor.get_full_name }}</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right">
+                <p class="text-2xl font-display font-bold text-brand-orange">{{ checklist.progresso }}%</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500">Progresso geral</p>
+            </div>
+            {% if checklist.progresso == 100 %}
+            <form method="post" action="{% url 'checklists:completar' checklist.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2.5 bg-success text-white rounded-lg text-sm font-medium hover:bg-success/80 transition">
+                    Finalizar Checklist
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Barra de progresso -->
+    <div class="w-full bg-white dark:bg-dark-100 rounded-full h-2 border border-gray-200 dark:border-gray-700/50">
+        <div class="bg-brand-orange h-2 rounded-full transition-all" style="width: {{ checklist.progresso }}%"></div>
+    </div>
+
+    <!-- Navegação por categorias (dots) -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2">
+        {% for cat_nome, dados in categorias.items %}
+        <a href="?cat={{ cat_nome }}"
+           class="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition border
+           {% if cat_nome == cat_ativa %}
+               bg-brand-orange/10 text-brand-orange border-brand-orange/30
+           {% elif dados.completos == dados.total %}
+               bg-success/10 text-success border-success/20
+           {% else %}
+               bg-white dark:bg-dark-100 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700/50 hover:border-gray-600
+           {% endif %}">
+            {{ cat_nome }}
+            <span class="ml-1.5 text-xs {% if dados.completos == dados.total %}text-success{% else %}text-gray-400 dark:text-gray-500{% endif %}">
+                {{ dados.completos }}/{{ dados.total }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Conteúdo da categoria ativa -->
+    {% if cat_ativa %}
+    <form method="post" action="{% url 'checklists:salvar_categoria' checklist.pk %}" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
+                <h2 class="text-lg font-display font-semibold text-gray-900 dark:text-white">{{ cat_ativa }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {{ categorias|dictsort:"0"|first }} — Responda cada item abaixo
+                </p>
+            </div>
+
+            <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for item in categorias|dictsort:"0" %}
+                {% if forloop.first %}
+                {% for it in item.1.itens %}
+                {% if cat_ativa == item.0 %}
+                <!-- Nada aqui, renderizado abaixo -->
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+
+                {% with itens_ativos=categorias %}
+                {% for cat_nome, dados in itens_ativos.items %}
+                {% if cat_nome == cat_ativa %}
+                {% for item in dados.itens %}
+                <div class="px-6 py-4" id="exec-item-{{ item.pk }}">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ item.template_item.descricao }}</p>
+                            {% if item.template_item.instrucoes %}
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ item.template_item.instrucoes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Opções de resposta -->
+                    <div class="mt-3 flex flex-wrap gap-2" x-data="{ status: '{{ item.status }}' }">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="item_{{ item.pk }}" value="conforming" class="sr-only peer"
+                                   {% if item.status == 'conforming' %}checked{% endif %} x-model="status">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition
+                                  peer-checked:bg-success/10 peer-checked:text-success peer-checked:border-success/30
+                                  border-gray-200 dark:border-gray-700/50 text-gray-500 dark:text-gray-400 hover:border-gray-600">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Conforme
+                            </span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="item_{{ item.pk }}" value="non_conforming" class="sr-only peer"
+                                   {% if item.status == 'non_conforming' %}checked{% endif %} x-model="status">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition
+                                  peer-checked:bg-danger/10 peer-checked:text-danger peer-checked:border-danger/30
+                                  border-gray-200 dark:border-gray-700/50 text-gray-500 dark:text-gray-400 hover:border-gray-600">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                Não Conforme
+                            </span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="item_{{ item.pk }}" value="not_applicable" class="sr-only peer"
+                                   {% if item.status == 'not_applicable' %}checked{% endif %} x-model="status">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition
+                                  peer-checked:bg-gray-600/20 peer-checked:text-gray-600 dark:text-gray-300 peer-checked:border-gray-600
+                                  border-gray-200 dark:border-gray-700/50 text-gray-500 dark:text-gray-400 hover:border-gray-600">
+                                N/A
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Nota (se requerida ou se não conforme) -->
+                    {% if item.template_item.requires_note %}
+                    <div class="mt-3">
+                        <textarea name="note_{{ item.pk }}" rows="2" placeholder="Observação..."
+                                  class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-xs focus:ring-brand-orange focus:border-brand-orange">{{ item.note }}</textarea>
+                    </div>
+                    {% endif %}
+
+                    <!-- Upload de evidência -->
+                    {% if item.template_item.requires_evidence %}
+                    <div class="mt-3">
+                        <div class="flex items-center gap-3">
+                            {% for ev in item.evidencias.all %}
+                            <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700/50">
+                                <img src="{{ ev.file.url }}" alt="{{ ev.description }}" class="w-full h-full object-cover">
+                            </div>
+                            {% endfor %}
+                            <div hx-get="{% url 'checklists:upload_evidencia' checklist.pk item.pk %}"
+                                 hx-target="#evidencia-form-{{ item.pk }}"
+                                 class="w-16 h-16 rounded-lg border-2 border-dashed border-gray-700 flex items-center justify-center cursor-pointer hover:border-brand-orange/50 transition">
+                                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            </div>
+                        </div>
+                        <div id="evidencia-form-{{ item.pk }}"></div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Navegação entre categorias -->
+        <div class="flex items-center justify-between mt-6">
+            {% with prev_cat=None next_cat=None %}
+            {% for i, cat_nome in enumerate cat_names %}
+            {% endfor %}
+            {% endwith %}
+
+            <div>
+                {% for cat_nome in cat_names %}
+                {% if cat_nome == cat_ativa and not forloop.first %}
+                <a href="?cat={{ forloop.prev }}"
+                   class="px-4 py-2.5 bg-white dark:bg-dark-100 text-gray-600 dark:text-gray-300 rounded-lg text-sm border border-gray-200 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-dark-200/50 transition">
+                    &larr; Anterior
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit" class="px-6 py-2.5 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+                    Salvar
+                </button>
+
+                {% for cat_nome in cat_names %}
+                {% if cat_nome == cat_ativa and not forloop.last %}
+                <input type="hidden" name="next_cat" value="">
+                <button type="submit" onclick="this.form.querySelector('[name=next_cat]').value='{{ cat_names|slice:forloop.counter|first }}'"
+                        class="px-6 py-2.5 bg-dark-200 text-white rounded-lg text-sm font-medium hover:bg-dark-200/80 transition">
+                    Próxima &rarr;
+                </button>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

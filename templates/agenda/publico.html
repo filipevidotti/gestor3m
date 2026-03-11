@@ -1,0 +1,207 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar com {{ consultor.get_full_name }} — 3M Consultoria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { dark: '#8C103C', red: '#D83341', orange: '#FE8103' },
+                    },
+                    fontFamily: {
+                        display: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
+                        body: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        h1, h2, h3 { font-family: 'Red Hat Display', system-ui, sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="h-full bg-gray-50 font-body">
+    <div class="min-h-full flex flex-col" x-data="agendaPublica()">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 py-4">
+            <div class="max-w-3xl mx-auto px-4 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-brand-dark to-brand-red flex items-center justify-center text-white font-display font-bold text-lg">
+                    {{ consultor.first_name.0 }}{{ consultor.last_name.0 }}
+                </div>
+                <div>
+                    <h1 class="text-lg font-display font-bold text-gray-900">{{ consultor.get_full_name }}</h1>
+                    <p class="text-sm text-gray-500">{{ config.titulo|default:"3M Consultoria" }}</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main -->
+        <main class="flex-1 py-8">
+            <div class="max-w-3xl mx-auto px-4">
+                {% if config.descricao %}
+                <p class="text-sm text-gray-600 mb-6">{{ config.descricao }}</p>
+                {% endif %}
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <!-- Etapa 1: Selecionar Data -->
+                    <div x-show="etapa === 1" x-transition>
+                        <div class="p-6 border-b border-gray-100">
+                            <h2 class="text-xl font-display font-bold text-gray-900">Escolha uma data</h2>
+                            <p class="text-sm text-gray-500 mt-1">Reunião de {{ duracao }} minutos</p>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                {% for dia in dias %}
+                                <button @click="selecionarData('{{ dia.data|date:'Y-m-d' }}', '{{ dia.dia_semana }}', '{{ dia.data|date:'d/m' }}')"
+                                        class="p-4 rounded-xl border-2 text-center transition"
+                                        :class="dataSelecionada === '{{ dia.data|date:'Y-m-d' }}' ? 'border-brand-orange bg-brand-orange/5' : 'border-gray-200 hover:border-brand-orange/50'">
+                                    <p class="text-xs font-medium text-gray-500 uppercase">{{ dia.dia_semana }}</p>
+                                    <p class="text-2xl font-display font-bold text-gray-900 mt-1">{{ dia.data|date:"d" }}</p>
+                                    <p class="text-xs text-gray-500">{{ dia.data|date:"M" }}</p>
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 2: Selecionar Horário -->
+                    <div x-show="etapa === 2" x-transition x-cloak>
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex items-center gap-3">
+                                <button @click="etapa = 1" class="p-1.5 hover:bg-gray-100 rounded-lg transition">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <div>
+                                    <h2 class="text-xl font-display font-bold text-gray-900">Escolha um horário</h2>
+                                    <p class="text-sm text-gray-500" x-text="dataLabel + ' — ' + diaSemanaLabel"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div x-show="carregando" class="text-center py-8">
+                                <svg class="animate-spin w-8 h-8 mx-auto text-brand-orange" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                <p class="text-sm text-gray-500 mt-2">Buscando horários disponíveis...</p>
+                            </div>
+                            <div x-show="!carregando && slots.length === 0" class="text-center py-8">
+                                <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <p class="text-sm text-gray-500">Nenhum horário disponível para esta data.</p>
+                                <button @click="etapa = 1" class="mt-3 text-sm text-brand-orange font-medium hover:underline">Escolher outra data</button>
+                            </div>
+                            <div x-show="!carregando && slots.length > 0" class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                <template x-for="slot in slots" :key="slot">
+                                    <button @click="selecionarHorario(slot)"
+                                            class="py-3 px-4 rounded-xl border-2 text-center font-medium text-sm transition"
+                                            :class="horarioSelecionado === slot ? 'border-brand-orange bg-brand-orange text-white' : 'border-gray-200 text-gray-700 hover:border-brand-orange/50'"
+                                            x-text="slot">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 3: Dados do Cliente -->
+                    <div x-show="etapa === 3" x-transition x-cloak>
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex items-center gap-3">
+                                <button @click="etapa = 2" class="p-1.5 hover:bg-gray-100 rounded-lg transition">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <div>
+                                    <h2 class="text-xl font-display font-bold text-gray-900">Seus dados</h2>
+                                    <p class="text-sm text-gray-500" x-text="dataLabel + ' às ' + horarioSelecionado"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <form method="post" action="{% url 'agenda:publico_agendar' config.slug %}" class="space-y-4">
+                                {% csrf_token %}
+                                <input type="hidden" name="data" :value="dataSelecionada">
+                                <input type="hidden" name="horario" :value="horarioSelecionado">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome completo *</label>
+                                    <input type="text" name="nome" required
+                                           class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                                           placeholder="Seu nome completo">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">E-mail *</label>
+                                    <input type="email" name="email" required
+                                           class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                                           placeholder="seu@email.com">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                                    <input type="tel" name="telefone"
+                                           class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                                           placeholder="(11) 99999-9999">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+                                    <textarea name="observacao" rows="3"
+                                              class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                                              placeholder="Conte brevemente sobre o que deseja tratar..."></textarea>
+                                </div>
+                                <button type="submit"
+                                        class="w-full py-3 bg-brand-orange text-white rounded-xl text-sm font-semibold hover:bg-orange-600 transition">
+                                    Confirmar Agendamento
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Powered by -->
+                <p class="text-center text-xs text-gray-400 mt-6">
+                    Agendamento por <span class="font-semibold text-brand-dark">3M Consultoria</span>
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    function agendaPublica() {
+        return {
+            etapa: 1,
+            dataSelecionada: '',
+            dataLabel: '',
+            diaSemanaLabel: '',
+            horarioSelecionado: '',
+            slots: [],
+            carregando: false,
+
+            selecionarData(data, diaSemana, label) {
+                this.dataSelecionada = data;
+                this.dataLabel = label;
+                this.diaSemanaLabel = diaSemana;
+                this.carregando = true;
+                this.slots = [];
+                this.etapa = 2;
+
+                fetch(`{% url 'agenda:publico_horarios' config.slug %}?data=${data}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        this.slots = data.slots;
+                        this.carregando = false;
+                    });
+            },
+
+            selecionarHorario(slot) {
+                this.horarioSelecionado = slot;
+                this.etapa = 3;
+            }
+        };
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<tr id="pag-{{ pag.pk }}">
+    <td class="px-6 py-4 text-gray-700 dark:text-gray-200">{{ pag.mes_referencia|date:"m/Y" }}</td>
+    <td class="px-6 py-4 text-gray-700 dark:text-gray-200">R$ {{ pag.valor|floatformat:2 }}</td>
+    <td class="px-6 py-4">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">Pago</span>
+    </td>
+    <td class="px-6 py-4 text-gray-500 dark:text-gray-400">{{ pag.data_pagamento|date:"d/m/Y" }}</td>
+    <td class="px-6 py-4"></td>
+</tr>

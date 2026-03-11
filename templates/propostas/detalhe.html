@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Proposta — {{ proposta.nome_display }} — 3M Control{% endblock %}
+{% block page_title %}Proposta{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ proposta.nome_display }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Criada em {{ proposta.created_at|date:"d/m/Y H:i" }} por {{ proposta.consultor.get_full_name }}
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium
+                {% if proposta.status == 'rascunho' %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300
+                {% elif proposta.status == 'questionario' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
+                {% elif proposta.status == 'calculando' or proposta.status == 'gerando_ia' %}bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400
+                {% elif proposta.status == 'revisao' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                {% elif proposta.status == 'enviado' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400
+                {% elif proposta.status == 'aceito' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                {% elif proposta.status == 'recusado' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                {% elif proposta.status == 'expirado' %}bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-500
+                {% endif %}">
+                {{ proposta.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Ações por status -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'propostas:editar' proposta.pk %}" class="px-3 py-1.5 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Editar
+            </a>
+
+            {% if proposta.status == 'rascunho' or proposta.status == 'questionario' %}
+            <a href="{% url 'propostas:questionario' proposta.pk %}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                Questionário
+            </a>
+            {% endif %}
+
+            {% if proposta.status == 'calculando' %}
+            <form method="post" action="{% url 'propostas:calcular' proposta.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Calcular Métricas
+                </button>
+            </form>
+            <form method="post" action="{% url 'propostas:gerar_ia' proposta.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1.5 bg-violet-600 text-white rounded-lg text-sm hover:bg-violet-700 transition">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Gerar IA
+                </button>
+            </form>
+            {% endif %}
+
+            {% if proposta.status == 'revisao' or proposta.status == 'calculando' or proposta.status == 'gerando_ia' %}
+            <a href="{% url 'propostas:revisao' proposta.pk %}" class="px-3 py-1.5 bg-yellow-500 text-white rounded-lg text-sm hover:bg-yellow-600 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                Revisão
+            </a>
+            {% endif %}
+
+            {% if proposta.status == 'revisao' %}
+            <form method="post" action="{% url 'propostas:enviar' proposta.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1.5 bg-brand-orange text-white rounded-lg text-sm hover:bg-brand-orange/90 transition"
+                        onclick="return confirm('Enviar proposta ao cliente?')">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    Enviar Proposta
+                </button>
+            </form>
+            {% endif %}
+
+            {% if proposta.status == 'enviado' %}
+            <a href="{% url 'propostas:publico' proposta.token %}" target="_blank" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                Link Público
+            </a>
+            {% endif %}
+
+            <form method="post" action="{% url 'propostas:excluir' proposta.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition"
+                        onclick="return confirm('Remover esta proposta?')">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Excluir
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Info cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tipo de Seller</p>
+            <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ proposta.get_tipo_seller_display }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Marketplace</p>
+            <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ proposta.get_marketplace_display }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visualizações</p>
+            <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ proposta.visualizacoes }}</p>
+        </div>
+    </div>
+
+    <!-- Investimento -->
+    {% if proposta.valor_setup or proposta.valor_mensalidade %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Investimento</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Setup</p>
+                <p class="text-2xl font-bold text-brand-orange">R$ {{ proposta.valor_setup|floatformat:2 }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Mensalidade</p>
+                <p class="text-2xl font-bold text-brand-orange">R$ {{ proposta.valor_mensalidade|floatformat:2 }}</p>
+            </div>
+        </div>
+        {% if proposta.condicoes_especiais %}
+        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700/50">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Condições Especiais</p>
+            <p class="text-sm text-gray-900 dark:text-white mt-1">{{ proposta.condicoes_especiais|linebreaksbr }}</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Serviços incluídos -->
+    {% if proposta.servicos_incluidos.all %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Serviços Incluídos</h3>
+        <div class="space-y-2">
+            {% for ps in proposta.servicos_incluidos.all %}
+            <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700/30 last:border-0">
+                <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ ps.servico.nome }}</p>
+                    {% if ps.descricao_custom %}
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ ps.descricao_custom }}</p>
+                    {% endif %}
+                </div>
+                <p class="text-sm font-semibold text-brand-orange">R$ {{ ps.valor|floatformat:2 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Textos IA -->
+    {% if proposta.diagnostico_ia %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-3">Diagnóstico IA</h3>
+        <div class="prose dark:prose-invert max-w-none text-sm">{{ proposta.diagnostico_ia|linebreaksbr }}</div>
+    </div>
+    {% endif %}
+
+    {% if proposta.proposicao_valor %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-3">Proposição de Valor</h3>
+        <div class="prose dark:prose-invert max-w-none text-sm">{{ proposta.proposicao_valor|linebreaksbr }}</div>
+    </div>
+    {% endif %}
+
+    {% if proposta.proposta_comercial %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-3">Proposta Comercial</h3>
+        <div class="prose dark:prose-invert max-w-none text-sm">{{ proposta.proposta_comercial|linebreaksbr }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Tracking -->
+    {% if proposta.status == 'enviado' or proposta.status == 'aceito' or proposta.status == 'recusado' %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-3">Tracking</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+                <p class="text-gray-500 dark:text-gray-400">Enviada em</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ proposta.data_envio|date:"d/m/Y H:i" }}</p>
+            </div>
+            <div>
+                <p class="text-gray-500 dark:text-gray-400">Expira em</p>
+                <p class="font-medium {% if proposta.expirada %}text-red-500{% else %}text-gray-900 dark:text-white{% endif %}">
+                    {{ proposta.data_expiracao|date:"d/m/Y" }}
+                    {% if proposta.expirada %}(expirada){% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="text-gray-500 dark:text-gray-400">Visualizações</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ proposta.visualizacoes }}</p>
+            </div>
+            {% if proposta.data_resposta %}
+            <div>
+                <p class="text-gray-500 dark:text-gray-400">Respondida em</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ proposta.data_resposta|date:"d/m/Y H:i" }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% if proposta.motivo_recusa %}
+        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700/50">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Motivo da Recusa</p>
+            <p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ proposta.motivo_recusa }}</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Voltar -->
+    <div>
+        <a href="{% url 'propostas:listar' %}" class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-orange transition">
+            &larr; Voltar para lista
+        </a>
+    </div>
+</div>
+{% endblock %}

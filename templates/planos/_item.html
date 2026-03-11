@@ -1,0 +1,24 @@
+<div class="bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 flex items-center gap-4" id="item-{{ item.pk }}">
+    <button hx-post="{% url 'planos:toggle_item' plano.pk item.pk %}" hx-target="#item-{{ item.pk }}" hx-swap="outerHTML"
+            class="flex-shrink-0">
+        {% if item.status == 'concluido' %}
+        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {% else %}
+        <svg class="w-6 h-6 text-gray-400 dark:text-gray-500 hover:text-brand-orange transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>
+        {% endif %}
+    </button>
+    <div class="flex-1">
+        <p class="text-sm {% if item.status == 'concluido' %}text-gray-400 dark:text-gray-500 line-through{% else %}text-gray-700 dark:text-gray-200{% endif %}">{{ item.descricao }}</p>
+        <div class="flex gap-4 mt-1 text-xs text-gray-400 dark:text-gray-500">
+            <span>{{ item.responsavel.get_full_name }}</span>
+            {% if item.prazo %}<span>Prazo: {{ item.prazo|date:"d/m/Y" }}</span>{% endif %}
+        </div>
+    </div>
+    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+        {% if item.prioridade == 'urgente' %}bg-red-500/10 text-red-400
+        {% elif item.prioridade == 'alta' %}bg-amber-500/10 text-amber-400
+        {% elif item.prioridade == 'media' %}bg-blue-500/10 text-blue-400
+        {% else %}bg-gray-500/10 text-gray-500 dark:text-gray-400{% endif %}">
+        {{ item.get_prioridade_display }}
+    </span>
+</div>

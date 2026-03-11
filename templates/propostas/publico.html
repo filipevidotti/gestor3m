@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposta Comercial — 3M Consultoria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { dark: '#8C103C', red: '#D83341', orange: '#FE8103' },
+                    },
+                    fontFamily: {
+                        display: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
+                        body: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Red Hat Display', system-ui, sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="min-h-full bg-gray-50 text-gray-800 font-body">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange py-8">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-display font-bold text-white">Proposta Comercial</h1>
+            <p class="text-white/80 mt-2 text-lg">3M Consultoria — Marketplace</p>
+        </div>
+    </header>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-4xl mx-auto px-6 mt-4">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg text-sm mb-2
+            {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200
+            {% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+            {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="max-w-4xl mx-auto px-6 py-8 space-y-8">
+        <!-- Cliente / Lead -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Preparada para</p>
+                    <h2 class="text-2xl font-display font-bold text-gray-900">{{ proposta.nome_display }}</h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">Consultor</p>
+                    <p class="font-medium text-gray-900">{{ proposta.consultor.get_full_name }}</p>
+                </div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
+                <span>{{ proposta.get_tipo_seller_display }}</span>
+                <span>•</span>
+                <span>{{ proposta.get_marketplace_display }}</span>
+                <span>•</span>
+                <span>{{ proposta.data_envio|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+
+        <!-- Diagnóstico -->
+        {% if proposta.diagnostico_ia %}
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="text-xl font-display font-bold text-brand-dark mb-3">Diagnóstico</h3>
+            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.diagnostico_ia|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Proposição de Valor -->
+        {% if proposta.proposicao_valor %}
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="text-xl font-display font-bold text-brand-dark mb-3">Nossa Proposição de Valor</h3>
+            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.proposicao_valor|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Proposta Comercial -->
+        {% if proposta.proposta_comercial %}
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="text-xl font-display font-bold text-brand-dark mb-3">Proposta Comercial</h3>
+            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.proposta_comercial|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Serviços -->
+        {% if proposta.servicos_incluidos.all %}
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="text-xl font-display font-bold text-brand-dark mb-4">Serviços Incluídos</h3>
+            <div class="space-y-3">
+                {% for ps in proposta.servicos_incluidos.all %}
+                <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                    <div>
+                        <p class="font-medium text-gray-900">{{ ps.servico.nome }}</p>
+                        {% if ps.descricao_custom %}
+                        <p class="text-sm text-gray-500">{{ ps.descricao_custom }}</p>
+                        {% endif %}
+                    </div>
+                    <p class="text-lg font-bold text-brand-orange">R$ {{ ps.valor|floatformat:2 }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Investimento -->
+        <div class="bg-gradient-to-r from-brand-dark to-brand-red rounded-xl p-6 text-white">
+            <h3 class="text-xl font-display font-bold mb-6 text-center">Investimento</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
+                <div>
+                    <p class="text-white/70 text-sm">Setup (única vez)</p>
+                    <p class="text-3xl font-bold mt-1">R$ {{ proposta.valor_setup|floatformat:2 }}</p>
+                </div>
+                <div>
+                    <p class="text-white/70 text-sm">Mensalidade</p>
+                    <p class="text-3xl font-bold mt-1">R$ {{ proposta.valor_mensalidade|floatformat:2 }}</p>
+                </div>
+            </div>
+            {% if proposta.condicoes_especiais %}
+            <div class="mt-6 pt-4 border-t border-white/20 text-center">
+                <p class="text-white/70 text-sm">Condições Especiais</p>
+                <p class="text-sm mt-1">{{ proposta.condicoes_especiais|linebreaksbr }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Ações -->
+        {% if proposta.status == 'enviado' %}
+        <div class="bg-white rounded-xl border border-gray-200 p-6" x-data="{ showRecusa: false }">
+            <h3 class="text-xl font-display font-bold text-gray-900 mb-4 text-center">O que deseja fazer?</h3>
+
+            {% if proposta.expirada %}
+            <div class="text-center py-4">
+                <p class="text-red-600 font-medium">Esta proposta expirou em {{ proposta.data_expiracao|date:"d/m/Y" }}.</p>
+                <p class="text-sm text-gray-500 mt-1">Entre em contato conosco para renovar.</p>
+            </div>
+            {% else %}
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <form method="post" action="{% url 'propostas:publico_responder' proposta.token %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="aceitar">
+                    <button type="submit" class="px-8 py-3 bg-green-600 text-white rounded-lg text-lg font-semibold hover:bg-green-700 transition"
+                            onclick="return confirm('Confirma que deseja aceitar esta proposta?')">
+                        Aceitar Proposta
+                    </button>
+                </form>
+
+                <button type="button" @click="showRecusa = !showRecusa"
+                        class="px-8 py-3 bg-gray-100 text-gray-700 rounded-lg text-lg font-medium hover:bg-gray-200 transition">
+                    Recusar
+                </button>
+            </div>
+
+            <div x-show="showRecusa" x-transition class="mt-6 pt-6 border-t border-gray-200">
+                <form method="post" action="{% url 'propostas:publico_responder' proposta.token %}" class="space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="recusar">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Motivo da recusa (opcional)</label>
+                        <textarea name="motivo_recusa" rows="3"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500"
+                                  placeholder="Nos ajude a melhorar..."></textarea>
+                    </div>
+                    <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition">
+                        Confirmar Recusa
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        {% elif proposta.status == 'aceito' %}
+        <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+            <svg class="w-16 h-16 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <h3 class="text-xl font-bold text-green-800">Proposta Aceita!</h3>
+            <p class="text-sm text-green-700 mt-1">Obrigado! Entraremos em contato em breve.</p>
+        </div>
+
+        {% elif proposta.status == 'recusado' %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <h3 class="text-xl font-bold text-red-800">Proposta Recusada</h3>
+            <p class="text-sm text-red-700 mt-1">Agradecemos seu feedback. Estamos à disposição para conversas futuras.</p>
+        </div>
+        {% endif %}
+
+        <!-- Validade -->
+        {% if proposta.data_expiracao %}
+        <p class="text-center text-xs text-gray-400">
+            Proposta válida até {{ proposta.data_expiracao|date:"d/m/Y" }}
+        </p>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center text-xs text-gray-400 border-t border-gray-200 mt-8">
+        <p>3M Consultoria — Marketplace · www.3mconsultoria.com.br</p>
+    </footer>
+</body>
+</html>

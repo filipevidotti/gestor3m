@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Questionário — {{ proposta.nome_display }} — 3M Control{% endblock %}
+{% block page_title %}Questionário da Proposta{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white">{{ proposta.nome_display }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ proposta.get_tipo_seller_display }} — {{ proposta.get_marketplace_display }}</p>
+        </div>
+        <a href="{% url 'propostas:detalhe' proposta.pk %}" class="text-sm text-gray-500 dark:text-gray-400 hover:text-brand-orange">
+            Ver proposta &rarr;
+        </a>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Bloco {{ passo }} de {{ total_passos }}</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">{{ passo|floatformat:0 }}0%</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-dark-200 rounded-full h-2">
+            <div class="bg-brand-orange h-2 rounded-full transition-all duration-300"
+                 style="width: {{ passo }}0%"></div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="passo" value="{{ passo }}">
+
+        <!-- Bloco dinâmico -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 space-y-5">
+
+            {% if passo == 1 %}
+            <!-- BLOCO 1: Estrutura da Operação -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Estrutura da Operação</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantos SKUs ativos?</label>
+                    <input type="number" name="r_skus_ativos" value="{{ proposta.respostas.bloco_1.skus_ativos|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 150">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Faturamento mensal estimado (R$)</label>
+                    <input type="number" name="r_faturamento_mensal" step="0.01" value="{{ proposta.respostas.bloco_1.faturamento_mensal|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 50000">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantas pessoas na equipe?</label>
+                    <input type="number" name="r_equipe" value="{{ proposta.respostas.bloco_1.equipe|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 3">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Há quanto tempo vende online? (meses)</label>
+                    <input type="number" name="r_tempo_operacao" value="{{ proposta.respostas.bloco_1.tempo_operacao|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 12">
+                </div>
+            </div>
+
+            {% elif passo == 2 %}
+            <!-- BLOCO 2: Anúncios -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Qualidade dos Anúncios</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Já usa título otimizado com palavras-chave?</label>
+                    <select name="r_titulo_otimizado" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_2.titulo_otimizado == 'sim' %}selected{% endif %}>Sim</option>
+                        <option value="parcial" {% if proposta.respostas.bloco_2.titulo_otimizado == 'parcial' %}selected{% endif %}>Parcialmente</option>
+                        <option value="nao" {% if proposta.respostas.bloco_2.titulo_otimizado == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fotos profissionais / infográficos?</label>
+                    <select name="r_fotos_profissionais" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_2.fotos_profissionais == 'sim' %}selected{% endif %}>Sim, todos</option>
+                        <option value="parcial" {% if proposta.respostas.bloco_2.fotos_profissionais == 'parcial' %}selected{% endif %}>Alguns</option>
+                        <option value="nao" {% if proposta.respostas.bloco_2.fotos_profissionais == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição com HTML/rich text?</label>
+                    <select name="r_descricao_html" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_2.descricao_html == 'sim' %}selected{% endif %}>Sim</option>
+                        <option value="nao" {% if proposta.respostas.bloco_2.descricao_html == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Taxa de conversão atual (%)</label>
+                    <input type="number" name="r_taxa_conversao" step="0.1" value="{{ proposta.respostas.bloco_2.taxa_conversao|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 8.5">
+                </div>
+            </div>
+
+            {% elif passo == 3 %}
+            <!-- BLOCO 3: Ads / Publicidade -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Publicidade (Ads)</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usa Product Ads?</label>
+                    <select name="r_usa_ads" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_3.usa_ads == 'sim' %}selected{% endif %}>Sim</option>
+                        <option value="nao" {% if proposta.respostas.bloco_3.usa_ads == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Investimento mensal em Ads (R$)</label>
+                    <input type="number" name="r_investimento_ads" step="0.01" value="{{ proposta.respostas.bloco_3.investimento_ads|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 3000">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ACOS atual (%)</label>
+                    <input type="number" name="r_acos_atual" step="0.1" value="{{ proposta.respostas.bloco_3.acos_atual|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 12.5">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sabe otimizar campanhas?</label>
+                    <select name="r_sabe_otimizar_ads" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_3.sabe_otimizar_ads == 'sim' %}selected{% endif %}>Sim</option>
+                        <option value="parcial" {% if proposta.respostas.bloco_3.sabe_otimizar_ads == 'parcial' %}selected{% endif %}>Parcialmente</option>
+                        <option value="nao" {% if proposta.respostas.bloco_3.sabe_otimizar_ads == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+            </div>
+
+            {% elif passo == 4 %}
+            <!-- BLOCO 4: Logística -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Logística e Fulfillment</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de envio principal</label>
+                    <select name="r_tipo_envio" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="full" {% if proposta.respostas.bloco_4.tipo_envio == 'full' %}selected{% endif %}>Mercado Envios Full</option>
+                        <option value="flex" {% if proposta.respostas.bloco_4.tipo_envio == 'flex' %}selected{% endif %}>Flex / Coleta</option>
+                        <option value="proprio" {% if proposta.respostas.bloco_4.tipo_envio == 'proprio' %}selected{% endif %}>Logística própria</option>
+                        <option value="misto" {% if proposta.respostas.bloco_4.tipo_envio == 'misto' %}selected{% endif %}>Misto</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prazo médio de despacho (dias)</label>
+                    <input type="number" name="r_prazo_despacho" value="{{ proposta.respostas.bloco_4.prazo_despacho|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Taxa de reclamação por atraso (%)</label>
+                    <input type="number" name="r_taxa_atraso" step="0.1" value="{{ proposta.respostas.bloco_4.taxa_atraso|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Custo médio frete por pedido (R$)</label>
+                    <input type="number" name="r_custo_frete" step="0.01" value="{{ proposta.respostas.bloco_4.custo_frete|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+
+            {% elif passo == 5 %}
+            <!-- BLOCO 5: Atendimento -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Atendimento ao Cliente</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tempo médio de resposta (horas)</label>
+                    <input type="number" name="r_tempo_resposta" value="{{ proposta.respostas.bloco_5.tempo_resposta|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reputação no Mercado Livre</label>
+                    <select name="r_reputacao" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="verde" {% if proposta.respostas.bloco_5.reputacao == 'verde' %}selected{% endif %}>Verde (MercadoLíder)</option>
+                        <option value="amarelo" {% if proposta.respostas.bloco_5.reputacao == 'amarelo' %}selected{% endif %}>Amarelo</option>
+                        <option value="laranja" {% if proposta.respostas.bloco_5.reputacao == 'laranja' %}selected{% endif %}>Laranja</option>
+                        <option value="vermelho" {% if proposta.respostas.bloco_5.reputacao == 'vermelho' %}selected{% endif %}>Vermelho</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Taxa de reclamações (%)</label>
+                    <input type="number" name="r_taxa_reclamacoes" step="0.1" value="{{ proposta.respostas.bloco_5.taxa_reclamacoes|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+
+            {% elif passo == 6 %}
+            <!-- BLOCO 6: Precificação -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Precificação</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usa planilha de precificação?</label>
+                    <select name="r_planilha_preco" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_6.planilha_preco == 'sim' %}selected{% endif %}>Sim, estruturada</option>
+                        <option value="basica" {% if proposta.respostas.bloco_6.planilha_preco == 'basica' %}selected{% endif %}>Básica</option>
+                        <option value="nao" {% if proposta.respostas.bloco_6.planilha_preco == 'nao' %}selected{% endif %}>Não usa</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Margem líquida estimada (%)</label>
+                    <input type="number" name="r_margem_liquida" step="0.1" value="{{ proposta.respostas.bloco_6.margem_liquida|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 15">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Considera todos os custos (comissão, frete, impostos)?</label>
+                    <select name="r_custos_completos" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_6.custos_completos == 'sim' %}selected{% endif %}>Sim</option>
+                        <option value="parcial" {% if proposta.respostas.bloco_6.custos_completos == 'parcial' %}selected{% endif %}>Parcialmente</option>
+                        <option value="nao" {% if proposta.respostas.bloco_6.custos_completos == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+            </div>
+
+            {% elif passo == 7 %}
+            <!-- BLOCO 7: Gestão e Processos -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Gestão e Processos</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usa ERP / sistema de gestão?</label>
+                    <select name="r_usa_erp" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_7.usa_erp == 'sim' %}selected{% endif %}>Sim</option>
+                        <option value="basico" {% if proposta.respostas.bloco_7.usa_erp == 'basico' %}selected{% endif %}>Básico / Planilha</option>
+                        <option value="nao" {% if proposta.respostas.bloco_7.usa_erp == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Qual ERP?</label>
+                    <input type="text" name="r_qual_erp" value="{{ proposta.respostas.bloco_7.qual_erp|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: Bling, Tiny, Omie...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horas semanais dedicadas à operação</label>
+                    <input type="number" name="r_horas_semanais" value="{{ proposta.respostas.bloco_7.horas_semanais|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+
+            {% elif passo == 8 %}
+            <!-- BLOCO 8: Concorrência -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Análise Competitiva</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Principais concorrentes (quem mais vende no nicho)</label>
+                    <textarea name="r_concorrentes" rows="3"
+                              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                              placeholder="Liste os principais concorrentes...">{{ proposta.respostas.bloco_8.concorrentes|default:'' }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diferencial em relação a eles</label>
+                    <textarea name="r_diferencial" rows="3"
+                              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                              placeholder="O que diferencia dos concorrentes?">{{ proposta.respostas.bloco_8.diferencial|default:'' }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Posição no ranking do nicho</label>
+                    <select name="r_posicao_ranking" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="top3" {% if proposta.respostas.bloco_8.posicao_ranking == 'top3' %}selected{% endif %}>Top 3</option>
+                        <option value="top10" {% if proposta.respostas.bloco_8.posicao_ranking == 'top10' %}selected{% endif %}>Top 10</option>
+                        <option value="top20" {% if proposta.respostas.bloco_8.posicao_ranking == 'top20' %}selected{% endif %}>Top 20</option>
+                        <option value="fora" {% if proposta.respostas.bloco_8.posicao_ranking == 'fora' %}selected{% endif %}>Fora do top 20</option>
+                    </select>
+                </div>
+            </div>
+
+            {% elif passo == 9 %}
+            <!-- BLOCO 9: Objetivos -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Objetivos e Metas</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meta de faturamento mensal (R$)</label>
+                    <input type="number" name="r_meta_faturamento" step="0.01" value="{{ proposta.respostas.bloco_9.meta_faturamento|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 100000">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Principal objetivo com a consultoria</label>
+                    <select name="r_objetivo_principal" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="escalar" {% if proposta.respostas.bloco_9.objetivo_principal == 'escalar' %}selected{% endif %}>Escalar vendas</option>
+                        <option value="margem" {% if proposta.respostas.bloco_9.objetivo_principal == 'margem' %}selected{% endif %}>Aumentar margem</option>
+                        <option value="organizar" {% if proposta.respostas.bloco_9.objetivo_principal == 'organizar' %}selected{% endif %}>Organizar operação</option>
+                        <option value="multicanal" {% if proposta.respostas.bloco_9.objetivo_principal == 'multicanal' %}selected{% endif %}>Expandir para multicanal</option>
+                        <option value="reputacao" {% if proposta.respostas.bloco_9.objetivo_principal == 'reputacao' %}selected{% endif %}>Recuperar reputação</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prazo para atingir metas (meses)</label>
+                    <input type="number" name="r_prazo_metas" value="{{ proposta.respostas.bloco_9.prazo_metas|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                           placeholder="ex: 6">
+                </div>
+            </div>
+
+            {% elif passo == 10 %}
+            <!-- BLOCO 10: Dores e Observações -->
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Dores e Observações</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Maiores dores / frustrações na operação</label>
+                    <textarea name="r_dores" rows="4"
+                              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                              placeholder="Descreva as principais dificuldades enfrentadas...">{{ proposta.respostas.bloco_10.dores|default:'' }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Já teve consultoria antes?</label>
+                    <select name="r_consultoria_anterior" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione</option>
+                        <option value="sim" {% if proposta.respostas.bloco_10.consultoria_anterior == 'sim' %}selected{% endif %}>Sim</option>
+                        <option value="nao" {% if proposta.respostas.bloco_10.consultoria_anterior == 'nao' %}selected{% endif %}>Não</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observações adicionais</label>
+                    <textarea name="r_observacoes" rows="3"
+                              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange"
+                              placeholder="Algo mais relevante para a proposta...">{{ proposta.respostas.bloco_10.observacoes|default:'' }}</textarea>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Navegação -->
+        <div class="flex items-center justify-between mt-6">
+            {% if passo > 1 %}
+            <button type="submit" name="acao" value="anterior" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Anterior
+            </button>
+            {% else %}
+            <div></div>
+            {% endif %}
+
+            {% if passo < 10 %}
+            <button type="submit" name="acao" value="proximo" class="px-6 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+                Próximo
+                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            {% else %}
+            <button type="submit" name="acao" value="finalizar" class="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Finalizar Questionário
+            </button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}

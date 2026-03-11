@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Editar Etapa — 3M Control{% endblock %}
+{% block page_title %}Editar Etapa{% endblock %}
+
+{% block content %}
+<div class="max-w-xl">
+    <a href="{% url 'clientes:pipeline_config' %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange">&larr; Voltar</a>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 mt-4">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">{{ etapa.nome }}</h3>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nome *</label>
+                <input type="text" name="nome" value="{{ form.nome.value }}" required class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Descricao</label>
+                <input type="text" name="descricao" value="{{ form.descricao.value|default:'' }}" class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cor</label>
+                    <input type="color" name="cor" value="{{ form.cor.value }}" class="w-full h-[38px] bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+                    <input type="number" name="ordem" value="{{ form.ordem.value }}" class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <a href="{% url 'clientes:pipeline_config' %}" class="px-4 py-2 bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-sm border border-gray-200 dark:border-gray-700/50">Cancelar</a>
+                <button type="submit" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

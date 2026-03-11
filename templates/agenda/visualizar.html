@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Agenda — 3M Control{% endblock %}
+{% block page_title %}Minha Agenda{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<style>
+    /* FullCalendar custom theming */
+    .fc {
+        --fc-border-color: var(--border-color, #e5e7eb);
+        --fc-button-bg-color: #FE8103;
+        --fc-button-border-color: #FE8103;
+        --fc-button-hover-bg-color: #ea580c;
+        --fc-button-hover-border-color: #ea580c;
+        --fc-button-active-bg-color: #c2410c;
+        --fc-button-active-border-color: #c2410c;
+        --fc-today-bg-color: rgba(254, 129, 3, 0.06);
+        --fc-event-border-color: transparent;
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+    .dark .fc {
+        --fc-border-color: rgba(55, 65, 81, 0.5);
+        --fc-page-bg-color: #1E293B;
+        --fc-neutral-bg-color: #0F172A;
+        --fc-today-bg-color: rgba(254, 129, 3, 0.08);
+    }
+    .fc .fc-toolbar-title {
+        font-family: 'Red Hat Display', system-ui, sans-serif;
+        font-weight: 700;
+    }
+    .dark .fc .fc-toolbar-title,
+    .dark .fc .fc-col-header-cell-cushion,
+    .dark .fc .fc-daygrid-day-number {
+        color: #e5e7eb;
+    }
+    .dark .fc .fc-button {
+        background-color: #FE8103;
+        border-color: #FE8103;
+    }
+    .fc .fc-event {
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    .fc .fc-daygrid-day-number {
+        font-weight: 500;
+        padding: 6px 10px;
+    }
+    .fc .fc-col-header-cell-cushion {
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Minha Agenda</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Visualize seus próximos agendamentos.</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'agenda:agendamentos' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                Ver Todos
+            </a>
+            <a href="{% url 'agenda:config' %}" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">
+                Configurar
+            </a>
+        </div>
+    </div>
+
+    {% if not config %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-12 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-2">Agenda não configurada</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Configure seus horários de trabalho para começar a receber agendamentos.</p>
+        <a href="{% url 'agenda:config' %}" class="inline-flex items-center px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">
+            Configurar Agenda
+        </a>
+    </div>
+    {% else %}
+
+    <!-- FullCalendar -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 sm:p-6">
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Modal detalhe do evento -->
+    <div x-data="eventoModal()" @evento-click.window="abrir($event.detail)" x-cloak>
+        <div x-show="open" class="fixed inset-0 z-50 overflow-y-auto"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:leave="transition ease-in duration-150">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div @click="open = false" class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+                <div class="relative bg-white dark:bg-dark-100 rounded-2xl shadow-xl w-full max-w-md">
+                    <!-- Header colorido -->
+                    <div class="px-6 py-4 rounded-t-2xl" :style="'background-color:' + evento.color">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-display font-bold text-white" x-text="evento.title"></h3>
+                            <button @click="open = false" class="text-white/70 hover:text-white transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <span class="inline-block mt-1 px-2 py-0.5 bg-white/20 text-white text-xs font-medium rounded-full" x-text="evento.status_display"></span>
+                    </div>
+                    <!-- Body -->
+                    <div class="p-6 space-y-4">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300" x-text="evento.dataFormatada"></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300" x-text="evento.duracao + ' minutos'"></span>
+                        </div>
+                        <div class="flex items-center gap-3" x-show="evento.email">
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300" x-text="evento.email"></span>
+                        </div>
+                        <div class="flex items-center gap-3" x-show="evento.telefone">
+                            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            <span class="text-sm text-gray-700 dark:text-gray-300" x-text="evento.telefone"></span>
+                        </div>
+                        <div x-show="evento.observacao" class="bg-gray-50 dark:bg-dark/50 rounded-lg p-3">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Observação</p>
+                            <p class="text-sm text-gray-700 dark:text-gray-300" x-text="evento.observacao"></p>
+                        </div>
+                    </div>
+                    <!-- Actions -->
+                    <div class="px-6 pb-6 flex gap-2" x-show="evento.status === 'confirmado'">
+                        <form :action="'/agenda/agendamentos/' + evento.id + '/status/'" method="post" class="flex-1">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                            <input type="hidden" name="status" value="realizado">
+                            <button type="submit" class="w-full px-4 py-2 bg-green-50 dark:bg-success/10 text-green-700 dark:text-success border border-green-200 dark:border-success/20 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-success/20 transition">
+                                Marcar Realizado
+                            </button>
+                        </form>
+                        <form :action="'/agenda/agendamentos/' + evento.id + '/cancelar/'" method="post">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                            <button type="submit" class="px-4 py-2 text-red-600 dark:text-danger hover:bg-red-50 dark:hover:bg-danger/10 rounded-lg text-sm font-medium transition">
+                                Cancelar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    if (!calendarEl) return;
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'pt-br',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+        },
+        buttonText: {
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            day: 'Dia',
+        },
+        nowIndicator: true,
+        navLinks: true,
+        editable: false,
+        selectable: false,
+        dayMaxEvents: 3,
+        moreLinkText: 'mais',
+        slotMinTime: '07:00:00',
+        slotMaxTime: '21:00:00',
+        slotDuration: '00:30:00',
+        allDaySlot: false,
+        height: 'auto',
+        events: {
+            url: '{% url "agenda:eventos_json" %}',
+            failure: function() {
+                console.error('Erro ao carregar eventos.');
+            }
+        },
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            const ev = info.event;
+            const props = ev.extendedProps;
+            const start = ev.start;
+            const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+            const dataFmt = `${dias[start.getDay()]}, ${String(start.getDate()).padStart(2,'0')}/${String(start.getMonth()+1).padStart(2,'0')}/${start.getFullYear()} às ${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`;
+
+            window.dispatchEvent(new CustomEvent('evento-click', {
+                detail: {
+                    id: ev.id,
+                    title: ev.title,
+                    color: ev.backgroundColor,
+                    dataFormatada: dataFmt,
+                    email: props.email || '',
+                    telefone: props.telefone || '',
+                    status: props.status,
+                    status_display: props.status_display,
+                    duracao: props.duracao,
+                    observacao: props.observacao || '',
+                }
+            }));
+        },
+        eventDidMount: function(info) {
+            // Tooltip com nome
+            info.el.title = info.event.title + ' — ' + (info.event.extendedProps.status_display || '');
+        }
+    });
+
+    calendar.render();
+});
+
+function eventoModal() {
+    return {
+        open: false,
+        evento: { id: '', title: '', color: '', dataFormatada: '', email: '', telefone: '', status: '', status_display: '', duracao: 0, observacao: '' },
+        abrir(data) {
+            this.evento = data;
+            this.open = true;
+        }
+    };
+}
+</script>
+{% endblock %}

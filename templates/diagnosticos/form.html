@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ form_title }} — 3M Control{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl space-y-6">
+    <a href="{{ cancel_url }}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar</a>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Template *</label>
+                    <select name="template" required
+                            class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                        <option value="">Selecione...</option>
+                        {% for tpl in form.fields.template.queryset %}
+                        <option value="{{ tpl.pk }}" {% if form.template.value|stringformat:"s" == tpl.pk|stringformat:"s" %}selected{% endif %}>{{ tpl.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Mês *</label>
+                    <input type="number" name="mes" value="{{ form.mes.value|default:'' }}" min="1" max="12" required
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Ano *</label>
+                    <input type="number" name="ano" value="{{ form.ano.value|default:'' }}" required
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+            </div>
+            <input type="hidden" name="cliente" value="{{ cliente.pk }}">
+        </div>
+        <div class="flex justify-end gap-3">
+            <a href="{{ cancel_url }}" class="px-4 py-2.5 bg-white dark:bg-dark-100 text-gray-600 dark:text-gray-300 rounded-lg text-sm border border-gray-200 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-dark-200/50 transition">Cancelar</a>
+            <button type="submit" class="px-6 py-2.5 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">Criar Diagnóstico</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

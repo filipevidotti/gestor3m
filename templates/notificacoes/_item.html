@@ -1,0 +1,30 @@
+<div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 flex items-start gap-4 {% if not notificacao.lida %}border-l-4 border-l-brand-orange{% else %}opacity-60{% endif %}"
+     id="notif-{{ notificacao.pk }}">
+    <div class="flex-1">
+        <div class="flex items-center gap-2 mb-1">
+            {% if notificacao.link %}
+            <a href="{{ notificacao.link }}" class="text-gray-900 dark:text-white font-medium text-sm hover:text-brand-orange transition">{{ notificacao.titulo }}</a>
+            {% else %}
+            <h3 class="text-gray-900 dark:text-white font-medium text-sm">{{ notificacao.titulo }}</h3>
+            {% endif %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                {% if notificacao.tipo == 'tarefa_atrasada' %}bg-danger/20 text-danger
+                {% elif notificacao.tipo == 'inadimplencia' %}bg-danger/20 text-danger
+                {% elif notificacao.tipo == 'reuniao_marcada' %}bg-brand-orange/20 text-brand-orange
+                {% elif notificacao.tipo == 'diagnostico_pendente' %}bg-warning/20 text-warning
+                {% elif notificacao.tipo == 'sem_reuniao' %}bg-warning/20 text-warning
+                {% else %}bg-gray-600/20 text-gray-500 dark:text-gray-400
+                {% endif %}">
+                {{ notificacao.get_tipo_display }}
+            </span>
+        </div>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">{{ notificacao.mensagem }}</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">{{ notificacao.created_at|timesince }} atras</p>
+    </div>
+    {% if not notificacao.lida %}
+    <button hx-post="{% url 'notificacoes:marcar_lida' notificacao.pk %}" hx-target="#notif-{{ notificacao.pk }}" hx-swap="outerHTML"
+            class="text-gray-500 dark:text-gray-400 hover:text-brand-orange transition text-xs whitespace-nowrap">
+        Marcar lida
+    </button>
+    {% endif %}
+</div>

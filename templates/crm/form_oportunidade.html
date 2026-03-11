@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ form_title }} — CRM — 3M Control{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <div class="mb-4">
+        <a href="{% url 'crm:detalhe_lead' lead.pk %}" class="text-xs text-gray-400 hover:text-brand-orange transition">&larr; Voltar ao Lead: {{ lead.nome }}</a>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título *</label>
+                <input type="text" name="titulo" value="{{ form.titulo.value|default:'' }}" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor estimado (R$)</label>
+                    <input type="number" name="valor_estimado" value="{{ form.valor_estimado.value|default:'0' }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Previsão fechamento</label>
+                    <input type="date" name="previsao_fechamento" value="{{ form.previsao_fechamento.value|date:'Y-m-d' }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Etapa</label>
+                <select name="etapa" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                    <option value="">Primeira etapa do funil</option>
+                    {% for e in form.fields.etapa.queryset %}
+                    <option value="{{ e.pk }}" {% if form.etapa.value == e.pk|stringformat:"d" %}selected{% endif %}>{{ e.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'crm:detalhe_lead' lead.pk %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium">Cancelar</a>
+            <button type="submit" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">Salvar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

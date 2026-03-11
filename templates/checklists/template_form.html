@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} — 3M Control{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<form method="post" class="space-y-6" x-data="{ itemCount: {{ formset.total_form_count }} }">
+    {% csrf_token %}
+
+    <!-- Dados do Template -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Dados do Template</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome *</label>
+                <input type="text" name="nome" value="{{ form.nome.value|default:'' }}" required
+                       class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange"
+                       placeholder="Ex: Onboarding de Novo Cliente">
+                {% if form.nome.errors %}<p class="mt-1 text-xs text-danger">{{ form.nome.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Descrição</label>
+                <textarea name="descricao" rows="2"
+                          class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange"
+                          placeholder="Descrição breve do checklist">{{ form.descricao.value|default:'' }}</textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Público-alvo *</label>
+                <select name="target_audience" required
+                        class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    {% for value, label in form.fields.target_audience.choices %}
+                    <option value="{{ value }}" {% if form.target_audience.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Tipo *</label>
+                <select name="tipo" required
+                        class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    {% for value, label in form.fields.tipo.choices %}
+                    <option value="{{ value }}" {% if form.tipo.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Ícone</label>
+                <input type="text" name="icone" value="{{ form.icone.value|default:'' }}"
+                       class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange"
+                       placeholder="clipboard-check">
+            </div>
+        </div>
+    </div>
+
+    <!-- Itens do Template -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Itens do Checklist</h3>
+        </div>
+
+        {{ formset.management_form }}
+
+        <div id="itens-container" class="space-y-4">
+            {% for item_form in formset %}
+            <div class="bg-gray-100/50 dark:bg-dark/50 rounded-lg border border-gray-200 dark:border-gray-700/30 p-4 item-form">
+                <input type="hidden" name="{{ item_form.id.html_name }}" value="{{ item_form.id.value|default:'' }}">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-5">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição</label>
+                        <input type="text" name="{{ item_form.descricao.html_name }}" value="{{ item_form.descricao.value|default:'' }}"
+                               class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange"
+                               placeholder="Descreva o item">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Categoria</label>
+                        <select name="{{ item_form.category.html_name }}"
+                                class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                            <option value="">—</option>
+                            {% for cat in item_form.fields.category.queryset %}
+                            <option value="{{ cat.pk }}" {% if item_form.category.value|stringformat:"s" == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+                        <input type="number" name="{{ item_form.ordem.html_name }}" value="{{ item_form.ordem.value|default:0 }}"
+                               class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    </div>
+                    <div class="md:col-span-3 flex items-end gap-3">
+                        <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+                            <input type="checkbox" name="{{ item_form.requires_evidence.html_name }}"
+                                   {% if item_form.requires_evidence.value %}checked{% endif %}
+                                   class="rounded border-gray-600 bg-gray-50 dark:bg-dark text-brand-orange focus:ring-brand-orange">
+                            Evidência
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+                            <input type="checkbox" name="{{ item_form.requires_note.html_name }}"
+                                   {% if item_form.requires_note.value %}checked{% endif %}
+                                   class="rounded border-gray-600 bg-gray-50 dark:bg-dark text-brand-orange focus:ring-brand-orange">
+                            Nota
+                        </label>
+                        {% if item_form.DELETE %}
+                        <label class="flex items-center gap-2 text-xs text-danger cursor-pointer">
+                            <input type="checkbox" name="{{ item_form.DELETE.html_name }}"
+                                   class="rounded border-gray-600 bg-gray-50 dark:bg-dark text-danger focus:ring-danger">
+                            Excluir
+                        </label>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <textarea name="{{ item_form.instrucoes.html_name }}" rows="1"
+                              class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-xs focus:ring-brand-orange focus:border-brand-orange"
+                              placeholder="Instruções detalhadas (opcional)">{{ item_form.instrucoes.value|default:'' }}</textarea>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="flex justify-end gap-3">
+        <a href="{% url 'checklists:template_listar' %}"
+           class="px-4 py-2.5 bg-white dark:bg-dark-100 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-200/50 transition border border-gray-200 dark:border-gray-700/50">
+            Cancelar
+        </a>
+        <button type="submit"
+                class="px-6 py-2.5 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+            Salvar Template
+        </button>
+    </div>
+</form>
+{% endblock %}

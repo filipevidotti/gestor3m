@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Diagnóstico {{ diag.mes|stringformat:"02d" }}/{{ diag.ano }} — 3M Control{% endblock %}
+{% block page_title %}Diagnóstico: {{ diag.template.nome }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'diagnosticos:listar' diag.cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar</a>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ diag.cliente.empresa }} &middot; {{ diag.mes|stringformat:"02d" }}/{{ diag.ano }} &middot; {{ diag.executor.get_full_name }}</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right">
+                <p class="text-3xl font-display font-bold {% if diag.score >= 7 %}text-success{% elif diag.score >= 5 %}text-warning{% else %}text-danger{% endif %}">{{ diag.score }}/10</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500">Score Final</p>
+            </div>
+            {% if diag.status == 'completed' and not user.is_seller %}
+            <form method="post" action="{% url 'diagnosticos:repetir' diag.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-dark-200/80 transition border border-gray-200 dark:border-gray-700/50">
+                    Repetir Próximo Mês
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Benchmark -->
+    {% if benchmark %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-blue-200 dark:border-blue-500/20 p-4 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                Benchmark: <span class="text-blue-500">{{ benchmark.segmento }}</span>
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                Média do segmento: <span class="font-semibold">{{ benchmark.score_medio }}/10</span>
+                ({{ benchmark.total_diagnosticos }} diagnósticos)
+                {% if diag.score > benchmark.score_medio %}
+                — <span class="text-success font-medium">Acima da média</span>
+                {% elif diag.score < benchmark.score_medio %}
+                — <span class="text-danger font-medium">Abaixo da média</span>
+                {% else %}
+                — <span class="text-warning font-medium">Na média</span>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Score por categoria -->
+    {% if diag.scores_por_categoria %}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {% for cat, score in diag.scores_por_categoria.items %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 text-center">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ cat }}</p>
+            <p class="text-2xl font-display font-bold {% if score >= 7 %}text-success{% elif score >= 5 %}text-warning{% else %}text-danger{% endif %}">{{ score }}</p>
+            {% if benchmark and benchmark.scores_por_categoria %}
+            <p class="text-xs text-gray-400 mt-1">
+                Benchmark: {{ benchmark.scores_por_categoria|default_if_none:"{}"|dictsort:cat }}
+            </p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Respostas por categoria -->
+    {% for cat_nome, dados in categorias.items %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+            <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">{{ cat_nome }}</h3>
+            {% if dados.score %}
+            <span class="text-sm font-bold {% if dados.score >= 7 %}text-success{% elif dados.score >= 5 %}text-warning{% else %}text-danger{% endif %}">
+                {{ dados.score }}/10
+            </span>
+            {% endif %}
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for resp in dados.respostas %}
+            <div class="px-6 py-3 flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-700 dark:text-gray-200">{{ resp.question.texto }}</p>
+                    {% if resp.question.is_inverted %}
+                    <p class="text-xs text-amber-400">Menor = Melhor</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-600 dark:text-gray-300">
+                        {% if resp.value_text %}{{ resp.value_text }}{% elif resp.value_numeric %}{{ resp.value_numeric }}{% else %}—{% endif %}
+                    </span>
+                    <span class="text-sm font-bold {% if resp.score >= 7 %}text-success{% elif resp.score >= 5 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ resp.score }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Pipeline — 3M Control{% endblock %}
+{% block page_title %}Pipeline de Clientes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Arraste os cards para mover clientes entre etapas</p>
+        <a href="{% url 'clientes:pipeline_config' %}" class="px-3 py-1.5 bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-xs border border-gray-200 dark:border-gray-700/50 hover:bg-dark-200/80 transition">
+            Configurar Etapas
+        </a>
+    </div>
+
+    <div class="flex gap-4 overflow-x-auto pb-4" x-data="pipelineKanban()">
+        {% for coluna in colunas %}
+        <div class="flex-shrink-0 w-72 bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50"
+             @drop.prevent="onDrop($event, {{ coluna.etapa.pk|default:'null' }})"
+             @dragover.prevent>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    {% if coluna.etapa %}
+                    <div class="w-3 h-3 rounded-full" style="background: {{ coluna.etapa.cor }}"></div>
+                    <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">{{ coluna.etapa.nome }}</h3>
+                    {% else %}
+                    <div class="w-3 h-3 rounded-full bg-gray-600"></div>
+                    <h3 class="text-sm font-display font-semibold text-gray-500 dark:text-gray-400">Sem etapa</h3>
+                    {% endif %}
+                </div>
+                <span class="text-xs text-gray-400 dark:text-gray-500">{{ coluna.clientes|length }}</span>
+            </div>
+            <div class="p-3 space-y-2 min-h-[200px]">
+                {% for cliente in coluna.clientes %}
+                <div class="bg-gray-50 dark:bg-dark rounded-lg border border-gray-200 dark:border-gray-700/50 p-3 cursor-grab hover:border-brand-orange/50 transition"
+                     draggable="true"
+                     @dragstart="onDragStart($event, {{ cliente.pk }})">
+                    <a href="{% url 'clientes:detalhe' cliente.pk %}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-brand-orange">
+                        {{ cliente.empresa }}
+                    </a>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xs text-gray-400 dark:text-gray-500">{{ cliente.consultor.get_full_name }}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                            {% if cliente.tipo_consultoria == 'estrategica' %}bg-blue-500/10 text-blue-400
+                            {% else %}bg-purple-500/10 text-purple-400{% endif %}">
+                            {{ cliente.get_tipo_consultoria_display }}
+                        </span>
+                    </div>
+                    {% if cliente.ml_nickname %}
+                    <p class="text-xs text-yellow-400 mt-1">{{ cliente.ml_nickname }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function pipelineKanban() {
+    return {
+        draggedId: null,
+        onDragStart(e, clienteId) {
+            this.draggedId = clienteId;
+            e.dataTransfer.effectAllowed = 'move';
+        },
+        async onDrop(e, etapaId) {
+            if (!this.draggedId) return;
+            const response = await fetch('{% url "clientes:pipeline_mover" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ cliente_id: this.draggedId, etapa_id: etapaId })
+            });
+            if (response.ok) {
+                location.reload();
+            }
+            this.draggedId = null;
+        }
+    }
+}
+</script>
+{% endblock %}

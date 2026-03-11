@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Kanban Tarefas — 3M Control{% endblock %}
+{% block page_title %}Tarefas{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'tarefas:listar' %}" class="px-3 py-1.5 bg-white dark:bg-dark-100 text-gray-500 dark:text-gray-400 rounded-lg text-xs border border-gray-200 dark:border-gray-700/50 hover:border-gray-600 transition">Lista</a>
+            <span class="px-3 py-1.5 bg-brand-orange/10 text-brand-orange rounded-lg text-xs border border-brand-orange/30">Kanban</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Filtros -->
+            <select onchange="location.href='?tipo='+this.value+'&cliente={{ request.GET.cliente|default:'' }}'"
+                    class="px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-brand-orange">
+                <option value="">Todos os tipos</option>
+                {% for tipo in tipos %}
+                <option value="{{ tipo.pk }}" {% if request.GET.tipo == tipo.pk|stringformat:"s" %}selected{% endif %}>{{ tipo.nome }}</option>
+                {% endfor %}
+            </select>
+            <select onchange="location.href='?cliente='+this.value+'&tipo={{ request.GET.tipo|default:'' }}'"
+                    class="px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-brand-orange">
+                <option value="">Todos os clientes</option>
+                {% for c in clientes %}
+                <option value="{{ c.pk }}" {% if request.GET.cliente == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.empresa }}</option>
+                {% endfor %}
+            </select>
+            <a href="{% url 'tarefas:criar' %}" class="px-4 py-1.5 bg-brand-orange text-white rounded-lg text-xs font-medium hover:bg-brand-orange/90 transition">
+                + Nova Tarefa
+            </a>
+        </div>
+    </div>
+
+    <!-- Kanban -->
+    <div class="flex gap-4 overflow-x-auto pb-4" x-data="tarefaKanban()">
+        {% for coluna in colunas %}
+        <div class="flex-shrink-0 w-80 bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50"
+             @drop.prevent="onDrop($event, '{{ coluna.status }}')"
+             @dragover.prevent>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">{{ coluna.label }}</h3>
+                <span class="text-xs text-gray-400 dark:text-gray-500 bg-gray-100/50 dark:bg-dark/50 px-2 py-0.5 rounded-full">{{ coluna.tarefas|length }}</span>
+            </div>
+            <div class="p-3 space-y-2 min-h-[300px]">
+                {% for tarefa in coluna.tarefas %}
+                <div class="bg-gray-50 dark:bg-dark rounded-lg border border-gray-200 dark:border-gray-700/50 p-3 cursor-grab hover:border-brand-orange/50 transition"
+                     draggable="true"
+                     @dragstart="onDragStart($event, {{ tarefa.pk }})">
+                    <p class="text-sm text-gray-900 dark:text-white">{{ tarefa.descricao|truncatechars:80 }}</p>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xs text-gray-400 dark:text-gray-500">{{ tarefa.cliente.empresa }}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                            {% if tarefa.prioridade == 'urgente' %}bg-red-500/10 text-red-400
+                            {% elif tarefa.prioridade == 'alta' %}bg-amber-500/10 text-amber-400
+                            {% elif tarefa.prioridade == 'media' %}bg-blue-500/10 text-blue-400
+                            {% else %}bg-gray-500/10 text-gray-500 dark:text-gray-400{% endif %}">
+                            {{ tarefa.get_prioridade_display }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between mt-1.5">
+                        {% if tarefa.tipo %}
+                        <span class="text-xs px-1.5 py-0.5 rounded" style="background: {{ tarefa.tipo.cor }}20; color: {{ tarefa.tipo.cor }}">{{ tarefa.tipo.nome }}</span>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+                        <span class="text-xs text-gray-400 dark:text-gray-500">{{ tarefa.responsavel.get_full_name|truncatechars:15 }}</span>
+                    </div>
+                    {% if tarefa.prazo %}
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Prazo: {{ tarefa.prazo|date:"d/m/Y" }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function tarefaKanban() {
+    return {
+        draggedId: null,
+        onDragStart(e, tarefaId) {
+            this.draggedId = tarefaId;
+            e.dataTransfer.effectAllowed = 'move';
+        },
+        async onDrop(e, status) {
+            if (!this.draggedId) return;
+            const response = await fetch('{% url "tarefas:kanban_mover" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ tarefa_id: this.draggedId, status: status })
+            });
+            if (response.ok) {
+                location.reload();
+            }
+            this.draggedId = null;
+        }
+    }
+}
+</script>
+{% endblock %}

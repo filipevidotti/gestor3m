@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Jornada — {{ cliente.nome }} — 3M Control{% endblock %}
+{% block page_title %}Jornada do Cliente{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'clientes:listar' %}" class="hover:text-brand-orange transition">Clientes</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-900 dark:text-white">{{ cliente.nome }}</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-900 dark:text-white">Jornada</span>
+    </nav>
+
+    {% if jornada %}
+    {# ═══════════════════ HAS JOURNEY ═══════════════════ #}
+
+    <!-- Header Card -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ cliente.nome }}</h1>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if jornada.status == 'ativa' %}bg-green-100 dark:bg-success/10 text-green-600 dark:text-success
+                        {% elif jornada.status == 'pausada' %}bg-yellow-100 dark:bg-warning/10 text-yellow-600 dark:text-warning
+                        {% elif jornada.status == 'concluida' %}bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400
+                        {% elif jornada.status == 'cancelada' %}bg-red-100 dark:bg-danger/10 text-red-600 dark:text-danger
+                        {% endif %}">
+                        {{ jornada.get_status_display }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ jornada.nome }} &middot; Iniciada em {{ jornada.data_inicio|date:"d/m/Y" }}
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <span class="text-2xl font-display font-bold text-brand-orange">{{ jornada.progresso|floatformat:0 }}%</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ jornada.etapas_concluidas }}/{{ jornada.total_etapas }} etapas</p>
+                </div>
+            </div>
+        </div>
+        <!-- Progress Bar -->
+        <div class="mt-4 w-full h-2.5 bg-gray-200 dark:bg-dark-200 rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange transition-all duration-500"
+                 style="width: {{ jornada.progresso|floatformat:0 }}%"></div>
+        </div>
+        {% if jornada.etapas_atrasadas > 0 %}
+        <p class="mt-2 text-xs text-danger flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            {{ jornada.etapas_atrasadas }} etapa{{ jornada.etapas_atrasadas|pluralize:"s" }} atrasada{{ jornada.etapas_atrasadas|pluralize:"s" }}
+        </p>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Main Timeline (3 cols) -->
+        <div class="lg:col-span-3">
+            <div class="relative">
+                <!-- Vertical Line -->
+                <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700/50"></div>
+
+                <div class="space-y-4">
+                    {% for etapa in etapas %}
+                    {% include "jornadas/partials/etapa_card.html" with etapa=etapa %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if not etapas %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-10 text-center">
+                <p class="text-gray-500 dark:text-gray-400">Nenhuma etapa cadastrada para esta jornada.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar (1 col) -->
+        <div class="lg:col-span-1 space-y-5">
+            <!-- Areas de Foco -->
+            {% if jornada.areas_foco %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-3">Areas de Foco</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for area in jornada.areas_foco %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-orange/10 text-brand-orange">
+                        {{ area }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Justificativa IA -->
+            {% if jornada.justificativa_ia %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                    <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">Analise da IA</h3>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ jornada.justificativa_ia }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Recalibrar -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">Recalibracoes</h3>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ jornada.recalibragens }}x</span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Solicite que a IA reavalie a jornada com base no progresso atual.</p>
+                <form method="post" action="{% url 'jornadas:recalibrar' jornada.pk %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange hover:opacity-90 text-white text-sm font-semibold rounded-lg transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                        Recalibrar com IA
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous Journeys -->
+    {% if jornadas_anteriores %}
+    <div x-data="{ aberto: false }" class="mt-8">
+        <button @click="aberto = !aberto"
+                class="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition">
+            <svg :class="aberto && 'rotate-180'" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            Jornadas Anteriores ({{ jornadas_anteriores|length }})
+        </button>
+        <div x-show="aberto" x-collapse class="mt-4 space-y-3">
+            {% for j in jornadas_anteriores %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ j.nome }}</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ j.data_inicio|date:"d/m/Y" }} &middot; {{ j.get_status_display }} &middot; {{ j.progresso|floatformat:0 }}% concluido
+                    </p>
+                </div>
+                <a href="{% url 'jornadas:timeline_cliente' cliente.pk %}?jornada={{ j.pk }}"
+                   class="text-xs text-brand-orange hover:text-brand-orange/80 font-medium transition">
+                    Ver detalhes
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    {# ═══════════════════ NO JOURNEY ═══════════════════ #}
+
+    <!-- Client Header -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-1">{{ cliente.nome }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Este cliente ainda nao possui uma jornada ativa.</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Generate with AI -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 flex flex-col items-center text-center">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange flex items-center justify-center mb-4">
+                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            </div>
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-2">Gerar com IA</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">A IA analisara o perfil do cliente e criara uma jornada personalizada automaticamente.</p>
+            <form method="post" action="{% url 'jornadas:gerar_jornada' cliente.pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange hover:opacity-90 text-white text-sm font-semibold rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                    Gerar Jornada com IA
+                </button>
+            </form>
+        </div>
+
+        <!-- Create Manual -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 flex flex-col items-center text-center"
+             x-data="{ showTemplates: false }">
+            <div class="w-14 h-14 rounded-full bg-brand-orange/10 flex items-center justify-center mb-4">
+                <svg class="w-7 h-7 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+            </div>
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-2">Criar Jornada Manual</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">Escolha um template existente para criar a jornada do cliente.</p>
+            <button @click="showTemplates = !showTemplates"
+                    class="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                Escolher Template
+            </button>
+
+            <!-- Templates Dropdown -->
+            <div x-show="showTemplates" x-collapse class="mt-4 w-full">
+                {% if templates_disponiveis %}
+                <div class="space-y-2">
+                    {% for tmpl in templates_disponiveis %}
+                    <form method="post" action="{% url 'jornadas:gerar_jornada' cliente.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="template_id" value="{{ tmpl.pk }}">
+                        <button type="submit"
+                                class="w-full text-left px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/30 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-8 rounded-full flex-shrink-0" style="background-color: {{ tmpl.cor }}"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ tmpl.nome }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ tmpl.total_etapas }} etapas &middot; {{ tmpl.duracao_total_dias }} dias</p>
+                                </div>
+                            </div>
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 dark:text-gray-400 py-3">Nenhum template disponivel. <a href="{% url 'jornadas:config_templates' %}" class="text-brand-orange hover:underline">Criar template</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous Journeys -->
+    {% if jornadas_anteriores %}
+    <div x-data="{ aberto: false }" class="mt-4">
+        <button @click="aberto = !aberto"
+                class="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition">
+            <svg :class="aberto && 'rotate-180'" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            Jornadas Anteriores ({{ jornadas_anteriores|length }})
+        </button>
+        <div x-show="aberto" x-collapse class="mt-4 space-y-3">
+            {% for j in jornadas_anteriores %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ j.nome }}</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ j.data_inicio|date:"d/m/Y" }} &middot; {{ j.get_status_display }} &middot; {{ j.progresso|floatformat:0 }}% concluido
+                    </p>
+                </div>
+                <a href="{% url 'jornadas:timeline_cliente' cliente.pk %}?jornada={{ j.pk }}"
+                   class="text-xs text-brand-orange hover:text-brand-orange/80 font-medium transition">
+                    Ver detalhes
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}

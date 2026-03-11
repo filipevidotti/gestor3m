@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Ranking — 3M Control{% endblock %}
+{% block page_title %}Ranking{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Meus pontos -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+        <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Seus pontos</p>
+            <p class="text-3xl font-display font-bold text-brand-orange">{{ meus_pontos }}</p>
+        </div>
+        <a href="{% url 'gamificacao:conquistas' %}" class="px-4 py-2.5 bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-sm border border-gray-200 dark:border-gray-700/50 hover:bg-dark-200/80 transition">
+            Minhas Conquistas
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Ranking Consultores -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
+                <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Consultores</h3>
+            </div>
+            <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for user in ranking_consultores %}
+                <div class="px-6 py-3 flex items-center gap-4">
+                    <span class="w-8 text-center font-display font-bold text-lg
+                        {% if forloop.counter == 1 %}text-yellow-400
+                        {% elif forloop.counter == 2 %}text-gray-600 dark:text-gray-300
+                        {% elif forloop.counter == 3 %}text-amber-600
+                        {% else %}text-gray-400 dark:text-gray-500{% endif %}">
+                        {{ forloop.counter }}
+                    </span>
+                    <div class="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-semibold text-sm">
+                        {{ user.first_name.0 }}{{ user.last_name.0 }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900 dark:text-white font-medium">{{ user.get_full_name }}</p>
+                    </div>
+                    <p class="text-sm font-display font-bold text-brand-orange">{{ user.total_pontos }} pts</p>
+                </div>
+                {% empty %}
+                <div class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">Nenhum consultor pontuou ainda</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Ranking Sellers -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
+                <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Sellers (Clientes)</h3>
+            </div>
+            <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for user in ranking_sellers %}
+                <div class="px-6 py-3 flex items-center gap-4">
+                    <span class="w-8 text-center font-display font-bold text-lg
+                        {% if forloop.counter == 1 %}text-yellow-400
+                        {% elif forloop.counter == 2 %}text-gray-600 dark:text-gray-300
+                        {% elif forloop.counter == 3 %}text-amber-600
+                        {% else %}text-gray-400 dark:text-gray-500{% endif %}">
+                        {{ forloop.counter }}
+                    </span>
+                    <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-semibold text-sm">
+                        {{ user.first_name.0 }}{{ user.last_name.0 }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900 dark:text-white font-medium">{{ user.get_full_name }}</p>
+                    </div>
+                    <p class="text-sm font-display font-bold text-brand-orange">{{ user.total_pontos }} pts</p>
+                </div>
+                {% empty %}
+                <div class="px-6 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">Nenhum seller pontuou ainda</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}{% if editing %}Editar{% else %}Nova{% endif %} Análise SWOT — {{ cliente.empresa }} — 3M Control{% endblock %}
+{% block page_title %}{% if editing %}Editar{% else %}Nova{% endif %} Análise SWOT: {{ cliente.empresa }}{% endblock %}
+
+{% block content %}
+<div x-data="swotForm()" class="space-y-6 max-w-5xl">
+    <div>
+        <a href="{% url 'swot:listar' cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar</a>
+        <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white mt-1">{% if editing %}Editar{% else %}Nova{% endif %} Análise SWOT</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ cliente.empresa }}</p>
+    </div>
+
+    <form method="post" @submit="prepareSubmit()">
+        {% csrf_token %}
+
+        <!-- Data da análise -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data da Análise *</label>
+            <input type="date" name="data_analise" required
+                   value="{% if analise %}{{ analise.data_analise|date:'Y-m-d' }}{% endif %}"
+                   class="w-full sm:w-64 px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-brand-orange focus:border-brand-orange">
+        </div>
+
+        <!-- Quadrantes SWOT -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Forças -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Forças (Strengths)</h3>
+                </div>
+                <div class="space-y-2 mb-3">
+                    <template x-for="(item, idx) in forcas" :key="idx">
+                        <div class="flex items-center gap-2">
+                            <span class="flex-1 px-3 py-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-lg text-sm" x-text="item"></span>
+                            <button type="button" @click="forcas.splice(idx, 1)" class="text-gray-400 hover:text-red-500 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" x-ref="inputForcas" @keydown.enter.prevent="addItem('forcas', $refs.inputForcas)"
+                           placeholder="Adicionar força..." class="flex-1 px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500">
+                    <button type="button" @click="addItem('forcas', $refs.inputForcas)" class="px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-sm font-medium hover:bg-emerald-500/20 transition">+</button>
+                </div>
+            </div>
+
+            <!-- Fraquezas -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Fraquezas (Weaknesses)</h3>
+                </div>
+                <div class="space-y-2 mb-3">
+                    <template x-for="(item, idx) in fraquezas" :key="idx">
+                        <div class="flex items-center gap-2">
+                            <span class="flex-1 px-3 py-1.5 bg-red-500/10 text-red-700 dark:text-red-400 rounded-lg text-sm" x-text="item"></span>
+                            <button type="button" @click="fraquezas.splice(idx, 1)" class="text-gray-400 hover:text-red-500 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" x-ref="inputFraquezas" @keydown.enter.prevent="addItem('fraquezas', $refs.inputFraquezas)"
+                           placeholder="Adicionar fraqueza..." class="flex-1 px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-red-500 focus:border-red-500">
+                    <button type="button" @click="addItem('fraquezas', $refs.inputFraquezas)" class="px-3 py-1.5 bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/20 transition">+</button>
+                </div>
+            </div>
+
+            <!-- Oportunidades -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Oportunidades (Opportunities)</h3>
+                </div>
+                <div class="space-y-2 mb-3">
+                    <template x-for="(item, idx) in oportunidades" :key="idx">
+                        <div class="flex items-center gap-2">
+                            <span class="flex-1 px-3 py-1.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 rounded-lg text-sm" x-text="item"></span>
+                            <button type="button" @click="oportunidades.splice(idx, 1)" class="text-gray-400 hover:text-red-500 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" x-ref="inputOportunidades" @keydown.enter.prevent="addItem('oportunidades', $refs.inputOportunidades)"
+                           placeholder="Adicionar oportunidade..." class="flex-1 px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500">
+                    <button type="button" @click="addItem('oportunidades', $refs.inputOportunidades)" class="px-3 py-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-500/20 transition">+</button>
+                </div>
+            </div>
+
+            <!-- Ameaças -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Ameaças (Threats)</h3>
+                </div>
+                <div class="space-y-2 mb-3">
+                    <template x-for="(item, idx) in ameacas" :key="idx">
+                        <div class="flex items-center gap-2">
+                            <span class="flex-1 px-3 py-1.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-lg text-sm" x-text="item"></span>
+                            <button type="button" @click="ameacas.splice(idx, 1)" class="text-gray-400 hover:text-red-500 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" x-ref="inputAmeacas" @keydown.enter.prevent="addItem('ameacas', $refs.inputAmeacas)"
+                           placeholder="Adicionar ameaça..." class="flex-1 px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-amber-500 focus:border-amber-500">
+                    <button type="button" @click="addItem('ameacas', $refs.inputAmeacas)" class="px-3 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg text-sm font-medium hover:bg-amber-500/20 transition">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações de Mercado -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 mb-4">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Informações de Mercado</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Segmento de Mercado</label>
+                    <input type="text" name="segmento_mercado" value="{{ analise.segmento_mercado|default:'' }}"
+                           placeholder="Ex: Moda feminina, Eletrônicos..."
+                           class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Público-Alvo</label>
+                    <input type="text" name="publico_alvo" value="{{ analise.publico_alvo|default:'' }}"
+                           placeholder="Ex: Mulheres 25-45 anos, classe B/C..."
+                           class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Principais Concorrentes</label>
+                    <textarea name="concorrentes" rows="3" placeholder="Liste os principais concorrentes e seus diferenciais..."
+                              class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">{{ analise.concorrentes|default:'' }}</textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Diferencial Competitivo</label>
+                    <textarea name="diferencial" rows="2" placeholder="O que diferencia este seller dos concorrentes..."
+                              class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">{{ analise.diferencial|default:'' }}</textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Observações do Mercado</label>
+                    <textarea name="observacoes_mercado" rows="2" placeholder="Tendências, sazonalidade, oportunidades gerais..."
+                              class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">{{ analise.observacoes_mercado|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produtos Principais -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 mb-4">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Produtos Principais</h3>
+            <div class="space-y-2 mb-3">
+                <template x-for="(prod, idx) in produtos" :key="idx">
+                    <div class="flex items-center gap-2 bg-gray-50 dark:bg-dark/50 rounded-lg p-2">
+                        <span class="flex-1 text-sm text-gray-700 dark:text-gray-300" x-text="prod.nome"></span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400" x-text="prod.categoria"></span>
+                        <span class="text-xs font-medium text-brand-orange" x-text="prod.participacao + '%'"></span>
+                        <button type="button" @click="produtos.splice(idx, 1)" class="text-gray-400 hover:text-red-500 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <input type="text" x-ref="prodNome" placeholder="Nome do produto"
+                       class="flex-1 min-w-[150px] px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">
+                <input type="text" x-ref="prodCategoria" placeholder="Categoria"
+                       class="w-36 px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">
+                <input type="number" x-ref="prodParticipacao" placeholder="% part." min="0" max="100"
+                       class="w-24 px-3 py-1.5 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">
+                <button type="button" @click="addProduto()" class="px-3 py-1.5 bg-brand-orange/10 text-brand-orange rounded-lg text-sm font-medium hover:bg-brand-orange/20 transition">+ Adicionar</button>
+            </div>
+        </div>
+
+        <!-- Observações Gerais -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observações Gerais</label>
+            <textarea name="observacoes" rows="3" placeholder="Notas adicionais sobre a análise..."
+                      class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-brand-orange focus:border-brand-orange">{{ analise.observacoes|default:'' }}</textarea>
+        </div>
+
+        <!-- Hidden fields for JSON data -->
+        <input type="hidden" name="forcas" :value="JSON.stringify(forcas)">
+        <input type="hidden" name="fraquezas" :value="JSON.stringify(fraquezas)">
+        <input type="hidden" name="oportunidades" :value="JSON.stringify(oportunidades)">
+        <input type="hidden" name="ameacas" :value="JSON.stringify(ameacas)">
+        <input type="hidden" name="produtos_principais" :value="JSON.stringify(produtos)">
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'swot:listar' cliente.pk %}" class="px-4 py-2.5 bg-gray-100 dark:bg-dark-200/50 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-200 transition">Cancelar</a>
+            <button type="submit" class="px-6 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                {% if editing %}Salvar Alterações{% else %}Criar Análise SWOT{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function swotForm() {
+    return {
+        forcas: {{ analise.forcas|default:"[]"|safe }},
+        fraquezas: {{ analise.fraquezas|default:"[]"|safe }},
+        oportunidades: {{ analise.oportunidades|default:"[]"|safe }},
+        ameacas: {{ analise.ameacas|default:"[]"|safe }},
+        produtos: {{ analise.produtos_principais|default:"[]"|safe }},
+
+        addItem(field, input) {
+            const val = input.value.trim();
+            if (!val) return;
+            this[field].push(val);
+            input.value = '';
+            input.focus();
+        },
+
+        addProduto() {
+            const nome = this.$refs.prodNome.value.trim();
+            const categoria = this.$refs.prodCategoria.value.trim();
+            const participacao = parseInt(this.$refs.prodParticipacao.value) || 0;
+            if (!nome) return;
+            this.produtos.push({ nome, categoria, participacao });
+            this.$refs.prodNome.value = '';
+            this.$refs.prodCategoria.value = '';
+            this.$refs.prodParticipacao.value = '';
+            this.$refs.prodNome.focus();
+        },
+
+        prepareSubmit() {
+            // Values are already bound via :value
+        }
+    }
+}
+</script>
+{% endblock %}

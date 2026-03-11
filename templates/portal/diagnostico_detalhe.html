@@ -1,0 +1,55 @@
+{% extends "base_portal.html" %}
+{% block title %}{{ diagnostico.template.nome }} — Portal 3M{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'portal:diagnosticos' %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar</a>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white mt-1">{{ diagnostico.template.nome }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ diagnostico.mes }}/{{ diagnostico.ano }}</p>
+        </div>
+        <div class="text-right">
+            <p class="text-4xl font-display font-bold {% if diagnostico.score >= 7 %}text-success{% elif diagnostico.score >= 5 %}text-warning{% else %}text-danger{% endif %}">{{ diagnostico.score }}/10</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">Score Geral</p>
+        </div>
+    </div>
+
+    <!-- Scores por categoria -->
+    {% if diagnostico.scores_por_categoria %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {% for cat, score in diagnostico.scores_por_categoria.items %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 text-center">
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ cat }}</p>
+            <p class="text-2xl font-display font-bold mt-1 {% if score >= 7 %}text-success{% elif score >= 5 %}text-warning{% else %}text-danger{% endif %}">{{ score }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Respostas por categoria -->
+    {% for cat, respostas in categorias.items %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+        <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">{{ cat }}</h3>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for resp in respostas %}
+            <div class="px-5 py-3 flex items-center justify-between">
+                <p class="text-sm text-gray-700 dark:text-gray-200 flex-1">{{ resp.question.texto }}</p>
+                <div class="ml-4 text-right">
+                    {% if resp.question.tipo == 'scale_1_10' %}
+                    <p class="text-lg font-bold {% if resp.score >= 7 %}text-success{% elif resp.score >= 5 %}text-warning{% else %}text-danger{% endif %}">{{ resp.value_numeric }}/10</p>
+                    {% elif resp.question.tipo == 'value' %}
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ resp.value_numeric|floatformat:0 }}</p>
+                    {% else %}
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ resp.value_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

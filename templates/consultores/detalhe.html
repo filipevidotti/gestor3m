@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{{ consultor }} - 3M Control{% endblock %}
+{% block page_title %}Consultor{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ consultor.usuario.get_full_name }}</h1>
+        <div class="flex gap-3">
+            <a href="{% url 'consultores:listar' %}" class="px-4 py-2.5 bg-dark-200 hover:bg-dark-200/80 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700/50 transition">
+                Voltar
+            </a>
+            <a href="{% url 'consultores:editar' consultor.pk %}" class="px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+        <h2 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Informações</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Nome</p>
+                <p class="text-gray-900 dark:text-white">{{ consultor.usuario.get_full_name }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">E-mail</p>
+                <p class="text-gray-900 dark:text-white">{{ consultor.usuario.email }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Especialidade</p>
+                <p class="text-gray-900 dark:text-white">{{ consultor.especialidade|default:"-" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Clientes ativos / Máx.</p>
+                <p class="text-gray-900 dark:text-white">{{ consultor.clientes_ativos }} / {{ consultor.max_clientes }}</p>
+            </div>
+            {% if consultor.bio %}
+            <div class="md:col-span-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Bio</p>
+                <p class="text-gray-900 dark:text-white">{{ consultor.bio }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+        <h2 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Clientes ({{ clientes.count }})</h2>
+        {% if clientes %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700/50">
+                    <tr>
+                        <th class="pb-3 font-medium">Empresa</th>
+                        <th class="pb-3 font-medium">Status</th>
+                        <th class="pb-3 font-medium">Tipo</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-900 dark:text-white">
+                    {% for cliente in clientes %}
+                    <tr class="border-b border-gray-200 dark:border-gray-700/30">
+                        <td class="py-3">{{ cliente.empresa }}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium
+                                {% if cliente.status == 'ativo' %}bg-green-500/10 text-green-400
+                                {% elif cliente.status == 'onboarding' %}bg-blue-500/10 text-blue-400
+                                {% elif cliente.status == 'pausado' %}bg-yellow-500/10 text-yellow-400
+                                {% else %}bg-gray-500/10 text-gray-500 dark:text-gray-400{% endif %}">
+                                {{ cliente.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3">{{ cliente.get_tipo_consultoria_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-gray-500 dark:text-gray-400">Nenhum cliente atribuído a este consultor.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

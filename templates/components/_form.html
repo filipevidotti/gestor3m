@@ -1,0 +1,60 @@
+{% load widget_tweaks %}
+
+<form method="post" class="space-y-6" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="px-4 py-3 rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20">
+        {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+        {% if form_title %}
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-6">{{ form_title }}</h3>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-{{ form_cols|default:'2' }} gap-5">
+            {% for field in form %}
+            {% if field.field.widget.input_type == 'hidden' %}
+                {{ field }}
+            {% else %}
+            <div class="{% if field.field.widget.input_type == 'textarea' or field.name == 'observacoes' or field.name == 'descricao' or field.name == 'resumo' or field.name == 'proximos_passos' or field.name == 'bio' %}md:col-span-{{ form_cols|default:'2' }}{% endif %}">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                    {{ field.label }}{% if field.field.required %} <span class="text-red-400">*</span>{% endif %}
+                </label>
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    <label class="inline-flex items-center gap-3 cursor-pointer">
+                        {% render_field field class="w-4 h-4 rounded border-gray-600 bg-gray-50 dark:bg-dark text-brand-orange focus:ring-brand-orange focus:ring-offset-dark" %}
+                        <span class="text-sm text-gray-600 dark:text-gray-300">{{ field.label }}</span>
+                    </label>
+                {% elif field.field.widget.input_type == 'select' or field.field.widget.attrs.class and 'select' in field.field.widget.attrs.class %}
+                    {% render_field field class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent" %}
+                {% elif field.field.widget.input_type == 'textarea' or field.name == 'observacoes' or field.name == 'descricao' or field.name == 'resumo' or field.name == 'proximos_passos' or field.name == 'bio' %}
+                    {% render_field field class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent placeholder-gray-500" rows="4" %}
+                {% else %}
+                    {% render_field field class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent placeholder-gray-500" %}
+                {% endif %}
+                {% if field.errors %}
+                <p class="mt-1 text-sm text-red-400">{{ field.errors.0 }}</p>
+                {% endif %}
+                {% if field.help_text %}
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-3">
+        <a href="{{ cancel_url }}" class="px-4 py-2.5 bg-dark-200 hover:bg-dark-200/80 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700/50 transition">
+            Cancelar
+        </a>
+        <button type="submit" class="px-6 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 focus:ring-offset-dark">
+            {{ submit_label|default:"Salvar" }}
+        </button>
+    </div>
+</form>

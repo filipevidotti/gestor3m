@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Registrar Treinamento — {{ cliente.empresa }}{% endblock %}
+{% block page_title %}Registrar Treinamento{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div>
+        <a href="{% url 'clientes:detalhe' cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar para {{ cliente.empresa }}</a>
+    </div>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h2 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-6">Registrar Treinamento Realizado</h2>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label for="id_treinamento" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Treinamento</label>
+                <select name="treinamento" id="id_treinamento" required
+                        class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition">
+                    <option value="">Selecione...</option>
+                    {% for t in form.treinamento.field.queryset %}
+                    <option value="{{ t.pk }}" {% if form.treinamento.value|stringformat:"s" == t.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ t.titulo }} ({{ t.get_categoria_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if form.treinamento.errors %}
+                <p class="mt-1 text-xs text-danger">{{ form.treinamento.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="id_data" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Data de Realização</label>
+                <input type="date" name="data" id="id_data" value="{{ form.data.value|date:'Y-m-d' }}" required
+                       class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition">
+                {% if form.data.errors %}
+                <p class="mt-1 text-xs text-danger">{{ form.data.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="id_observacoes" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Observações</label>
+                <textarea name="observacoes" id="id_observacoes" rows="2"
+                          class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent transition placeholder-gray-400"
+                          placeholder="Como foi o treinamento...">{{ form.observacoes.value|default:"" }}</textarea>
+            </div>
+
+            <div>
+                <label for="id_material_especifico" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Material Específico (opcional)</label>
+                <input type="file" name="material_especifico" id="id_material_especifico"
+                       class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-brand-orange/10 file:text-brand-orange hover:file:bg-brand-orange/20 transition">
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">PDF, slides ou material customizado para este cliente</p>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <a href="{% url 'clientes:detalhe' cliente.pk %}"
+                   class="px-4 py-2.5 bg-gray-100 dark:bg-dark-200 hover:bg-gray-200 dark:hover:bg-dark-200/80 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700/50 transition">
+                    Cancelar
+                </a>
+                <button type="submit"
+                        class="px-6 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                    Registrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

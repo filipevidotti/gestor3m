@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Tarefas - 3M Control{% endblock %}
+{% block page_title %}Tarefas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Tarefas</h1>
+            <span class="px-3 py-1.5 bg-brand-orange/10 text-brand-orange rounded-lg text-xs border border-brand-orange/30">Lista</span>
+            <a href="{% url 'tarefas:kanban' %}" class="px-3 py-1.5 bg-white dark:bg-dark-100 text-gray-500 dark:text-gray-400 rounded-lg text-xs border border-gray-200 dark:border-gray-700/50 hover:border-gray-600 transition">Kanban</a>
+        </div>
+        <div class="flex items-center gap-3">
+            {% if user.is_gestor %}
+            <a href="{% url 'tarefas:tipo_config' %}" class="px-3 py-1.5 bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-xs border border-gray-200 dark:border-gray-700/50 hover:bg-dark-200/80 transition">Tipos</a>
+            {% endif %}
+            {% if not user.is_seller %}
+            <a href="{% url 'tarefas:criar' %}" class="inline-flex items-center px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nova Tarefa
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+        <form hx-get="{% url 'tarefas:listar' %}" hx-target="#tabela-tarefas" hx-swap="innerHTML" class="flex flex-wrap items-end gap-4">
+            <div class="w-40">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                <select name="status" hx-get="{% url 'tarefas:listar' %}" hx-target="#tabela-tarefas" hx-trigger="change" hx-swap="innerHTML" hx-include="closest form"
+                        class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange">
+                    <option value="">Todos</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="w-40">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Prioridade</label>
+                <select name="prioridade" hx-get="{% url 'tarefas:listar' %}" hx-target="#tabela-tarefas" hx-trigger="change" hx-swap="innerHTML" hx-include="closest form"
+                        class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange">
+                    <option value="">Todas</option>
+                    {% for value, label in prioridade_choices %}
+                    <option value="{{ value }}" {% if request.GET.prioridade == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="w-40">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo</label>
+                <select name="tipo" hx-get="{% url 'tarefas:listar' %}" hx-target="#tabela-tarefas" hx-trigger="change" hx-swap="innerHTML" hx-include="closest form"
+                        class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos %}
+                    <option value="{{ tipo.pk }}" {% if request.GET.tipo == tipo.pk|stringformat:"s" %}selected{% endif %}>{{ tipo.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if clientes %}
+            <div class="w-48">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cliente</label>
+                <select name="cliente" hx-get="{% url 'tarefas:listar' %}" hx-target="#tabela-tarefas" hx-trigger="change" hx-swap="innerHTML" hx-include="closest form"
+                        class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange">
+                    <option value="">Todos</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.pk }}" {% if request.GET.cliente == cliente.pk|stringformat:"s" %}selected{% endif %}>{{ cliente.empresa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <div id="tabela-tarefas">
+        {% include "tarefas/_tabela.html" %}
+    </div>
+</div>
+{% endblock %}

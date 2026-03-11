@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+
+{% block title %}{{ cliente.empresa }} — 3M Control{% endblock %}
+{% block page_title %}{{ cliente.empresa }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'clientes:listar' %}" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div class="flex items-center gap-3">
+                {% if cliente.logo %}
+                <img src="{{ cliente.logo.url }}" alt="{{ cliente.empresa }}" class="w-12 h-12 rounded-lg object-cover border border-gray-200 dark:border-gray-700/50">
+                {% else %}
+                <div class="w-12 h-12 rounded-lg bg-brand-orange/10 flex items-center justify-center text-brand-orange font-display font-bold text-lg">
+                    {{ cliente.empresa.0 }}
+                </div>
+                {% endif %}
+                <div>
+                    <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ cliente.empresa }}</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        {% if cliente.cnpj %}{{ cliente.cnpj }} &middot; {% endif %}
+                        {% if cliente.ml_nickname %}<span class="text-brand-orange">@{{ cliente.ml_nickname }}</span>{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                {% if cliente.status == 'ativo' %}bg-emerald-500/10 text-emerald-400
+                {% elif cliente.status == 'onboarding' %}bg-blue-500/10 text-blue-400
+                {% elif cliente.status == 'pausado' %}bg-amber-500/10 text-amber-400
+                {% else %}bg-red-500/10 text-red-400{% endif %}">
+                {{ cliente.get_status_display }}
+            </span>
+            <a href="{% url 'dashboard:evolucao_cliente' cliente.pk %}" class="px-4 py-2 bg-brand-orange/10 text-brand-orange text-sm rounded-lg border border-brand-orange/20 hover:bg-brand-orange/20 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                Evolução
+            </a>
+            {% if user.is_gestor %}
+            <a href="{% url 'clientes:editar' cliente.pk %}" class="px-4 py-2 bg-dark-200 hover:bg-dark-200/80 text-gray-700 dark:text-gray-200 text-sm rounded-lg border border-gray-200 dark:border-gray-700/50 transition">Editar</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Consultor</p>
+            <p class="text-sm text-gray-900 dark:text-white font-medium">{{ cliente.consultor.get_full_name }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo</p>
+            <p class="text-sm text-gray-900 dark:text-white font-medium">{{ cliente.get_tipo_consultoria_display }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Início</p>
+            <p class="text-sm text-gray-900 dark:text-white font-medium">{{ cliente.data_inicio|date:"d/m/Y" }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Reputação ML</p>
+            <p class="text-sm text-gray-900 dark:text-white font-medium">{{ cliente.ml_reputacao|default:"--" }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contato</p>
+            <p class="text-sm text-gray-900 dark:text-white font-medium">{{ cliente.telefone|default:cliente.email|default:"--" }}</p>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div x-data="{ tab: 'visao' }">
+        <div class="flex gap-1 border-b border-gray-200 dark:border-gray-700/50 mb-6 overflow-x-auto">
+            <button @click="tab = 'visao'" :class="tab === 'visao' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Visão Geral</button>
+            <button @click="tab = 'checklists'" :class="tab === 'checklists' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Checklists</button>
+            <button @click="tab = 'diagnosticos'" :class="tab === 'diagnosticos' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Diagnósticos</button>
+            <button @click="tab = 'tarefas'" :class="tab === 'tarefas' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Tarefas ({{ tarefas|length }})</button>
+            <button @click="tab = 'reunioes'" :class="tab === 'reunioes' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Reuniões ({{ reunioes|length }})</button>
+            <button @click="tab = 'treinamentos'" :class="tab === 'treinamentos' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Treinamentos ({{ treinamentos_realizados|length }})</button>
+            <button @click="tab = 'curva_abc'" :class="tab === 'curva_abc' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Curva ABC</button>
+            <button @click="tab = 'metricas'" :class="tab === 'metricas' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Métricas</button>
+            <button @click="tab = 'atualizacoes'" :class="tab === 'atualizacoes' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Atualizações</button>
+            <button @click="tab = 'swot'" :class="tab === 'swot' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">SWOT</button>
+            <button @click="tab = 'timeline'" :class="tab === 'timeline' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">Timeline</button>
+            <button @click="tab = 'jornada'" :class="tab === 'jornada' ? 'text-brand-orange border-brand-orange' : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'" class="px-4 py-3 text-sm font-medium border-b-2 transition flex-shrink-0">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                Jornada
+            </button>
+        </div>
+
+        <!-- Visão Geral -->
+        <div x-show="tab === 'visao'" class="space-y-4">
+            {% if cliente.observacoes %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Observações</h3>
+                <p class="text-sm text-gray-700 dark:text-gray-200">{{ cliente.observacoes|linebreaksbr }}</p>
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{% url 'checklists:listar' cliente.pk %}" class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/50 transition group text-center">
+                    <p class="text-2xl font-display font-bold text-gray-900 dark:text-white group-hover:text-brand-orange">{{ checklists_count|default:"0" }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Checklists</p>
+                </a>
+                <a href="{% url 'diagnosticos:listar' cliente.pk %}" class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/50 transition group text-center">
+                    <p class="text-2xl font-display font-bold text-gray-900 dark:text-white group-hover:text-brand-orange">{{ diagnosticos|length }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Diagnósticos</p>
+                </a>
+                <a href="{% url 'planos:listar' cliente.pk %}" class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/50 transition group text-center">
+                    <p class="text-2xl font-display font-bold text-gray-900 dark:text-white group-hover:text-brand-orange">{{ planos_count|default:"0" }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Planos</p>
+                </a>
+                <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50 text-center">
+                    <p class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ tarefas|length }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tarefas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklists -->
+        <div x-show="tab === 'checklists'" x-cloak class="space-y-3">
+            <div class="flex justify-end mb-2">
+                <a href="{% url 'checklists:criar' cliente.pk %}" class="text-sm text-brand-orange hover:text-brand-orange transition">+ Novo Checklist</a>
+            </div>
+            {% for cl in checklists %}
+            <a href="{% url 'checklists:detalhe' cl.pk %}" class="block bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/30 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-900 dark:text-white font-medium">{{ cl.template.nome }}</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ cl.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-semibold {% if cl.score >= 80 %}text-success{% elif cl.score >= 50 %}text-warning{% else %}text-gray-500 dark:text-gray-400{% endif %}">
+                            {% if cl.status == 'completed' %}{{ cl.score }}%{% else %}{{ cl.progresso }}%{% endif %}
+                        </span>
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                            {% if cl.status == 'completed' %}bg-success/10 text-success
+                            {% elif cl.status == 'in_progress' %}bg-blue-500/10 text-blue-400
+                            {% else %}bg-gray-700/50 text-gray-500 dark:text-gray-400{% endif %}">
+                            {{ cl.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhum checklist</p>
+            {% endfor %}
+        </div>
+
+        <!-- Diagnósticos -->
+        <div x-show="tab === 'diagnosticos'" x-cloak class="space-y-3">
+            <div class="flex justify-end mb-2">
+                <a href="{% url 'diagnosticos:criar' cliente.pk %}" class="text-sm text-brand-orange hover:text-brand-orange transition">+ Novo Diagnóstico</a>
+            </div>
+            {% for diag in diagnosticos %}
+            <a href="{% url 'diagnosticos:detalhe' diag.pk %}" class="block bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/30 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-900 dark:text-white font-medium">{{ diag.template.nome }}</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ diag.mes|stringformat:"02d" }}/{{ diag.ano }}</span>
+                    </div>
+                    <span class="text-lg font-display font-bold {% if diag.score >= 7 %}text-success{% elif diag.score >= 5 %}text-warning{% else %}text-danger{% endif %}">
+                        {% if diag.status == 'completed' %}{{ diag.score }}/10{% else %}{{ diag.get_status_display }}{% endif %}
+                    </span>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhum diagnóstico</p>
+            {% endfor %}
+        </div>
+
+        <!-- Tarefas -->
+        <div x-show="tab === 'tarefas'" x-cloak class="space-y-3">
+            {% for tarefa in tarefas %}
+            <div class="bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                        {% if tarefa.prioridade == 'urgente' %}bg-red-500/10 text-red-400
+                        {% elif tarefa.prioridade == 'alta' %}bg-amber-500/10 text-amber-400
+                        {% else %}bg-gray-500/10 text-gray-500 dark:text-gray-400{% endif %}">
+                        {{ tarefa.get_prioridade_display }}
+                    </span>
+                    <span class="text-sm text-gray-700 dark:text-gray-200">{{ tarefa.descricao|truncatechars:80 }}</span>
+                </div>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                    {% if tarefa.status == 'concluido' %}bg-emerald-500/10 text-emerald-400
+                    {% elif tarefa.status == 'atrasado' %}bg-red-500/10 text-red-400
+                    {% else %}bg-blue-500/10 text-blue-400{% endif %}">
+                    {{ tarefa.get_status_display }}
+                </span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhuma tarefa</p>
+            {% endfor %}
+        </div>
+
+        <!-- Reuniões -->
+        <div x-show="tab === 'reunioes'" x-cloak class="space-y-3">
+            {% for reuniao in reunioes %}
+            <div class="bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                <div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400">{{ reuniao.get_tipo_display }}</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-200 ml-2">{{ reuniao.data|date:"d/m/Y H:i" }}</span>
+                </div>
+                <span class="text-sm text-gray-500 dark:text-gray-400">{{ reuniao.duracao_minutos }}min</span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhuma reunião</p>
+            {% endfor %}
+        </div>
+
+        <!-- Treinamentos -->
+        <div x-show="tab === 'treinamentos'" x-cloak class="space-y-3">
+            {% if not user.is_seller %}
+            <div class="flex justify-end mb-2">
+                <a href="{% url 'treinamentos:registrar_realizado' cliente.pk %}" class="text-sm text-brand-orange hover:text-brand-orange/80 transition">+ Registrar Treinamento</a>
+            </div>
+            {% endif %}
+            {% for tr in treinamentos_realizados %}
+            <div class="bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-brand-orange/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ tr.treinamento.titulo }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-brand-orange/10 text-brand-orange mr-1">{{ tr.treinamento.get_categoria_display }}</span>
+                                {{ tr.data|date:"d/m/Y" }}
+                                {% if tr.treinamento.duracao_minutos %} &middot; {{ tr.treinamento.duracao_minutos }}min{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% if tr.material_especifico %}
+                        <a href="{{ tr.material_especifico.url }}" target="_blank" class="px-2.5 py-1 bg-brand-orange/10 text-brand-orange rounded-lg text-xs font-medium hover:bg-brand-orange/20 transition" title="Material específico">
+                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Material
+                        </a>
+                        {% elif tr.treinamento.material %}
+                        <a href="{{ tr.treinamento.material.url }}" target="_blank" class="px-2.5 py-1 bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-dark-200/80 transition" title="Material do treinamento">
+                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Material
+                        </a>
+                        {% endif %}
+                        {% if tr.treinamento.conteudo_url %}
+                        <a href="{{ tr.treinamento.conteudo_url }}" target="_blank" class="px-2.5 py-1 bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-dark-200/80 transition" title="Link externo">
+                            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            Link
+                        </a>
+                        {% endif %}
+                        {% if not user.is_seller %}
+                        <form method="post" action="{% url 'treinamentos:remover_realizado' tr.pk %}" class="inline" hx-confirm="Remover este registro de treinamento?">
+                            {% csrf_token %}
+                            <button type="submit" class="px-2 py-1 text-gray-400 hover:text-danger transition text-xs">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if tr.observacoes %}
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 pl-13">{{ tr.observacoes }}</p>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="text-center py-12">
+                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Nenhum treinamento registrado</p>
+                {% if not user.is_seller %}
+                <a href="{% url 'treinamentos:registrar_realizado' cliente.pk %}" class="px-4 py-2.5 bg-brand-orange text-white text-sm rounded-lg hover:bg-brand-orange/90 transition">Registrar Treinamento</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Curva ABC -->
+        <div x-show="tab === 'curva_abc'" x-cloak class="space-y-3">
+            <div class="flex justify-between items-center mb-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ uploads_abc|length }} upload{{ uploads_abc|length|pluralize:"s" }}</p>
+                <div class="flex gap-2">
+                    <a href="{% url 'anuncios:curva_abc_upload' cliente.pk %}" class="text-sm text-brand-orange hover:text-brand-orange/80 transition">+ Upload</a>
+                    {% if uploads_abc %}
+                    <a href="{% url 'anuncios:curva_abc' cliente.pk %}" class="text-sm text-gray-400 hover:text-gray-200 transition">Ver completo &rarr;</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% for u in uploads_abc %}
+            <a href="{% url 'anuncios:curva_abc' cliente.pk %}?upload={{ u.pk }}" class="block bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/30 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-900 dark:text-white font-medium">{{ u.data_referencia|date:"d/m/Y" }}</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ u.get_periodo_display }}</span>
+                    </div>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ u.itens.count }} anúncios</span>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhum upload de Curva ABC</p>
+            {% endfor %}
+        </div>
+
+        <!-- Métricas -->
+        <div x-show="tab === 'metricas'" x-cloak class="space-y-3">
+            <div class="flex justify-between items-center mb-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ uploads_metricas|length }} upload{{ uploads_metricas|length|pluralize:"s" }}</p>
+                <div class="flex gap-2">
+                    <a href="{% url 'anuncios:metricas_upload' cliente.pk %}" class="text-sm text-brand-orange hover:text-brand-orange/80 transition">+ Upload</a>
+                    {% if uploads_metricas %}
+                    <a href="{% url 'anuncios:metricas' cliente.pk %}" class="text-sm text-gray-400 hover:text-gray-200 transition">Ver completo &rarr;</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% for u in uploads_metricas %}
+            <a href="{% url 'anuncios:metricas' cliente.pk %}?upload={{ u.pk }}" class="block bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/30 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-sm text-gray-900 dark:text-white font-medium">{{ u.data_referencia|date:"d/m/Y" }}</span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ u.get_periodo_display }}</span>
+                    </div>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ u.itens.count }} anúncios</span>
+                </div>
+            </a>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhum upload de Métricas</p>
+            {% endfor %}
+        </div>
+
+        <!-- Atualizações de Anúncios -->
+        <div x-show="tab === 'atualizacoes'" x-cloak class="space-y-3">
+            <div class="flex justify-between items-center mb-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ anuncios_atualizar_pendentes }} pendente{{ anuncios_atualizar_pendentes|pluralize:"s" }} de {{ anuncios_atualizar_total }}</p>
+                <div class="flex gap-2">
+                    <a href="{% url 'anuncios:atualizacoes_upload' cliente.pk %}" class="text-sm text-brand-orange hover:text-brand-orange/80 transition">+ Upload</a>
+                    <a href="{% url 'anuncios:atualizacoes' cliente.pk %}" class="text-sm text-gray-400 hover:text-gray-200 transition">Ver completo &rarr;</a>
+                </div>
+            </div>
+            {% for an in anuncios_atualizar_lista %}
+            <div class="bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-mono text-gray-400 dark:text-gray-500">{{ an.mlb }}</span>
+                        <span class="text-sm text-gray-700 dark:text-gray-200 ml-2">{{ an.titulo|truncatechars:50 }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        {% if an.precisa_foto %}
+                        <span class="text-xs px-2 py-0.5 rounded-full {% if an.foto_feito %}bg-emerald-500/10 text-emerald-400{% else %}bg-red-500/10 text-red-400{% endif %}">Foto</span>
+                        {% endif %}
+                        {% if an.precisa_video %}
+                        <span class="text-xs px-2 py-0.5 rounded-full {% if an.video_feito %}bg-emerald-500/10 text-emerald-400{% else %}bg-red-500/10 text-red-400{% endif %}">Vídeo</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhum anúncio para atualizar</p>
+            {% endfor %}
+        </div>
+
+        <!-- SWOT -->
+        <div x-show="tab === 'swot'" x-cloak class="space-y-3">
+            <div class="flex justify-between items-center mb-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ analises_swot|length }} análise{{ analises_swot|length|pluralize:"s" }}</p>
+                <div class="flex gap-2">
+                    <a href="{% url 'swot:criar' cliente.pk %}" class="text-sm text-brand-orange hover:text-brand-orange/80 transition">+ Nova SWOT</a>
+                    {% if analises_swot %}
+                    <a href="{% url 'swot:listar' cliente.pk %}" class="text-sm text-gray-400 hover:text-gray-200 transition">Ver todas &rarr;</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% for swot in analises_swot %}
+            <a href="{% url 'swot:detalhe' swot.pk %}" class="block bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-gray-700/50 hover:border-brand-orange/30 transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-900 dark:text-white font-medium">SWOT — {{ swot.data_analise|date:"d/m/Y" }}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ swot.consultor.get_full_name }}</span>
+                </div>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <div class="bg-emerald-500/10 rounded px-2 py-1 text-center">
+                        <span class="text-xs text-emerald-400 font-medium">{{ swot.forcas|length }} F</span>
+                    </div>
+                    <div class="bg-red-500/10 rounded px-2 py-1 text-center">
+                        <span class="text-xs text-red-400 font-medium">{{ swot.fraquezas|length }} Fr</span>
+                    </div>
+                    <div class="bg-blue-500/10 rounded px-2 py-1 text-center">
+                        <span class="text-xs text-blue-400 font-medium">{{ swot.oportunidades|length }} O</span>
+                    </div>
+                    <div class="bg-amber-500/10 rounded px-2 py-1 text-center">
+                        <span class="text-xs text-amber-400 font-medium">{{ swot.ameacas|length }} A</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="text-center py-12">
+                <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Nenhuma análise SWOT</p>
+                <a href="{% url 'swot:criar' cliente.pk %}" class="px-4 py-2.5 bg-brand-orange text-white text-sm rounded-lg hover:bg-brand-orange/90 transition">Nova Análise SWOT</a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Timeline -->
+        <div x-show="tab === 'timeline'" x-cloak>
+            <div class="space-y-4">
+                {% for atividade in atividades %}
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-center">
+                        <div class="w-2 h-2 rounded-full bg-brand-orange mt-2"></div>
+                        <div class="w-0.5 flex-1 bg-gray-700/50"></div>
+                    </div>
+                    <div class="pb-4">
+                        <p class="text-sm text-gray-700 dark:text-gray-200">{{ atividade.descricao }}</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ atividade.autor.get_full_name }} &mdash; {{ atividade.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-8">Nenhuma atividade registrada</p>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Jornada -->
+        <div x-show="tab === 'jornada'" class="space-y-4">
+            {% if jornada_ativa %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white">{{ jornada_ativa.nome }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Início: {{ jornada_ativa.data_inicio|date:"d/m/Y" }} &middot; {{ jornada_ativa.etapas_concluidas }}/{{ jornada_ativa.total_etapas }} etapas</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-brand-orange">{{ jornada_ativa.progresso }}%</span>
+                        <a href="{% url 'jornadas:timeline_cliente' cliente.pk %}" class="px-4 py-2 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm rounded-lg transition">
+                            Ver Timeline Completa
+                        </a>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-dark-200 rounded-full h-2.5">
+                    <div class="bg-brand-orange h-2.5 rounded-full transition-all" style="width: {{ jornada_ativa.progresso }}%"></div>
+                </div>
+                {% if jornada_ativa.areas_foco %}
+                <div class="mt-3 flex flex-wrap gap-2">
+                    {% for area in jornada_ativa.areas_foco %}
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-orange/10 text-brand-orange">{{ area }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if jornada_ativa.etapas_atrasadas > 0 %}
+                <div class="mt-3 flex items-center gap-2 text-red-400 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                    {{ jornada_ativa.etapas_atrasadas }} etapa{{ jornada_ativa.etapas_atrasadas|pluralize:"s" }} atrasada{{ jornada_ativa.etapas_atrasadas|pluralize:"s" }}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl p-12 border border-gray-200 dark:border-gray-700/50 text-center">
+                <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-2">Nenhuma Jornada Ativa</h3>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">Crie uma jornada para guiar o acompanhamento deste cliente.</p>
+                <a href="{% url 'jornadas:timeline_cliente' cliente.pk %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange text-white text-sm font-semibold rounded-lg hover:opacity-90 transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Criar Jornada
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

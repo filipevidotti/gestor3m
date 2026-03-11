@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Templates de Checklist — 3M Control{% endblock %}
+{% block page_title %}Templates de Checklist{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Gerencie os modelos de checklist da metodologia</p>
+        </div>
+        <a href="{% url 'checklists:template_criar' %}"
+           class="inline-flex items-center px-4 py-2.5 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Novo Template
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+        <form class="flex flex-wrap items-end gap-4"
+              hx-get="{% url 'checklists:template_listar' %}" hx-target="#template-list" hx-swap="innerHTML">
+            <div class="w-48">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Público-alvo</label>
+                <select name="audience" class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white px-3 py-2 focus:ring-brand-orange focus:border-brand-orange">
+                    <option value="">Todos</option>
+                    {% for value, label in audience_choices %}
+                    <option value="{{ value }}" {% if request.GET.audience == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="w-48">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo</label>
+                <select name="tipo" class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white px-3 py-2 focus:ring-brand-orange focus:border-brand-orange">
+                    <option value="">Todos</option>
+                    {% for value, label in tipo_choices %}
+                    <option value="{{ value }}" {% if request.GET.tipo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-dark-200/50 text-gray-600 dark:text-gray-300 rounded-lg text-sm hover:bg-dark-200 transition">
+                Filtrar
+            </button>
+        </form>
+    </div>
+
+    <!-- Lista -->
+    <div id="template-list">
+        {% include "checklists/_template_lista.html" %}
+    </div>
+</div>
+{% endblock %}

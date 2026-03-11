@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Contrato — 3M Control{% endblock %}
+{% block page_title %}Preview do Contrato{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <a href="{% url 'financeiro:detalhe' contrato.pk %}" class="text-xs text-gray-400 hover:text-brand-orange transition">&larr; Voltar ao contrato</a>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-display font-bold text-gray-900 dark:text-white">{{ template.nome }}</h2>
+            <span class="text-xs text-gray-400">{{ contrato.cliente.empresa }}</span>
+        </div>
+        <div class="prose dark:prose-invert max-w-none text-sm">
+            {{ conteudo|safe }}
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-3">
+        <a href="{% url 'financeiro:detalhe' contrato.pk %}" class="px-4 py-2.5 bg-gray-100 dark:bg-dark-200/50 text-gray-600 dark:text-gray-300 text-sm rounded-lg">
+            Voltar
+        </a>
+        <form method="post" action="{% url 'financeiro:gerar_pdf' contrato.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="template_id" value="{{ template.pk }}">
+            <button type="submit" class="px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                Gerar PDF
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil - 3M Control{% endblock %}
+{% block page_title %}Meu Perfil{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-16 h-16 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-bold text-2xl">
+                {{ user.first_name.0 }}{{ user.last_name.0 }}
+            </div>
+            <div>
+                <h2 class="text-xl font-display font-bold text-gray-900 dark:text-white">{{ user.get_full_name }}</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">{{ user.get_role_display }} &mdash; {{ user.email }}</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <p class="text-gray-500 dark:text-gray-400">Usuario</p>
+                <p class="text-gray-900 dark:text-white">{{ user.username }}</p>
+            </div>
+            <div>
+                <p class="text-gray-500 dark:text-gray-400">Telefone</p>
+                <p class="text-gray-900 dark:text-white">{{ user.telefone|default:"--" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

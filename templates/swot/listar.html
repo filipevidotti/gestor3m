@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Análise SWOT — {{ cliente.empresa }} — 3M Control{% endblock %}
+{% block page_title %}Análise SWOT: {{ cliente.empresa }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'clientes:detalhe' cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; {{ cliente.empresa }}</a>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white mt-1">Análises SWOT</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ analises.count }} análise{{ analises.count|pluralize:"s" }}</p>
+        </div>
+        <a href="{% url 'swot:criar' cliente.pk %}" class="inline-flex items-center px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nova Análise
+        </a>
+    </div>
+
+    {% if analises %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for analise in analises %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 hover:shadow-md transition">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <h3 class="font-display font-semibold text-gray-900 dark:text-white">SWOT {{ analise.data_analise|date:"d/m/Y" }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ analise.consultor.get_full_name }}</p>
+                </div>
+                <div class="flex gap-1">
+                    <a href="{% url 'swot:editar' analise.pk %}" class="p-1.5 text-gray-400 hover:text-brand-orange transition rounded">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    <form method="post" action="{% url 'swot:excluir' analise.pk %}" onsubmit="return confirm('Remover esta análise SWOT?')">
+                        {% csrf_token %}
+                        <button type="submit" class="p-1.5 text-gray-400 hover:text-red-500 transition rounded">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <!-- Mini SWOT preview -->
+            <div class="grid grid-cols-2 gap-1.5 mb-3">
+                <div class="bg-emerald-500/10 rounded-lg p-2">
+                    <p class="text-xs font-semibold text-emerald-400 mb-0.5">Forças</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ analise.forcas|length }} item{{ analise.forcas|length|pluralize:"ns" }}</p>
+                </div>
+                <div class="bg-red-500/10 rounded-lg p-2">
+                    <p class="text-xs font-semibold text-red-400 mb-0.5">Fraquezas</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ analise.fraquezas|length }} item{{ analise.fraquezas|length|pluralize:"ns" }}</p>
+                </div>
+                <div class="bg-blue-500/10 rounded-lg p-2">
+                    <p class="text-xs font-semibold text-blue-400 mb-0.5">Oportunidades</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ analise.oportunidades|length }} item{{ analise.oportunidades|length|pluralize:"ns" }}</p>
+                </div>
+                <div class="bg-amber-500/10 rounded-lg p-2">
+                    <p class="text-xs font-semibold text-amber-400 mb-0.5">Ameaças</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ analise.ameacas|length }} item{{ analise.ameacas|length|pluralize:"ns" }}</p>
+                </div>
+            </div>
+            <a href="{% url 'swot:detalhe' analise.pk %}" class="block text-center px-3 py-2 bg-gray-100 dark:bg-dark-200/50 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-200 dark:hover:bg-dark-200 transition">
+                Ver Relatório Completo
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <h3 class="text-lg font-display font-medium text-gray-500 dark:text-gray-400 mb-2">Nenhuma análise SWOT</h3>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mb-4">Crie a primeira análise para este cliente.</p>
+        <a href="{% url 'swot:criar' cliente.pk %}" class="inline-flex items-center px-4 py-2 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Nova Análise SWOT
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

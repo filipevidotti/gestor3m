@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ checklist.template.nome }} — 3M Control{% endblock %}
+{% block page_title %}{{ checklist.template.nome }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'checklists:listar' checklist.cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar</a>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ checklist.cliente.empresa }} &middot; {{ checklist.executor.get_full_name }} &middot; {{ checklist.created_at|date:"d/m/Y" }}</p>
+        </div>
+        <div class="flex items-center gap-4">
+            {% if checklist.status == 'completed' %}
+            <div class="text-right">
+                <p class="text-3xl font-display font-bold {% if checklist.score >= 80 %}text-success{% elif checklist.score >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ checklist.score }}%</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500">Score Final</p>
+            </div>
+            {% endif %}
+            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
+                {% if checklist.status == 'completed' %}bg-success/10 text-success
+                {% elif checklist.status == 'in_progress' %}bg-blue-500/10 text-blue-400
+                {% elif checklist.status == 'cancelled' %}bg-danger/10 text-danger
+                {% else %}bg-gray-700/50 text-gray-500 dark:text-gray-400{% endif %}">
+                {{ checklist.get_status_display }}
+            </span>
+            {% if checklist.status != 'completed' and checklist.status != 'cancelled' %}
+            <a href="{% url 'checklists:executar' checklist.pk %}"
+               class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+                Continuar Execução
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Barra de progresso -->
+    <div class="w-full bg-white dark:bg-dark-100 rounded-full h-2 border border-gray-200 dark:border-gray-700/50">
+        <div class="{% if checklist.status == 'completed' %}bg-success{% else %}bg-brand-orange{% endif %} h-2 rounded-full transition-all" style="width: {{ checklist.progresso }}%"></div>
+    </div>
+
+    <!-- Itens agrupados por categoria -->
+    {% for cat_nome, itens in categorias.items %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+            <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">{{ cat_nome }}</h3>
+            {% with total=itens|length %}
+            {% with conformes=0 %}
+            <span class="text-xs text-gray-500 dark:text-gray-400">{{ total }} itens</span>
+            {% endwith %}
+            {% endwith %}
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for item in itens %}
+            <div class="px-6 py-3 flex items-center gap-3">
+                {% if item.status == 'conforming' %}
+                <svg class="w-5 h-5 text-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {% elif item.status == 'non_conforming' %}
+                <svg class="w-5 h-5 text-danger flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {% elif item.status == 'not_applicable' %}
+                <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                {% else %}
+                <svg class="w-5 h-5 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>
+                {% endif %}
+                <div class="flex-1">
+                    <p class="text-sm {% if item.status == 'not_applicable' %}text-gray-400 dark:text-gray-500{% else %}text-gray-700 dark:text-gray-200{% endif %}">
+                        {{ item.template_item.descricao }}
+                    </p>
+                    {% if item.note %}
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ item.note }}</p>
+                    {% endif %}
+                </div>
+                {% if item.evidencias.count > 0 %}
+                <div class="flex gap-1">
+                    {% for ev in item.evidencias.all %}
+                    <div class="w-8 h-8 rounded overflow-hidden border border-gray-200 dark:border-gray-700/50">
+                        <img src="{{ ev.file.url }}" alt="" class="w-full h-full object-cover">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <span class="text-xs font-medium
+                    {% if item.status == 'conforming' %}text-success
+                    {% elif item.status == 'non_conforming' %}text-danger
+                    {% elif item.status == 'not_applicable' %}text-gray-400 dark:text-gray-500
+                    {% else %}text-gray-600{% endif %}">
+                    {{ item.get_status_display }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

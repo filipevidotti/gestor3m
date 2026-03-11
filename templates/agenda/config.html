@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Configuração da Agenda — 3M Control{% endblock %}
+{% block page_title %}Configuração da Agenda{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl space-y-6">
+    <!-- Link Público -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white mb-3">Link Público da Agenda</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Compartilhe este link para que clientes possam agendar horários com você.</p>
+        <div class="flex items-center gap-2">
+            <input type="text" value="{{ link_publico }}" readonly id="link-publico"
+                   class="flex-1 bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+            <button onclick="navigator.clipboard.writeText(document.getElementById('link-publico').value); this.textContent='Copiado!'; setTimeout(() => this.textContent='Copiar', 2000)"
+                    class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">
+                Copiar
+            </button>
+        </div>
+    </div>
+
+    <!-- Google Calendar -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white">Google Calendar</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Sincronize sua agenda com o Google Calendar.</p>
+            </div>
+            {% if google_conectado %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-success/10 text-green-800 dark:text-success">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Conectado
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400">Desconectado</span>
+            {% endif %}
+        </div>
+        {% if google_conectado %}
+        <form method="post" action="{% url 'agenda:google_desconectar' %}">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-red-50 dark:bg-danger/10 text-red-600 dark:text-danger border border-red-200 dark:border-danger/20 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-danger/20 transition">
+                Desconectar Google Calendar
+            </button>
+        </form>
+        {% elif has_google %}
+        <a href="{% url 'agenda:google_auth_inicio' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 transition">
+            <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Conectar com Google Calendar
+        </a>
+        {% else %}
+        <p class="text-sm text-gray-500 dark:text-gray-400">Bibliotecas do Google não instaladas. Instale <code class="text-xs bg-gray-100 dark:bg-dark-200 px-1 py-0.5 rounded">google-api-python-client</code> e <code class="text-xs bg-gray-100 dark:bg-dark-200 px-1 py-0.5 rounded">google-auth-oauthlib</code>.</p>
+        {% endif %}
+    </div>
+
+    <!-- Configurações Gerais + Horários -->
+    <form method="post" x-data="agendaConfig()">
+        {% csrf_token %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 space-y-6">
+            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white">Configurações Gerais</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título da Agenda</label>
+                    <input type="text" name="titulo" value="{{ config.titulo }}"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                           placeholder="Ex: Consultoria 3M">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duração padrão (min)</label>
+                    <input type="number" name="duracao_padrao" value="{{ config.duracao_padrao }}" min="15" max="240" step="15"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Antecedência mínima (horas)</label>
+                    <input type="number" name="antecedencia_minima" value="{{ config.antecedencia_minima }}" min="1" max="168"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dias visíveis para agendamento</label>
+                    <input type="number" name="dias_visiveis" value="{{ config.dias_visiveis }}" min="7" max="60"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição (exibida na página pública)</label>
+                <textarea name="descricao" rows="3"
+                          class="w-full bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                          placeholder="Descreva brevemente o tipo de consultoria...">{{ config.descricao }}</textarea>
+            </div>
+        </div>
+
+        <!-- Horários de Trabalho -->
+        <div class="mt-6 bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white mb-4">Horários de Trabalho</h3>
+            <div class="space-y-3">
+                <template x-for="dia in dias" :key="dia.value">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-dark/50">
+                        <label class="flex items-center gap-2 w-40">
+                            <input type="checkbox" :name="'dia_' + dia.value + '_ativo'" value="1"
+                                   x-model="dia.ativo"
+                                   class="w-4 h-4 text-brand-orange bg-gray-100 dark:bg-dark border-gray-300 dark:border-gray-700 rounded focus:ring-brand-orange">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300" x-text="dia.label"></span>
+                        </label>
+                        <div class="flex items-center gap-2" x-show="dia.ativo" x-transition>
+                            <input type="time" :name="'dia_' + dia.value + '_inicio'" x-model="dia.inicio"
+                                   class="bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                            <span class="text-gray-400 text-sm">até</span>
+                            <input type="time" :name="'dia_' + dia.value + '_fim'" x-model="dia.fim"
+                                   class="bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            <button type="submit" class="px-6 py-2.5 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">
+                Salvar Configurações
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function agendaConfig() {
+    const horarios = {
+        {% for dia, horario in horarios.items %}
+        {{ dia }}: { inicio: "{{ horario.hora_inicio|time:'H:i' }}", fim: "{{ horario.hora_fim|time:'H:i' }}" },
+        {% endfor %}
+    };
+    const labels = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
+    return {
+        dias: labels.map((label, i) => ({
+            value: i,
+            label: label,
+            ativo: i in horarios,
+            inicio: horarios[i] ? horarios[i].inicio : '09:00',
+            fim: horarios[i] ? horarios[i].fim : '18:00',
+        }))
+    };
+}
+</script>
+{% endblock %}

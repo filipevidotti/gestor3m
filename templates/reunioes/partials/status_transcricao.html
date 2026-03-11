@@ -1,0 +1,40 @@
+{% if reuniao.transcricao_status == 'processando' %}
+<div id="transcription-status"
+     hx-get="{% url 'reunioes:status_transcricao' reuniao.pk %}"
+     hx-trigger="every 5s"
+     hx-swap="outerHTML"
+     class="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl px-5 py-4 flex items-center gap-3">
+    <svg class="w-5 h-5 text-blue-500 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+    <div>
+        <p class="text-sm font-medium text-blue-700 dark:text-blue-400">Processando transcricao...</p>
+        <p class="text-xs text-blue-600 dark:text-blue-500 mt-0.5">A IA esta analisando o audio da reuniao. Isso pode levar alguns minutos.</p>
+    </div>
+</div>
+
+{% elif reuniao.transcricao_status == 'concluida' %}
+<div id="transcription-status"
+     class="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl px-5 py-4 flex items-center gap-3">
+    <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div>
+        <p class="text-sm font-medium text-green-700 dark:text-green-400">Transcricao concluida!</p>
+        <p class="text-xs text-green-600 dark:text-green-500 mt-0.5">A analise de IA foi finalizada. Recarregue a pagina para ver os resultados completos.</p>
+    </div>
+</div>
+
+{% elif reuniao.transcricao_status == 'erro' %}
+<div id="transcription-status"
+     class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl px-5 py-4 flex items-center gap-3">
+    <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div>
+        <p class="text-sm font-medium text-red-700 dark:text-red-400">Erro na transcricao</p>
+        <p class="text-xs text-red-600 dark:text-red-500 mt-0.5">Ocorreu um erro ao processar o audio. Tente gravar novamente.</p>
+    </div>
+</div>
+{% endif %}

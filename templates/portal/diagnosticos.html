@@ -1,0 +1,42 @@
+{% extends "base_portal.html" %}
+{% block title %}Meus Diagnosticos — Portal 3M{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Meus Diagnosticos</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ cliente.empresa }} — Resultados dos diagnosticos realizados</p>
+    </div>
+
+    <div class="space-y-3">
+        {% for diag in diagnosticos %}
+        <a href="{% url 'portal:diagnostico_detalhe' diag.pk %}" class="block bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 hover:border-brand-orange/50 transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-gray-900 dark:text-white font-semibold">{{ diag.template.nome }}</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ diag.mes }}/{{ diag.ano }} — {{ diag.completed_at|date:"d/m/Y" }}</p>
+                </div>
+                <p class="text-3xl font-display font-bold {% if diag.score >= 7 %}text-success{% elif diag.score >= 5 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ diag.score }}/10
+                </p>
+            </div>
+            {% if diag.scores_por_categoria %}
+            <div class="flex gap-3 mt-3 overflow-x-auto">
+                {% for cat, score in diag.scores_por_categoria.items %}
+                <div class="flex-shrink-0 bg-gray-100/50 dark:bg-dark/50 rounded-lg px-3 py-2 text-center">
+                    <p class="text-xs text-gray-400 dark:text-gray-500">{{ cat }}</p>
+                    <p class="text-sm font-bold {% if score >= 7 %}text-success{% elif score >= 5 %}text-warning{% else %}text-danger{% endif %}">{{ score }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </a>
+        {% empty %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-12 text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <p class="text-gray-500 dark:text-gray-400">Nenhum diagnostico realizado</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

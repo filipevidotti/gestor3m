@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11pt;
+            color: #1a1a2e;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #8C103C, #D83341, #FE8103);
+            color: white;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+        }
+        .header h1 {
+            font-size: 22pt;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 10pt;
+            opacity: 0.9;
+        }
+
+        /* SWOT Grid */
+        .swot-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        .swot-grid td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0;
+        }
+        .swot-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin: 4px;
+            overflow: hidden;
+        }
+        .swot-card-header {
+            padding: 10px 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 12pt;
+        }
+        .swot-card-body {
+            padding: 12px 15px;
+        }
+        .swot-card-body ul {
+            list-style: none;
+            padding: 0;
+        }
+        .swot-card-body li {
+            padding: 4px 0;
+            font-size: 10pt;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .swot-card-body li:last-child {
+            border-bottom: none;
+        }
+        .swot-card-body li::before {
+            content: "• ";
+            font-weight: bold;
+        }
+
+        /* Colors */
+        .bg-forcas { background-color: #059669; }
+        .bg-fraquezas { background-color: #DC2626; }
+        .bg-oportunidades { background-color: #2563EB; }
+        .bg-ameacas { background-color: #D97706; }
+
+        .bg-forcas-light { background-color: #ecfdf5; }
+        .bg-fraquezas-light { background-color: #fef2f2; }
+        .bg-oportunidades-light { background-color: #eff6ff; }
+        .bg-ameacas-light { background-color: #fffbeb; }
+
+        .dot-forcas li::before { color: #059669; }
+        .dot-fraquezas li::before { color: #DC2626; }
+        .dot-oportunidades li::before { color: #2563EB; }
+        .dot-ameacas li::before { color: #D97706; }
+
+        /* Section */
+        .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .section-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #8C103C;
+            border-bottom: 2px solid #FE8103;
+            padding-bottom: 5px;
+            margin-bottom: 12px;
+        }
+        .info-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-grid td {
+            padding: 6px 10px;
+            font-size: 10pt;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #64748b;
+            width: 180px;
+        }
+        .info-value {
+            color: #1e293b;
+        }
+
+        /* Products table */
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+        }
+        .products-table th {
+            background-color: #f8fafc;
+            color: #64748b;
+            font-size: 9pt;
+            text-transform: uppercase;
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .products-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .products-table .pct {
+            text-align: right;
+            font-weight: bold;
+            color: #FE8103;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 8pt;
+            color: #94a3b8;
+        }
+
+        .empty {
+            color: #94a3b8;
+            font-style: italic;
+            font-size: 10pt;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Análise SWOT</h1>
+        <p>{{ analise.cliente.empresa }} — {{ analise.data_analise|date:"d/m/Y" }} — Consultor: {{ analise.consultor.get_full_name }}</p>
+    </div>
+
+    <!-- SWOT Matrix -->
+    <table class="swot-grid">
+        <tr>
+            <td>
+                <div class="swot-card">
+                    <div class="swot-card-header bg-forcas">Forças (Strengths)</div>
+                    <div class="swot-card-body bg-forcas-light">
+                        <ul class="dot-forcas">
+                            {% for item in analise.forcas %}
+                            <li>{{ item }}</li>
+                            {% empty %}
+                            <li class="empty" style="list-style:none">Nenhuma força registrada</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="swot-card">
+                    <div class="swot-card-header bg-fraquezas">Fraquezas (Weaknesses)</div>
+                    <div class="swot-card-body bg-fraquezas-light">
+                        <ul class="dot-fraquezas">
+                            {% for item in analise.fraquezas %}
+                            <li>{{ item }}</li>
+                            {% empty %}
+                            <li class="empty" style="list-style:none">Nenhuma fraqueza registrada</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="swot-card">
+                    <div class="swot-card-header bg-oportunidades">Oportunidades (Opportunities)</div>
+                    <div class="swot-card-body bg-oportunidades-light">
+                        <ul class="dot-oportunidades">
+                            {% for item in analise.oportunidades %}
+                            <li>{{ item }}</li>
+                            {% empty %}
+                            <li class="empty" style="list-style:none">Nenhuma oportunidade registrada</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="swot-card">
+                    <div class="swot-card-header bg-ameacas">Ameaças (Threats)</div>
+                    <div class="swot-card-body bg-ameacas-light">
+                        <ul class="dot-ameacas">
+                            {% for item in analise.ameacas %}
+                            <li>{{ item }}</li>
+                            {% empty %}
+                            <li class="empty" style="list-style:none">Nenhuma ameaça registrada</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Market Info -->
+    {% if analise.segmento_mercado or analise.publico_alvo or analise.concorrentes or analise.diferencial or analise.observacoes_mercado %}
+    <div class="section">
+        <div class="section-title">Informações de Mercado</div>
+        <table class="info-grid">
+            {% if analise.segmento_mercado %}
+            <tr>
+                <td class="info-label">Segmento de Mercado</td>
+                <td class="info-value">{{ analise.segmento_mercado }}</td>
+            </tr>
+            {% endif %}
+            {% if analise.publico_alvo %}
+            <tr>
+                <td class="info-label">Público-Alvo</td>
+                <td class="info-value">{{ analise.publico_alvo }}</td>
+            </tr>
+            {% endif %}
+            {% if analise.concorrentes %}
+            <tr>
+                <td class="info-label">Principais Concorrentes</td>
+                <td class="info-value">{{ analise.concorrentes|linebreaksbr }}</td>
+            </tr>
+            {% endif %}
+            {% if analise.diferencial %}
+            <tr>
+                <td class="info-label">Diferencial Competitivo</td>
+                <td class="info-value">{{ analise.diferencial|linebreaksbr }}</td>
+            </tr>
+            {% endif %}
+            {% if analise.observacoes_mercado %}
+            <tr>
+                <td class="info-label">Observações do Mercado</td>
+                <td class="info-value">{{ analise.observacoes_mercado|linebreaksbr }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Products -->
+    {% if analise.produtos_principais %}
+    <div class="section">
+        <div class="section-title">Produtos Principais</div>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th style="text-align:right">Participação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prod in analise.produtos_principais %}
+                <tr>
+                    <td>{{ prod.nome }}</td>
+                    <td>{{ prod.categoria|default:"-" }}</td>
+                    <td class="pct">{{ prod.participacao }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Observations -->
+    {% if analise.observacoes %}
+    <div class="section">
+        <div class="section-title">Observações Gerais</div>
+        <p style="font-size: 10pt;">{{ analise.observacoes|linebreaksbr }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        Relatório gerado por 3M Control — 3M Consultoria — www.3mconsultoria.com.br
+    </div>
+</body>
+</html>

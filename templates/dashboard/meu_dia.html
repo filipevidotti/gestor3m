@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Meu Dia - 3M Control{% endblock %}
+{% block page_title %}Meu Dia{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">
+                {% now "H" as hora %}
+                {% if hora|add:"0" < 12 %}Bom dia{% elif hora|add:"0" < 18 %}Boa tarde{% else %}Boa noite{% endif %}, {{ request.user.first_name }}!
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {% now "l, d \d\e F \d\e Y" %}
+            </p>
+        </div>
+        <a href="{% url 'dashboard:index' %}" class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-brand-orange transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Dashboard geral
+        </a>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Atrasados -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 {% if tarefas_atrasadas or etapas_atrasadas %}ring-1 ring-red-500/30{% endif %}">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center {% if tarefas_atrasadas or etapas_atrasadas %}bg-red-500/10 text-red-500{% else %}bg-green-500/10 text-green-500{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                </div>
+                <div>
+                    {% with total_atrasados=tarefas_atrasadas|length|add:etapas_atrasadas|length %}
+                    <p class="text-2xl font-display font-bold {% if total_atrasados > 0 %}text-red-500{% else %}text-green-500{% endif %}">{{ total_atrasados }}</p>
+                    {% endwith %}
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Atrasados</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reunioes Hoje -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </div>
+                <div>
+                    <p class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ reunioes_hoje|length }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Reunioes hoje</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarefas Hoje -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-brand-orange/10 text-brand-orange flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ tarefas_hoje|length }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Tarefas hoje</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progresso Semana -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <div>
+                    <p class="text-2xl font-display font-bold text-gray-900 dark:text-white">
+                        {{ tarefas_semana_concluidas }}/{{ tarefas_semana_total }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Semana
+                        {% if tarefas_semana_total > 0 %}
+                            ({% widthratio tarefas_semana_concluidas tarefas_semana_total 100 %}%)
+                        {% else %}
+                            (0%)
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Left Column (2 cols) -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- ATRASADOS -->
+            {% if tarefas_atrasadas or etapas_atrasadas %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 border-l-4 border-l-red-500 overflow-hidden">
+                <div class="p-5 pb-3">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <h2 class="text-lg font-display font-bold text-red-500">Atrasados</h2>
+                        <span class="ml-auto bg-red-500/10 text-red-500 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            {% with total=tarefas_atrasadas|length|add:etapas_atrasadas|length %}{{ total }} item{{ total|pluralize:"ns" }}{% endwith %}
+                        </span>
+                    </div>
+
+                    {% if tarefas_atrasadas %}
+                    <div class="mb-4">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">Tarefas</p>
+                        <div class="space-y-2">
+                            {% for tarefa in tarefas_atrasadas %}
+                            <div class="flex items-center gap-3 p-3 rounded-lg bg-red-50/50 dark:bg-red-500/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition group">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ tarefa.descricao|truncatewords:12 }}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ tarefa.cliente }}</span>
+                                        <span class="text-xs text-red-500 font-medium">Prazo: {{ tarefa.prazo|date:"d/m" }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'tarefas:editar' tarefa.pk %}" class="text-gray-400 hover:text-brand-orange transition opacity-0 group-hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if etapas_atrasadas %}
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">Etapas de Jornada</p>
+                        <div class="space-y-2">
+                            {% for etapa in etapas_atrasadas %}
+                            <div class="flex items-center gap-3 p-3 rounded-lg bg-red-50/50 dark:bg-red-500/5 hover:bg-red-50 dark:hover:bg-red-500/10 transition group">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ etapa.nome }}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ etapa.jornada.cliente }}</span>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-300">{{ etapa.get_tipo_display }}</span>
+                                        <span class="text-xs text-red-500 font-medium">Limite: {{ etapa.data_limite|date:"d/m" }}</span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'jornadas:detalhe' etapa.jornada.pk %}" class="text-gray-400 hover:text-brand-orange transition opacity-0 group-hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- HOJE -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <h2 class="text-lg font-display font-bold text-gray-900 dark:text-white">Hoje</h2>
+                    </div>
+
+                    <!-- Reunioes -->
+                    <div class="mb-5">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                            <span class="inline-flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                Reunioes ({{ reunioes_hoje|length }})
+                            </span>
+                        </p>
+                        {% if reunioes_hoje %}
+                        <div class="space-y-2">
+                            {% for reuniao in reunioes_hoje %}
+                            <div class="flex items-center gap-3 p-3 rounded-lg bg-blue-50/50 dark:bg-blue-500/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition group">
+                                <div class="w-14 text-center flex-shrink-0">
+                                    <p class="text-sm font-bold text-blue-600 dark:text-blue-400">{{ reuniao.data|date:"H:i" }}</p>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ reuniao.get_tipo_display }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ reuniao.cliente }} &middot; {{ reuniao.duracao_minutos }}min</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    {% if reuniao.link_gravacao %}
+                                    <a href="{{ reuniao.link_gravacao }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-medium hover:bg-green-500/20 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Link
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'reunioes:editar' reuniao.pk %}" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-brand-orange/10 text-brand-orange text-xs font-medium hover:bg-brand-orange/20 transition">
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a1 1 0 01-.707-.293l-3-3a1 1 0 111.414-1.414L12 12.586l2.293-2.293a1 1 0 111.414 1.414l-3 3A1 1 0 0112 15z"/><circle cx="12" cy="6" r="1.5" fill="currentColor"/></svg>
+                                        Gravar
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-400 dark:text-gray-500 italic py-2">Nenhuma reuniao agendada para hoje.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Etapas Jornada -->
+                    <div class="mb-5">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                            <span class="inline-flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                                Etapas de Jornada ({{ etapas_hoje|length }})
+                            </span>
+                        </p>
+                        {% if etapas_hoje %}
+                        <div class="space-y-2">
+                            {% for etapa in etapas_hoje %}
+                            <div class="flex items-center gap-3 p-3 rounded-lg bg-purple-50/50 dark:bg-purple-500/5 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition" id="etapa-{{ etapa.pk }}">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ etapa.nome }}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ etapa.jornada.cliente }}</span>
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">{{ etapa.get_tipo_display }}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    hx-post="{% url 'jornadas:concluir_etapa' etapa.pk %}"
+                                    hx-target="#etapa-{{ etapa.pk }}"
+                                    hx-swap="outerHTML"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-medium hover:bg-green-500/20 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Concluir
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-400 dark:text-gray-500 italic py-2">Nenhuma etapa prevista para hoje.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tarefas -->
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                            <span class="inline-flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Tarefas ({{ tarefas_hoje|length }})
+                            </span>
+                        </p>
+                        {% if tarefas_hoje %}
+                        <div class="space-y-2">
+                            {% for tarefa in tarefas_hoje %}
+                            <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-dark-200/30 hover:bg-gray-100 dark:hover:bg-dark-200/50 transition group">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ tarefa.descricao|truncatewords:12 }}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ tarefa.cliente }}</span>
+                                        {% if tarefa.prioridade == "urgente" %}
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400">Urgente</span>
+                                        {% elif tarefa.prioridade == "alta" %}
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400">Alta</span>
+                                        {% elif tarefa.prioridade == "media" %}
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-100 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">Media</span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400">Baixa</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <a href="{% url 'tarefas:editar' tarefa.pk %}" class="text-gray-400 hover:text-brand-orange transition opacity-0 group-hover:opacity-100">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-400 dark:text-gray-500 italic py-2">Nenhuma tarefa com prazo para hoje.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEMANA -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <h2 class="text-lg font-display font-bold text-gray-900 dark:text-white">Resumo da Semana</h2>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <!-- Tarefas progress -->
+                    <div class="p-4 rounded-lg bg-gray-50 dark:bg-dark-200/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Tarefas</p>
+                            <p class="text-sm font-bold text-gray-900 dark:text-white">{{ tarefas_semana_concluidas }}/{{ tarefas_semana_total }}</p>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-dark-200 rounded-full h-2.5">
+                            {% if tarefas_semana_total > 0 %}
+                            <div class="bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange h-2.5 rounded-full transition-all duration-500"
+                                 style="width: {% widthratio tarefas_semana_concluidas tarefas_semana_total 100 %}%"></div>
+                            {% else %}
+                            <div class="bg-gray-300 dark:bg-dark-300 h-2.5 rounded-full" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {% if tarefas_semana_total > 0 %}
+                                {% widthratio tarefas_semana_concluidas tarefas_semana_total 100 %}% concluido
+                            {% else %}
+                                Nenhuma tarefa nesta semana
+                            {% endif %}
+                        </p>
+                    </div>
+                    <!-- Reunioes count -->
+                    <div class="p-4 rounded-lg bg-gray-50 dark:bg-dark-200/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Reunioes na semana</p>
+                            <p class="text-sm font-bold text-gray-900 dark:text-white">{{ reunioes_semana }}</p>
+                        </div>
+                        <div class="flex items-center gap-2 mt-3">
+                            <svg class="w-8 h-8 text-blue-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ reunioes_semana }} reunio{{ reunioes_semana|pluralize:"es" }} agendada{{ reunioes_semana|pluralize:"s" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-6">
+
+            <!-- Insights IA -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+                <div class="h-1 bg-gradient-to-r from-brand-dark via-brand-red to-brand-orange"></div>
+                <div class="p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <svg class="w-5 h-5 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                        <h2 class="text-lg font-display font-bold text-gray-900 dark:text-white">Insights IA</h2>
+                        {% if insights %}
+                        <span class="ml-auto bg-brand-orange/10 text-brand-orange text-xs font-semibold px-2.5 py-0.5 rounded-full">{{ insights|length }}</span>
+                        {% endif %}
+                    </div>
+
+                    {% if insights %}
+                    <div class="space-y-3">
+                        {% for insight in insights %}
+                        <div class="p-3 rounded-lg bg-gray-50 dark:bg-dark-200/30 hover:bg-gray-100 dark:hover:bg-dark-200/50 transition" id="insight-{{ insight.pk }}">
+                            <div class="flex items-start gap-2.5">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    {% if insight.tipo == "alerta" %}
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 dark:bg-yellow-500/10">
+                                            <svg class="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                                        </span>
+                                    {% elif insight.tipo == "risco" %}
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 dark:bg-red-500/10">
+                                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </span>
+                                    {% elif insight.tipo == "elogio" %}
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/10">
+                                            <svg class="w-3.5 h-3.5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/10">
+                                            <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ insight.titulo }}</p>
+                                    {% if insight.acao_sugerida %}
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ insight.acao_sugerida }}</p>
+                                    {% endif %}
+                                    {% if insight.cliente %}
+                                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{{ insight.cliente }}</p>
+                                    {% endif %}
+                                </div>
+                                <button
+                                    hx-post="{% url 'ia:marcar_lido' insight.pk %}"
+                                    hx-target="#insight-{{ insight.pk }}"
+                                    hx-swap="outerHTML"
+                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                    class="flex-shrink-0 text-gray-400 hover:text-green-500 transition"
+                                    title="Marcar como lido">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <a href="{% url 'ia:listar_insights' %}" class="inline-flex items-center gap-1 text-xs text-brand-orange hover:text-brand-orange/80 transition mt-3">
+                        Ver todos os insights
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                        <p class="text-sm text-gray-400 dark:text-gray-500">Nenhum insight disponivel</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-600 mt-1">A IA esta analisando seus clientes</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Clientes que precisam de atencao -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <h2 class="text-lg font-display font-bold text-gray-900 dark:text-white">Precisam de Atencao</h2>
+                </div>
+
+                {% if clientes_atencao %}
+                <div class="space-y-2">
+                    {% for item in clientes_atencao %}
+                    <a href="{% url 'clientes:detalhe' item.cliente.pk %}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200/30 transition group">
+                        <div class="w-8 h-8 rounded-full bg-brand-orange/10 flex items-center justify-center text-brand-orange text-xs font-bold flex-shrink-0">
+                            {{ item.cliente.empresa|truncatechars:2 }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-brand-orange transition">{{ item.cliente.empresa }}</p>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400">
+                            {{ item.atrasadas }} atrasada{{ item.atrasadas|pluralize:"s" }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <svg class="w-10 h-10 mx-auto text-green-300 dark:text-green-600/50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-sm text-gray-400 dark:text-gray-500">Todos os clientes em dia!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

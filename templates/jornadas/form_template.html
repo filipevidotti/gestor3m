@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{% if template %}Editar{% else %}Novo{% endif %} Template de Jornada — 3M Control{% endblock %}
+{% block page_title %}{% if template %}Editar{% else %}Novo{% endif %} Template de Jornada{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'jornadas:config_templates' %}" class="hover:text-brand-orange transition">Templates de Jornada</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-900 dark:text-white">{% if template %}{{ template.nome }}{% else %}Novo Template{% endif %}</span>
+    </nav>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="px-4 py-3 rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-6">
+                {% if template %}Editar Template{% else %}Novo Template de Jornada{% endif %}
+            </h3>
+
+            <div class="space-y-5">
+                <!-- Nome -->
+                <div>
+                    <label for="{{ form.nome.id_for_label }}" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                        Nome <span class="text-red-400">*</span>
+                    </label>
+                    {% render_field form.nome class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent placeholder-gray-500" placeholder="Ex: Jornada Marketplace Premium" %}
+                    {% if form.nome.errors %}
+                    <p class="mt-1 text-sm text-red-400">{{ form.nome.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Descricao -->
+                <div>
+                    <label for="{{ form.descricao.id_for_label }}" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                        Descricao
+                    </label>
+                    {% render_field form.descricao class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent placeholder-gray-500" rows="3" placeholder="Descreva o objetivo desta jornada..." %}
+                    {% if form.descricao.errors %}
+                    <p class="mt-1 text-sm text-red-400">{{ form.descricao.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Tipo Consultoria -->
+                    <div>
+                        <label for="{{ form.tipo_consultoria.id_for_label }}" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                            Tipo de Consultoria
+                        </label>
+                        {% render_field form.tipo_consultoria class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent" %}
+                        {% if form.tipo_consultoria.errors %}
+                        <p class="mt-1 text-sm text-red-400">{{ form.tipo_consultoria.errors.0 }}</p>
+                        {% endif %}
+                        {% if form.tipo_consultoria.help_text %}
+                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ form.tipo_consultoria.help_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cor -->
+                    <div>
+                        <label for="{{ form.cor.id_for_label }}" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                            Cor do Template
+                        </label>
+                        <div class="flex items-center gap-3">
+                            {% render_field form.cor type="color" class="h-10 w-16 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer bg-gray-50 dark:bg-dark" %}
+                            <span class="text-sm text-gray-500 dark:text-gray-400" x-data x-text="$el.previousElementSibling?.querySelector('input')?.value || '#FE8103'"></span>
+                        </div>
+                        {% if form.cor.errors %}
+                        <p class="mt-1 text-sm text-red-400">{{ form.cor.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'jornadas:config_templates' %}"
+               class="px-4 py-2.5 bg-dark-200 hover:bg-dark-200/80 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700/50 transition">
+                Cancelar
+            </a>
+            <button type="submit"
+                    class="px-6 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 dark:focus:ring-offset-dark">
+                {% if template %}Salvar Alteracoes{% else %}Criar Template{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

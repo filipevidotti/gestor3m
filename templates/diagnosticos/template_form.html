@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} — 3M Control{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Dados do Template</h3>
+        <div class="grid grid-cols-1 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome *</label>
+                <input type="text" name="nome" value="{{ form.nome.value|default:'' }}" required
+                       class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange"
+                       placeholder="Ex: Diagnóstico Mercado Livre">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Descrição</label>
+                <textarea name="descricao" rows="2"
+                          class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:ring-brand-orange focus:border-brand-orange">{{ form.descricao.value|default:'' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Perguntas</h3>
+        {{ formset.management_form }}
+
+        <div class="space-y-4">
+            {% for qform in formset %}
+            <div class="bg-gray-100/50 dark:bg-dark/50 rounded-lg border border-gray-200 dark:border-gray-700/30 p-4">
+                <input type="hidden" name="{{ qform.id.html_name }}" value="{{ qform.id.value|default:'' }}">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Categoria</label>
+                        <input type="text" name="{{ qform.categoria.html_name }}" value="{{ qform.categoria.value|default:'' }}"
+                               class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange"
+                               placeholder="Vendas">
+                    </div>
+                    <div class="md:col-span-4">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Pergunta</label>
+                        <input type="text" name="{{ qform.texto.html_name }}" value="{{ qform.texto.value|default:'' }}"
+                               class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange"
+                               placeholder="Texto da pergunta">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo</label>
+                        <select name="{{ qform.tipo.html_name }}"
+                                class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                            {% for value, label in qform.fields.tipo.choices %}
+                            <option value="{{ value }}" {% if qform.tipo.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Peso</label>
+                        <input type="number" name="{{ qform.weight.html_name }}" value="{{ qform.weight.value|default:'1.00' }}" step="0.01"
+                               class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+                        <input type="number" name="{{ qform.ordem.html_name }}" value="{{ qform.ordem.value|default:0 }}"
+                               class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    </div>
+                    <div class="md:col-span-2 flex items-end gap-3">
+                        <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+                            <input type="checkbox" name="{{ qform.is_inverted.html_name }}"
+                                   {% if qform.is_inverted.value %}checked{% endif %}
+                                   class="rounded border-gray-600 bg-gray-50 dark:bg-dark text-brand-orange focus:ring-brand-orange">
+                            Invertida
+                        </label>
+                        {% if qform.DELETE %}
+                        <label class="flex items-center gap-2 text-xs text-danger cursor-pointer">
+                            <input type="checkbox" name="{{ qform.DELETE.html_name }}"
+                                   class="rounded border-gray-600 bg-gray-50 dark:bg-dark text-danger focus:ring-danger">
+                            Excluir
+                        </label>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <textarea name="{{ qform.options.html_name }}" rows="1"
+                              class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-xs focus:ring-brand-orange focus:border-brand-orange"
+                              placeholder='Opções JSON (para tipo seleção): {"Bom": 8, "Regular": 5, "Ruim": 2}'>{{ qform.options.value|default:'' }}</textarea>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-3">
+        <a href="{% url 'diagnosticos:template_listar' %}" class="px-4 py-2.5 bg-white dark:bg-dark-100 text-gray-600 dark:text-gray-300 rounded-lg text-sm border border-gray-200 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-dark-200/50 transition">Cancelar</a>
+        <button type="submit" class="px-6 py-2.5 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">Salvar Template</button>
+    </div>
+</form>
+{% endblock %}

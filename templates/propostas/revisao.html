@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Revisão — {{ proposta.nome_display }} — 3M Control{% endblock %}
+{% block page_title %}Revisão da Proposta{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6" x-data="revisaoForm()">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white">{{ proposta.nome_display }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Revise os textos gerados pela IA e defina os serviços e valores</p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Diagnóstico IA -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 mb-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-3">Diagnóstico IA</h3>
+            <textarea name="diagnostico_ia" rows="8"
+                      class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">{{ proposta.diagnostico_ia }}</textarea>
+        </div>
+
+        <!-- Proposição de Valor -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 mb-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-3">Proposição de Valor</h3>
+            <textarea name="proposicao_valor" rows="6"
+                      class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">{{ proposta.proposicao_valor }}</textarea>
+        </div>
+
+        <!-- Proposta Comercial -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 mb-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-3">Proposta Comercial</h3>
+            <textarea name="proposta_comercial" rows="8"
+                      class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">{{ proposta.proposta_comercial }}</textarea>
+        </div>
+
+        <!-- Serviços incluídos -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 mb-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Serviços Incluídos</h3>
+
+            <template x-for="(item, index) in servicosIncluidos" :key="index">
+                <div class="flex items-center gap-3 mb-3 p-3 bg-gray-50 dark:bg-dark-200/50 rounded-lg">
+                    <select x-model="item.servico_id" class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white">
+                        <option value="">Selecione o serviço</option>
+                        {% for s in servicos %}
+                        <option value="{{ s.pk }}">{{ s.nome }}{% if s.preco_sugerido %} (R$ {{ s.preco_sugerido }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" x-model="item.valor" step="0.01" placeholder="Valor (R$)"
+                           class="w-32 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white">
+                    <input type="text" x-model="item.descricao_custom" placeholder="Descrição custom"
+                           class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white">
+                    <button type="button" @click="servicosIncluidos.splice(index, 1)" class="text-red-500 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </template>
+
+            <button type="button" @click="servicosIncluidos.push({servico_id: '', valor: 0, descricao_custom: ''})"
+                    class="mt-2 px-3 py-1.5 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Adicionar Serviço
+            </button>
+
+            <input type="hidden" name="servicos_incluidos" :value="JSON.stringify(servicosIncluidos)">
+        </div>
+
+        <!-- Investimento -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 mb-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Investimento</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor de Setup (R$)</label>
+                    <input type="number" name="valor_setup" step="0.01" value="{{ proposta.valor_setup|floatformat:2 }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensalidade (R$)</label>
+                    <input type="number" name="valor_mensalidade" step="0.01" value="{{ proposta.valor_mensalidade|floatformat:2 }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condições Especiais</label>
+                <textarea name="condicoes_especiais" rows="3"
+                          class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">{{ proposta.condicoes_especiais }}</textarea>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'propostas:detalhe' proposta.pk %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Salvar Revisão
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function revisaoForm() {
+    return {
+        servicosIncluidos: {{ proposta.servicos_incluidos.all|length }} > 0
+            ? [
+                {% for ps in proposta.servicos_incluidos.all %}
+                {servico_id: '{{ ps.servico_id }}', valor: {{ ps.valor }}, descricao_custom: '{{ ps.descricao_custom|escapejs }}'},
+                {% endfor %}
+              ]
+            : []
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Templates de Contrato — 3M Control{% endblock %}
+{% block page_title %}Templates de Contrato{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <a href="{% url 'financeiro:listar' %}" class="text-xs text-gray-400 hover:text-brand-orange transition">&larr; Voltar ao Financeiro</a>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Formulário -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white mb-4">
+                {% if editando %}Editar: {{ editando.nome }}{% else %}Novo Template{% endif %}
+            </h3>
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome *</label>
+                    {% render_field form.nome class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-brand-orange focus:border-brand-orange" %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Conteúdo HTML *</label>
+                    {% render_field form.conteudo class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm font-mono focus:ring-brand-orange focus:border-brand-orange" rows="12" %}
+                    <p class="mt-1 text-xs text-gray-400">
+                        Variáveis: <code>{cliente}</code>, <code>{empresa}</code>, <code>{cpf_cnpj}</code>, <code>{valor}</code>, <code>{plano}</code>, <code>{data_inicio}</code>, <code>{data_fim}</code>, <code>{dia_vencimento}</code>
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                        {% if editando %}Salvar{% else %}Criar Template{% endif %}
+                    </button>
+                    {% if editando %}
+                    <a href="{% url 'financeiro:config_templates' %}" class="px-4 py-2.5 bg-gray-100 dark:bg-dark-200/50 text-gray-600 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-dark-200 transition">
+                        Cancelar
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Lista -->
+        <div class="space-y-3">
+            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white">Templates Existentes</h3>
+            {% for tmpl in templates %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ tmpl.nome }}</p>
+                    <p class="text-xs text-gray-400">Criado em {{ tmpl.created_at|date:"d/m/Y" }}</p>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{% url 'financeiro:editar_template' tmpl.pk %}" class="px-3 py-1.5 bg-gray-100 dark:bg-dark-200/50 text-gray-600 dark:text-gray-300 text-xs rounded-lg hover:bg-gray-200 dark:hover:bg-dark-200 transition">
+                        Editar
+                    </a>
+                    <form method="post" action="{% url 'financeiro:excluir_template' tmpl.pk %}" onsubmit="return confirm('Excluir este template?')">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-1.5 bg-red-500/10 text-red-400 text-xs rounded-lg hover:bg-red-500/20 transition">
+                            Excluir
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum template criado ainda</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base_portal.html" %}
+{% block title %}Dashboard — Portal 3M{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Welcome -->
+    <div>
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Ola, {{ user.first_name }}!</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ cliente.empresa }} — Acompanhe sua evolucao com a 3M Consultoria</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Checklists</p>
+            <p class="text-2xl font-display font-bold text-gray-900 dark:text-white mt-1">{{ checklists_concluidos }}/{{ checklists_total }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">concluidos</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Score Diagnostico</p>
+            {% if ultimo_diagnostico %}
+            <p class="text-2xl font-display font-bold {% if ultimo_diagnostico.score >= 7 %}text-success{% elif ultimo_diagnostico.score >= 5 %}text-warning{% else %}text-danger{% endif %} mt-1">{{ ultimo_diagnostico.score }}/10</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ ultimo_diagnostico.template.nome }}</p>
+            {% else %}
+            <p class="text-2xl font-display font-bold text-gray-600 mt-1">—</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Nenhum diagnostico</p>
+            {% endif %}
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tarefas Pendentes</p>
+            <p class="text-2xl font-display font-bold text-gray-900 dark:text-white mt-1">{{ tarefas_pendentes|length }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">a concluir</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Consultor</p>
+            <p class="text-lg font-display font-semibold text-gray-900 dark:text-white mt-1">{{ cliente.consultor.get_full_name }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">seu consultor</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Checklists Pendentes -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">Checklists Pendentes</h3>
+                <a href="{% url 'portal:checklists' %}" class="text-xs text-brand-orange hover:underline">Ver todos</a>
+            </div>
+            <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for exec in checklists_pendentes %}
+                <a href="{% url 'portal:checklist_executar' exec.pk %}" class="block px-5 py-3 hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-900 dark:text-white">{{ exec.template.nome }}</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ exec.created_at|date:"d/m/Y" }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-brand-orange">{{ exec.progresso }}%</p>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-50 dark:bg-dark rounded-full h-1.5 mt-2">
+                        <div class="bg-brand-orange h-1.5 rounded-full" style="width: {{ exec.progresso }}%"></div>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">Nenhum checklist pendente</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tarefas Pendentes -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+            <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">Tarefas</h3>
+                <a href="{% url 'portal:tarefas' %}" class="text-xs text-brand-orange hover:underline">Ver todas</a>
+            </div>
+            <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for tarefa in tarefas_pendentes %}
+                <div class="px-5 py-3">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-gray-700 dark:text-gray-200">{{ tarefa.descricao|truncatechars:50 }}</p>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                            {% if tarefa.prioridade == 'urgente' %}bg-red-500/10 text-red-400
+                            {% elif tarefa.prioridade == 'alta' %}bg-amber-500/10 text-amber-400
+                            {% else %}bg-gray-500/10 text-gray-500 dark:text-gray-400{% endif %}">
+                            {{ tarefa.get_prioridade_display }}
+                        </span>
+                    </div>
+                    {% if tarefa.prazo %}
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Prazo: {{ tarefa.prazo|date:"d/m/Y" }}</p>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="px-5 py-8 text-center text-gray-400 dark:text-gray-500 text-sm">Nenhuma tarefa pendente</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Proximas Reunioes -->
+    {% if reunioes_proximas %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+            <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white">Reunioes Recentes</h3>
+            <a href="{% url 'portal:reunioes' %}" class="text-xs text-brand-orange hover:underline">Ver todas</a>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for reuniao in reunioes_proximas %}
+            <div class="px-5 py-3 flex items-center justify-between">
+                <div>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400">{{ reuniao.get_tipo_display }}</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-300 ml-2">{{ reuniao.data|date:"d/m/Y H:i" }}</span>
+                </div>
+                <span class="text-xs text-gray-400 dark:text-gray-500">{{ reuniao.duracao_minutos }} min</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

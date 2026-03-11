@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Treinamentos - 3M Control{% endblock %}
+{% block page_title %}Treinamentos{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Biblioteca de Treinamentos</h1>
+        {% if user.is_gestor %}
+        <a href="{% url 'treinamentos:criar' %}" class="inline-flex items-center px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Novo Treinamento
+        </a>
+        {% endif %}
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for t in treinamentos %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+            <div class="flex items-start justify-between mb-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-orange/10 text-brand-orange">{{ t.get_categoria_display }}</span>
+                {% if user.is_gestor %}
+                <div class="flex gap-2">
+                    <a href="{% url 'treinamentos:editar' t.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-orange"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></a>
+                    <a href="{% url 'treinamentos:excluir' t.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-red-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></a>
+                </div>
+                {% endif %}
+            </div>
+            <h3 class="text-gray-900 dark:text-white font-semibold mb-2">{{ t.titulo }}</h3>
+            {% if t.descricao %}<p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ t.descricao|truncatechars:100 }}</p>{% endif %}
+            <div class="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+                {% if t.duracao_minutos %}<span>{{ t.duracao_minutos }} min</span>{% endif %}
+                {% if t.conteudo_url %}<a href="{{ t.conteudo_url }}" target="_blank" class="text-brand-orange hover:underline">Acessar</a>{% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12"><p class="text-gray-500 dark:text-gray-400">Nenhum treinamento cadastrado</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

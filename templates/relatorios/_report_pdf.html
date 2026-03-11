@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 12px; }
+        .header { background: linear-gradient(135deg, #8C103C, #D83341); color: white; padding: 30px 40px; }
+        .header h1 { font-size: 24px; font-weight: 700; }
+        .header p { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+        .content { padding: 30px 40px; }
+        .section { margin-bottom: 25px; }
+        .section-title { font-size: 16px; font-weight: 700; color: #8C103C; border-bottom: 2px solid #FE8103; padding-bottom: 5px; margin-bottom: 15px; }
+        .kpi-grid { display: flex; gap: 15px; flex-wrap: wrap; }
+        .kpi-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; flex: 1; min-width: 120px; text-align: center; }
+        .kpi-card .value { font-size: 28px; font-weight: 700; color: #333; }
+        .kpi-card .label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+        .kpi-card.green .value { color: #22C55E; }
+        .kpi-card.orange .value { color: #FE8103; }
+        .kpi-card.red .value { color: #EF4444; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th { background: #f9fafb; text-align: left; padding: 8px 12px; font-size: 10px; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #e5e7eb; }
+        table td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; }
+        .footer { text-align: center; padding: 20px; color: #9ca3af; font-size: 10px; border-top: 1px solid #e5e7eb; margin-top: 30px; }
+        .brand-bar { height: 4px; background: linear-gradient(90deg, #8C103C, #D83341, #FE8103); }
+    </style>
+</head>
+<body>
+    <div class="brand-bar"></div>
+    <div class="header">
+        <h1>Relatório Mensal</h1>
+        <p>{{ dados.cliente_nome }} — {{ dados.periodo }}</p>
+        <p>Consultor: {{ dados.consultor_nome }}</p>
+    </div>
+
+    <div class="content">
+        <div class="section">
+            <div class="section-title">Indicadores do Mês</div>
+            <div class="kpi-grid">
+                <div class="kpi-card {% if dados.tarefas_taxa >= 80 %}green{% elif dados.tarefas_taxa >= 50 %}orange{% else %}red{% endif %}">
+                    <div class="value">{{ dados.tarefas_concluidas }}/{{ dados.tarefas_total }}</div>
+                    <div class="label">Tarefas ({{ dados.tarefas_taxa }}%)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">{{ dados.reunioes }}</div>
+                    <div class="label">Reuniões</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="value">{{ dados.checklists_total }}</div>
+                    <div class="label">Checklists</div>
+                </div>
+                <div class="kpi-card {% if dados.checklists_score >= 80 %}green{% elif dados.checklists_score >= 50 %}orange{% else %}red{% endif %}">
+                    <div class="value">{{ dados.checklists_score }}%</div>
+                    <div class="label">Score Checklists</div>
+                </div>
+            </div>
+        </div>
+
+        {% if dados.diagnostico_score is not None %}
+        <div class="section">
+            <div class="section-title">Diagnóstico</div>
+            <div class="kpi-grid">
+                <div class="kpi-card {% if dados.diagnostico_score >= 7 %}green{% elif dados.diagnostico_score >= 5 %}orange{% else %}red{% endif %}">
+                    <div class="value">{{ dados.diagnostico_score }}/10</div>
+                    <div class="label">Score Geral</div>
+                </div>
+            </div>
+
+            {% if dados.diagnostico_categorias %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat, score in dados.diagnostico_categorias.items %}
+                    <tr>
+                        <td>{{ cat }}</td>
+                        <td><strong>{{ score }}/10</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        3M Consultoria — www.3mconsultoria.com.br — Relatório gerado automaticamente
+    </div>
+    <div class="brand-bar"></div>
+</body>
+</html>

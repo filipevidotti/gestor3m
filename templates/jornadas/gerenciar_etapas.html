@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Etapas — {{ template.nome }} — 3M Control{% endblock %}
+{% block page_title %}Gerenciar Etapas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'jornadas:config_templates' %}" class="hover:text-brand-orange transition">Templates</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <span class="text-gray-900 dark:text-white">{{ template.nome }}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex items-center gap-4">
+        <div class="w-3 h-10 rounded-full" style="background-color: {{ template.cor }}"></div>
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ template.nome }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ template.total_etapas }} etapa{{ template.total_etapas|pluralize:"s" }} &middot; {{ template.duracao_total_dias }} dias de duracao</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Add Step Form -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 sticky top-6">
+                <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-5">Nova Etapa</h3>
+
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 text-sm border border-red-500/20">
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                    {% if field.field.widget.input_type == 'hidden' %}
+                        {{ field }}
+                    {% else %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">
+                            {{ field.label }}{% if field.field.required %} <span class="text-red-400">*</span>{% endif %}
+                        </label>
+                        {% if field.field.widget.input_type == 'checkbox' %}
+                            <label class="inline-flex items-center gap-2 cursor-pointer">
+                                {% render_field field class="w-4 h-4 rounded border-gray-600 bg-gray-50 dark:bg-dark text-brand-orange focus:ring-brand-orange" %}
+                                <span class="text-sm text-gray-600 dark:text-gray-300">{{ field.label }}</span>
+                            </label>
+                        {% elif field.name == 'descricao' or field.name == 'condicao' %}
+                            {% render_field field class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent placeholder-gray-500" rows="2" %}
+                        {% else %}
+                            {% render_field field class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent placeholder-gray-500" %}
+                        {% endif %}
+                        {% if field.errors %}
+                        <p class="mt-1 text-xs text-red-400">{{ field.errors.0 }}</p>
+                        {% endif %}
+                        {% if field.help_text %}
+                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                    <button type="submit"
+                            class="w-full px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 dark:focus:ring-offset-dark">
+                        Adicionar Etapa
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right: Steps Timeline -->
+        <div class="lg:col-span-2">
+            {% if etapas %}
+            <div class="relative">
+                <!-- Vertical Line -->
+                <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700/50"></div>
+
+                <div class="space-y-4">
+                    {% for etapa in etapas %}
+                    <div class="relative flex items-start gap-4 pl-12">
+                        <!-- Icon Circle -->
+                        <div class="absolute left-2 w-7 h-7 rounded-full flex items-center justify-center
+                            {% if etapa.tipo == 'reuniao' %}bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400
+                            {% elif etapa.tipo == 'diagnostico' %}bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400
+                            {% elif etapa.tipo == 'checklist' %}bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400
+                            {% elif etapa.tipo == 'treinamento' %}bg-yellow-100 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-400
+                            {% elif etapa.tipo == 'tarefa' %}bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400
+                            {% elif etapa.tipo == 'marco' %}bg-pink-100 dark:bg-pink-500/20 text-pink-600 dark:text-pink-400
+                            {% endif %}">
+                            {% if etapa.tipo == 'reuniao' %}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            {% elif etapa.tipo == 'diagnostico' %}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            {% elif etapa.tipo == 'checklist' %}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            {% elif etapa.tipo == 'treinamento' %}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            {% elif etapa.tipo == 'tarefa' %}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            {% elif etapa.tipo == 'marco' %}
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                            {% endif %}
+                        </div>
+
+                        <!-- Card -->
+                        <div class="flex-1 bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ etapa.nome }}</h4>
+                                        {% if etapa.is_obrigatoria %}
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 dark:bg-danger/10 text-red-600 dark:text-red-400">Obrigatoria</span>
+                                        {% else %}
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-dark-200 text-gray-500 dark:text-gray-400">Opcional</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if etapa.descricao %}
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ etapa.descricao|truncatechars:100 }}</p>
+                                    {% endif %}
+                                    <div class="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                                        <span class="inline-flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            Dia +{{ etapa.dias_offset }}
+                                        </span>
+                                        <span class="inline-flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            {{ etapa.duracao_dias }} dias
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-dark-200 text-gray-500 dark:text-gray-400">
+                                            {{ etapa.get_tipo_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-mono text-gray-400 dark:text-gray-500">#{{ etapa.ordem }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-12 text-center">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-dark-200 flex items-center justify-center">
+                    <svg class="w-7 h-7 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                </div>
+                <h3 class="text-base font-display font-semibold text-gray-900 dark:text-white mb-1">Nenhuma etapa cadastrada</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Use o formulario ao lado para adicionar etapas a este template.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

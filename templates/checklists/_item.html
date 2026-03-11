@@ -1,0 +1,18 @@
+<div class="px-6 py-3 flex items-center gap-3" id="check-item-{{ item.pk }}">
+    <button hx-post="{% url 'checklists:toggle_item' checklist.pk item.pk %}" hx-target="#check-item-{{ item.pk }}" hx-swap="outerHTML"
+            class="flex-shrink-0">
+        {% if item.status == 'conforming' %}
+        <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {% elif item.status == 'non_conforming' %}
+        <svg class="w-5 h-5 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {% else %}
+        <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-brand-orange transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>
+        {% endif %}
+    </button>
+    <span class="text-sm flex-1 {% if item.status == 'not_applicable' %}text-gray-400 dark:text-gray-500 line-through{% elif item.status == 'conforming' %}text-gray-600 dark:text-gray-300{% else %}text-gray-700 dark:text-gray-200{% endif %}">
+        {{ item.template_item.descricao }}
+    </span>
+    {% if item.completed_by %}
+    <span class="text-xs text-gray-400 dark:text-gray-500">{{ item.completed_by.get_full_name }}</span>
+    {% endif %}
+</div>

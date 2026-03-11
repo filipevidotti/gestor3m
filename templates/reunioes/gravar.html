@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}Gravando Reuniao - 3M Control{% endblock %}
+{% block page_title %}Gravar Reuniao{% endblock %}
+
+{% block extra_head %}
+<style>
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+    .recording-dot {
+        animation: pulse-red 1.2s ease-in-out infinite;
+    }
+    @keyframes typing-cursor {
+        0%, 100% { border-right-color: transparent; }
+        50% { border-right-color: #FE8103; }
+    }
+    #transcriptBox {
+        scroll-behavior: smooth;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="recordingApp()" class="space-y-6">
+
+    <!-- Compatibility Warning -->
+    <template x-if="!supported">
+        <div class="bg-red-50 dark:bg-danger/10 border border-red-200 dark:border-danger/20 rounded-xl p-6 text-center">
+            <svg class="w-12 h-12 mx-auto text-red-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+            <h3 class="text-lg font-display font-bold text-red-700 dark:text-red-400 mb-2">Navegador nao suportado</h3>
+            <p class="text-red-600 dark:text-red-300 text-sm">Seu navegador nao suporta gravacao de audio ou reconhecimento de voz. Use o <strong>Google Chrome</strong> para melhor compatibilidade.</p>
+            <a href="{% url 'reunioes:detalhe' reuniao.pk %}" class="inline-flex items-center mt-4 px-4 py-2 bg-gray-200 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-dark-300 transition">
+                Voltar para Reuniao
+            </a>
+        </div>
+    </template>
+
+    <template x-if="supported">
+        <div class="space-y-6">
+
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">
+                        Gravando Reuniao
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">
+                        {{ reuniao.get_tipo_display }} &mdash; {{ reuniao.cliente }}
+                    </p>
+                </div>
+                <a href="{% url 'reunioes:detalhe' reuniao.pk %}" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-dark-300 transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Cancelar
+                </a>
+            </div>
+
+            <!-- Recording Controls Card -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-8">
+                <div class="flex flex-col items-center space-y-6">
+
+                    <!-- Status Indicator -->
+                    <div class="flex items-center gap-3">
+                        <template x-if="recording && !paused">
+                            <span class="flex items-center gap-2">
+                                <span class="w-3 h-3 bg-red-500 rounded-full recording-dot"></span>
+                                <span class="text-red-500 font-semibold text-sm uppercase tracking-wide">Gravando...</span>
+                            </span>
+                        </template>
+                        <template x-if="paused">
+                            <span class="flex items-center gap-2">
+                                <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                                <span class="text-yellow-500 font-semibold text-sm uppercase tracking-wide">Pausado</span>
+                            </span>
+                        </template>
+                        <template x-if="finished">
+                            <span class="flex items-center gap-2">
+                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                                <span class="text-green-500 font-semibold text-sm uppercase tracking-wide">Finalizado</span>
+                            </span>
+                        </template>
+                        <template x-if="!recording && !paused && !finished">
+                            <span class="flex items-center gap-2">
+                                <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
+                                <span class="text-gray-400 font-semibold text-sm uppercase tracking-wide">Aguardando...</span>
+                            </span>
+                        </template>
+                    </div>
+
+                    <!-- Timer -->
+                    <div class="text-6xl sm:text-7xl font-display font-bold text-gray-900 dark:text-white tracking-wider tabular-nums" x-text="formatTime(timer)">
+                        00:00
+                    </div>
+
+                    <!-- Control Buttons -->
+                    <div class="flex items-center gap-4">
+                        <!-- Start -->
+                        <template x-if="!recording && !finished">
+                            <button @click="startRecording()" class="inline-flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition shadow-lg shadow-green-500/25">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+                                Iniciar Gravacao
+                            </button>
+                        </template>
+
+                        <!-- Pause / Resume -->
+                        <template x-if="recording && !finished">
+                            <button @click="togglePause()" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-semibold transition shadow-lg" :class="paused ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/25' : 'bg-yellow-500 hover:bg-yellow-600 text-white shadow-yellow-500/25'">
+                                <template x-if="!paused">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                        Pausar
+                                    </span>
+                                </template>
+                                <template x-if="paused">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+                                        Retomar
+                                    </span>
+                                </template>
+                            </button>
+                        </template>
+
+                        <!-- Stop -->
+                        <template x-if="recording && !finished">
+                            <button @click="stopRecording()" class="inline-flex items-center gap-2 px-5 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition shadow-lg shadow-red-500/25">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+                                Parar
+                            </button>
+                        </template>
+
+                        <!-- Submit -->
+                        <template x-if="finished">
+                            <button @click="submitRecording()" :disabled="submitting" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-orange hover:bg-brand-orange/90 text-white font-semibold rounded-xl transition shadow-lg shadow-brand-orange/25 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <template x-if="!submitting">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                        Salvar Gravacao
+                                    </span>
+                                </template>
+                                <template x-if="submitting">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        Enviando...
+                                    </span>
+                                </template>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Transcription Card -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Transcricao ao vivo</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">(Web Speech API — funciona melhor no Chrome)</p>
+                    </div>
+                    <template x-if="recording && !paused">
+                        <span class="flex items-center gap-1.5 text-xs text-red-400">
+                            <span class="w-2 h-2 bg-red-400 rounded-full recording-dot"></span>
+                            Escutando...
+                        </span>
+                    </template>
+                </div>
+                <div class="p-6">
+                    <div id="transcriptBox"
+                         class="w-full h-80 overflow-y-auto bg-gray-50 dark:bg-dark rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-gray-700 dark:text-gray-200 text-sm leading-relaxed whitespace-pre-wrap"
+                         x-text="transcript || 'A transcricao aparecera aqui conforme voce fala...'">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden CSRF Token -->
+            {% csrf_token %}
+
+        </div>
+    </template>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function recordingApp() {
+    return {
+        recording: false,
+        paused: false,
+        finished: false,
+        submitting: false,
+        timer: 0,
+        timerInterval: null,
+        transcript: '',
+        mediaRecorder: null,
+        audioChunks: [],
+        recognition: null,
+        supported: true,
+
+        init() {
+            if (!navigator.mediaDevices || (!window.webkitSpeechRecognition && !window.SpeechRecognition)) {
+                this.supported = false;
+            }
+        },
+
+        async startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                // Setup MediaRecorder
+                this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                this.audioChunks = [];
+                this.mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) this.audioChunks.push(e.data);
+                };
+                this.mediaRecorder.start(1000);
+
+                // Setup Speech Recognition
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.lang = 'pt-BR';
+                    this.recognition.continuous = true;
+                    this.recognition.interimResults = true;
+
+                    let finalTranscript = '';
+                    this.recognition.onresult = (event) => {
+                        let interim = '';
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            if (event.results[i].isFinal) {
+                                finalTranscript += event.results[i][0].transcript + ' ';
+                            } else {
+                                interim += event.results[i][0].transcript;
+                            }
+                        }
+                        this.transcript = finalTranscript + interim;
+                        this.$nextTick(() => {
+                            const el = document.getElementById('transcriptBox');
+                            if (el) el.scrollTop = el.scrollHeight;
+                        });
+                    };
+                    this.recognition.onerror = (e) => console.warn('Speech error:', e.error);
+                    this.recognition.onend = () => {
+                        if (this.recording && !this.paused) {
+                            try { this.recognition.start(); } catch(err) {}
+                        }
+                    };
+                    this.recognition.start();
+                }
+
+                // Start timer
+                this.recording = true;
+                this.paused = false;
+                this.timer = 0;
+                this.timerInterval = setInterval(() => this.timer++, 1000);
+
+            } catch (err) {
+                alert('Erro ao acessar microfone. Verifique as permissoes do navegador.');
+                console.error('Microphone error:', err);
+            }
+        },
+
+        togglePause() {
+            if (this.paused) {
+                this.mediaRecorder.resume();
+                if (this.recognition) {
+                    try { this.recognition.start(); } catch(err) {}
+                }
+                this.timerInterval = setInterval(() => this.timer++, 1000);
+                this.paused = false;
+            } else {
+                this.mediaRecorder.pause();
+                if (this.recognition) this.recognition.stop();
+                clearInterval(this.timerInterval);
+                this.paused = true;
+            }
+        },
+
+        stopRecording() {
+            this.recording = false;
+            this.finished = true;
+            clearInterval(this.timerInterval);
+            if (this.recognition) this.recognition.stop();
+            this.mediaRecorder.stop();
+            this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        },
+
+        async submitRecording() {
+            this.submitting = true;
+            try {
+                const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                const formData = new FormData();
+                formData.append('audio', blob, 'reuniao_audio.webm');
+                formData.append('transcricao_rascunho', this.transcript);
+                formData.append('duracao_minutos', Math.ceil(this.timer / 60));
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+                const response = await fetch('{% url "reunioes:salvar_gravacao" reuniao.pk %}', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.href = '{% url "reunioes:detalhe" reuniao.pk %}';
+                }
+            } catch (err) {
+                this.submitting = false;
+                alert('Erro ao enviar gravacao. Tente novamente.');
+                console.error('Submit error:', err);
+            }
+        },
+
+        formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return m + ':' + s;
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full"
+      x-data="{ darkMode: localStorage.getItem('theme') === 'dark' || !localStorage.getItem('theme') }"
+      :class="darkMode ? 'dark' : ''"
+      x-init="$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'))">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal — 3M Control{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { dark: '#8C103C', red: '#D83341', orange: '#FE8103' },
+                        primary: {
+                            50: '#FFF7ED', 100: '#FFEDD5', 200: '#FED7AA', 300: '#FDBA74',
+                            400: '#FB923C', 500: '#FE8103', 600: '#EA580C', 700: '#C2410C',
+                            800: '#9A3412', 900: '#7C2D12',
+                        },
+                        dark: { DEFAULT: '#0F172A', 100: '#1E293B', 200: '#334155', 300: '#475569' },
+                        danger: '#EF4444', warning: '#FE8103', success: '#22C55E',
+                    },
+                    fontFamily: {
+                        display: ['"Red Hat Display"', 'system-ui', 'sans-serif'],
+                        body: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Red+Hat+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Red Hat Display', system-ui, sans-serif; }
+        [x-cloak] { display: none !important; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50 dark:bg-dark text-gray-800 dark:text-gray-200 font-body" x-data="{ mobileMenu: false }">
+    <!-- Top Navigation -->
+    <nav class="bg-white dark:bg-dark-100 border-b border-gray-200 dark:border-gray-700/50 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <img x-show="darkMode" src="{% static 'img/logo-branca.png' %}" alt="3M Consultoria" class="h-9 w-auto" x-cloak>
+                    <img x-show="!darkMode" src="{% static 'img/logo-original.png' %}" alt="3M Consultoria" class="h-9 w-auto">
+                    <span class="font-display font-bold text-gray-900 dark:text-white text-lg hidden sm:block">Meu Portal</span>
+                </div>
+
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center gap-1">
+                    <a href="{% url 'portal:dashboard' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'dashboard' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Dashboard
+                    </a>
+                    <a href="{% url 'portal:checklists' %}" class="px-3 py-2 rounded-lg text-sm transition {% if 'checklist' in request.resolver_match.url_name %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Checklists
+                    </a>
+                    {% if not user.is_funcionario %}
+                    <a href="{% url 'portal:diagnosticos' %}" class="px-3 py-2 rounded-lg text-sm transition {% if 'diagnostico' in request.resolver_match.url_name %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Diagnosticos
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'portal:tarefas' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'tarefas' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Tarefas
+                    </a>
+                    <a href="{% url 'portal:planos' %}" class="px-3 py-2 rounded-lg text-sm transition {% if 'plano' in request.resolver_match.url_name %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Planos
+                    </a>
+                    {% if not user.is_funcionario %}
+                    <a href="{% url 'portal:reunioes' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'reunioes' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Reunioes
+                    </a>
+                    <a href="{% url 'portal:treinamentos' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'treinamentos' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Treinamentos
+                    </a>
+                    <a href="{% url 'portal:minha_evolucao' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'minha_evolucao' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Evolução
+                    </a>
+                    <a href="{% url 'portal:anuncios_curva_abc' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'anuncios_curva_abc' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Curva ABC
+                    </a>
+                    <a href="{% url 'portal:anuncios_metricas' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'anuncios_metricas' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Métricas
+                    </a>
+                    <a href="{% url 'portal:anuncios_atualizacoes' %}" class="px-3 py-2 rounded-lg text-sm transition {% if request.resolver_match.url_name == 'anuncios_atualizacoes' %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Atualizações
+                    </a>
+                    <a href="{% url 'portal:equipe_listar' %}" class="px-3 py-2 rounded-lg text-sm transition {% if 'equipe' in request.resolver_match.url_name %}bg-brand-orange/10 text-brand-orange{% else %}text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-200/50{% endif %}">
+                        Equipe
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- User + Mobile toggle -->
+                <div class="flex items-center gap-3">
+                    <!-- Dark/Light Toggle -->
+                    <button @click="darkMode = !darkMode" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+                        <svg x-show="darkMode" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-brand-orange/20 flex items-center justify-center text-brand-orange font-semibold text-sm">
+                            {{ user.first_name.0 }}{{ user.last_name.0 }}
+                        </div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">{{ user.get_full_name }}</span>
+                    </div>
+                    <form method="post" action="{% url 'accounts:logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-400 hover:text-danger transition" title="Sair">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </button>
+                    </form>
+                    <button @click="mobileMenu = !mobileMenu" class="md:hidden text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenu" x-transition class="md:hidden border-t border-gray-200 dark:border-gray-700/50 p-3 space-y-1">
+            <a href="{% url 'portal:dashboard' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Dashboard</a>
+            <a href="{% url 'portal:checklists' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Checklists</a>
+            {% if not user.is_funcionario %}
+            <a href="{% url 'portal:diagnosticos' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Diagnosticos</a>
+            {% endif %}
+            <a href="{% url 'portal:tarefas' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Tarefas</a>
+            <a href="{% url 'portal:planos' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Planos</a>
+            {% if not user.is_funcionario %}
+            <a href="{% url 'portal:reunioes' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Reunioes</a>
+            <a href="{% url 'portal:treinamentos' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Treinamentos</a>
+            <a href="{% url 'portal:minha_evolucao' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Evolução</a>
+            <a href="{% url 'portal:anuncios_curva_abc' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Curva ABC</a>
+            <a href="{% url 'portal:anuncios_metricas' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Métricas</a>
+            <a href="{% url 'portal:anuncios_atualizacoes' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Atualizações</a>
+            <a href="{% url 'portal:equipe_listar' %}" class="block px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200/50">Equipe</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {% if messages %}
+        <div class="mb-4 space-y-2">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-green-50 dark:bg-success/10 text-green-800 dark:text-success border border-green-200 dark:border-success/20{% elif message.tags == 'error' %}bg-red-50 dark:bg-danger/10 text-red-800 dark:text-danger border border-red-200 dark:border-danger/20{% elif message.tags == 'warning' %}bg-orange-50 dark:bg-warning/10 text-orange-800 dark:text-warning border border-orange-200 dark:border-warning/20{% else %}bg-gray-50 dark:bg-dark-200/50 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700/50{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

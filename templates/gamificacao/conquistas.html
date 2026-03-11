@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Conquistas — 3M Control{% endblock %}
+{% block page_title %}Conquistas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Minhas Conquistas</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ meus_pontos }} pontos acumulados</p>
+        </div>
+        <a href="{% url 'gamificacao:ranking' %}" class="px-4 py-2.5 bg-dark-200 text-gray-600 dark:text-gray-300 rounded-lg text-sm border border-gray-200 dark:border-gray-700/50 hover:bg-dark-200/80 transition">
+            Ver Ranking
+        </a>
+    </div>
+
+    <!-- Desbloqueadas -->
+    {% if desbloqueadas %}
+    <div>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Desbloqueadas ({{ desbloqueadas|length }})</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for ua in desbloqueadas %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border
+                {% if ua.achievement.tipo == 'diamante' %}border-blue-400/50
+                {% elif ua.achievement.tipo == 'ouro' %}border-yellow-400/50
+                {% elif ua.achievement.tipo == 'prata' %}border-gray-300/50
+                {% else %}border-amber-600/50{% endif %}">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center
+                        {% if ua.achievement.tipo == 'diamante' %}bg-blue-500/20 text-blue-400
+                        {% elif ua.achievement.tipo == 'ouro' %}bg-yellow-500/20 text-yellow-400
+                        {% elif ua.achievement.tipo == 'prata' %}bg-gray-400/20 text-gray-600 dark:text-gray-300
+                        {% else %}bg-amber-600/20 text-amber-500{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ ua.achievement.nome }}</p>
+                        <span class="text-xs {% if ua.achievement.tipo == 'diamante' %}text-blue-400{% elif ua.achievement.tipo == 'ouro' %}text-yellow-400{% elif ua.achievement.tipo == 'prata' %}text-gray-600 dark:text-gray-300{% else %}text-amber-500{% endif %}">
+                            {{ ua.achievement.get_tipo_display }}
+                        </span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ ua.achievement.descricao }}</p>
+                <p class="text-xs text-gray-600 mt-2">{{ ua.desbloqueado_em|date:"d/m/Y" }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bloqueadas -->
+    {% if bloqueadas %}
+    <div>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">A desbloquear ({{ bloqueadas|length }})</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for ach in bloqueadas %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl p-5 border border-gray-200 dark:border-gray-700/50 opacity-60">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ ach.nome }}</p>
+                        <span class="text-xs text-gray-400 dark:text-gray-500">{{ ach.get_tipo_display }}</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 dark:text-gray-500">{{ ach.descricao }}</p>
+                {% if ach.pontos_recompensa > 0 %}
+                <p class="text-xs text-brand-orange mt-2">+{{ ach.pontos_recompensa }} pts</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento Confirmado — 3M Consultoria</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: { dark: '#8C103C', red: '#D83341', orange: '#FE8103' } }, fontFamily: { display: ['"Red Hat Display"', 'system-ui'], body: ['Inter', 'system-ui'] } } } }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Red+Hat+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', system-ui, sans-serif; } h1,h2,h3 { font-family: 'Red Hat Display', system-ui, sans-serif; }</style>
+</head>
+<body class="h-full bg-gray-50 flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+        <div class="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h1 class="text-2xl font-display font-bold text-gray-900 mb-2">Agendamento Confirmado!</h1>
+        <p class="text-sm text-gray-500 mb-6">Seu horário foi reservado com sucesso.</p>
+
+        <div class="bg-gray-50 rounded-xl p-4 space-y-3 text-left mb-6">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span class="text-sm text-gray-700">{{ consultor.get_full_name }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="text-sm text-gray-700">{{ agendamento.data_hora|date:"l, d/m/Y" }} às {{ agendamento.data_hora|time:"H:i" }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm text-gray-700">{{ agendamento.duracao }} minutos</span>
+            </div>
+        </div>
+
+        <p class="text-xs text-gray-400">
+            Precisa cancelar?
+            <a href="{% url 'agenda:publico_cancelar' agendamento.token_cancelamento %}" class="text-brand-orange hover:underline">Clique aqui</a>
+        </p>
+
+        <p class="text-xs text-gray-400 mt-4">
+            <span class="font-semibold text-brand-dark">3M Consultoria</span>
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Tipos de Tarefa — 3M Control{% endblock %}
+{% block page_title %}Tipos de Tarefa{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-3xl">
+    <a href="{% url 'tarefas:listar' %}" class="text-xs text-gray-500 dark:text-gray-400 hover:text-brand-orange">&larr; Voltar</a>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Tipos Cadastrados</h3>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for tipo in tipos %}
+            <div class="px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-4 h-4 rounded" style="background: {{ tipo.cor }}"></div>
+                    <p class="text-sm text-gray-900 dark:text-white font-medium">{{ tipo.nome }}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ tipo.tarefas.count }} tarefas</span>
+                    <a href="{% url 'tarefas:tipo_config_editar' tipo.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-orange">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    <form method="post" action="{% url 'tarefas:tipo_config_excluir' tipo.pk %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-500 dark:text-gray-400 hover:text-red-400" onclick="return confirm('Remover?')">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">Nenhum tipo cadastrado</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4">Novo Tipo</h3>
+        <form method="post" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% csrf_token %}
+            <div class="md:col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nome *</label>
+                <input type="text" name="nome" required class="w-full bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange" placeholder="Ex: Cadastro Anuncios">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cor</label>
+                <input type="color" name="cor" value="#6366f1" class="w-full h-[38px] bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg cursor-pointer">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

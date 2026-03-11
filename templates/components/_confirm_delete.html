@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Excluir {{ object }} - 3M Control{% endblock %}
+{% block page_title %}Confirmar Exclusao{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-8">
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-red-500/30">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <div>
+                <h2 class="text-lg font-display font-bold text-gray-900 dark:text-white">Tem certeza?</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Esta acao nao pode ser desfeita.</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-dark rounded-lg p-4 mb-6 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-sm text-gray-600 dark:text-gray-300">Voce esta prestes a excluir:</p>
+            <p class="text-gray-900 dark:text-white font-semibold mt-1">{{ object }}</p>
+        </div>
+
+        <form method="post" class="flex justify-end gap-3">
+            {% csrf_token %}
+            <a href="{{ cancel_url }}" class="px-4 py-2.5 bg-dark-200 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700/50 hover:bg-dark-200/80 transition">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition">
+                Excluir
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

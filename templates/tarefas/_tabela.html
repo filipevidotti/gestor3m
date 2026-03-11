@@ -1,0 +1,67 @@
+<div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descricao</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase hidden md:table-cell">Tipo</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Prioridade</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase hidden sm:table-cell">Prazo</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Acoes</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for tarefa in tarefas %}
+            <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition" id="tarefa-{{ tarefa.pk }}">
+                <td class="px-6 py-4 text-gray-700 dark:text-gray-200">{{ tarefa.descricao|truncatechars:60 }}</td>
+                <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ tarefa.cliente.empresa }}</td>
+                <td class="px-6 py-4 hidden md:table-cell">
+                    {% if tarefa.tipo %}
+                    <span class="text-xs px-2 py-0.5 rounded" style="background: {{ tarefa.tipo.cor }}20; color: {{ tarefa.tipo.cor }}">{{ tarefa.tipo.nome }}</span>
+                    {% else %}
+                    <span class="text-xs text-gray-600">—</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if tarefa.prioridade == 'urgente' %}bg-red-500/10 text-red-400
+                        {% elif tarefa.prioridade == 'alta' %}bg-amber-500/10 text-amber-400
+                        {% elif tarefa.prioridade == 'media' %}bg-blue-500/10 text-blue-400
+                        {% else %}bg-gray-500/10 text-gray-500 dark:text-gray-400{% endif %}">
+                        {{ tarefa.get_prioridade_display }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-gray-500 dark:text-gray-400 hidden sm:table-cell">{{ tarefa.prazo|date:"d/m/Y"|default:"--" }}</td>
+                <td class="px-6 py-4">
+                    {% if tarefa.status != 'concluido' %}
+                    <form hx-post="{% url 'tarefas:alterar_status' tarefa.pk %}" hx-target="#tarefa-{{ tarefa.pk }}" hx-swap="outerHTML">
+                        {% csrf_token %}
+                        <select name="status" onchange="this.form.requestSubmit()"
+                                class="px-2 py-1 bg-gray-50 dark:bg-dark border border-gray-700 rounded text-xs text-gray-900 dark:text-white focus:ring-1 focus:ring-brand-orange">
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if tarefa.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">Concluido</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-right">
+                    {% if not user.is_seller %}
+                    <a href="{% url 'tarefas:editar' tarefa.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-orange mr-2">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    <a href="{% url 'tarefas:excluir' tarefa.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-red-400">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">Nenhuma tarefa encontrada</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

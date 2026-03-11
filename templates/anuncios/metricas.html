@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Métricas — {{ cliente.empresa }} — 3M Control{% endblock %}
+{% block page_title %}Métricas: {{ cliente.empresa }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'clientes:detalhe' cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; {{ cliente.empresa }}</a>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white mt-1">Métricas de Anúncios</h1>
+            {% if upload_atual %}
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ upload_atual.data_referencia|date:"d/m/Y" }} — {{ upload_atual.get_periodo_display }} — {{ comparativo|length }} anúncios</p>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-3">
+            {% if uploads.count > 1 %}
+            <select onchange="window.location.href='?upload='+this.value"
+                class="px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-brand-orange">
+                {% for u in uploads %}
+                <option value="{{ u.pk }}" {% if upload_atual and u.pk == upload_atual.pk %}selected{% endif %}>
+                    {{ u.data_referencia|date:"d/m/Y" }} ({{ u.get_periodo_display }})
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+            <a href="{% url 'anuncios:metricas_upload' cliente.pk %}" class="px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                Upload Planilha
+            </a>
+        </div>
+    </div>
+
+    {% if comparativo %}
+    <!-- Gráficos -->
+    {% if chart_labels|length > 1 %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Evolução de Visitas</h3>
+            <canvas id="chartVisitas" height="120"></canvas>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Evolução de Vendas (30d)</h3>
+            <canvas id="chartVendas" height="120"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabela -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">MLB</th>
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Geral</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">V.30d</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Visitas</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Conv.</th>
+                        <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Preço</th>
+                        <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cat.</th>
+                        <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Víd.</th>
+                        <th class="text-center px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fot.</th>
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Frete</th>
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ADS</th>
+                        <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promo</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                    {% for c in comparativo %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                        <td class="px-4 py-3 text-xs font-mono text-gray-600 dark:text-gray-300">{{ c.item.mlb }}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                                {% if c.item.status == 'Ativo' %}bg-emerald-500/10 text-emerald-400
+                                {% else %}bg-gray-500/10 text-gray-500 dark:text-gray-400{% endif %}">
+                                {{ c.item.status }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">{{ c.item.geral }}</td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">
+                            {{ c.item.vendas_30d }}
+                            {% if c.vendas_diff is not None and c.vendas_diff != 0 %}
+                            <span class="text-xs ml-1 {% if c.vendas_diff > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+                                {% if c.vendas_diff > 0 %}+{% endif %}{{ c.vendas_diff }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">
+                            {{ c.item.visitas }}
+                            {% if c.visitas_diff is not None and c.visitas_diff != 0 %}
+                            <span class="text-xs ml-1 {% if c.visitas_diff > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+                                {% if c.visitas_diff > 0 %}+{% endif %}{{ c.visitas_diff }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">
+                            {{ c.item.conversao|floatformat:2 }}
+                            {% if c.conv_diff is not None and c.conv_diff != 0 %}
+                            <span class="text-xs ml-1 {% if c.conv_diff > 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+                                {% if c.conv_diff > 0 %}+{% endif %}{{ c.conv_diff|floatformat:2 }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-200">R$ {{ c.item.preco|floatformat:2 }}</td>
+                        <td class="px-4 py-3 text-center text-gray-700 dark:text-gray-200">{{ c.item.categoria|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center text-gray-700 dark:text-gray-200">{{ c.item.video|default:"-" }}</td>
+                        <td class="px-4 py-3 text-center text-gray-700 dark:text-gray-200">{{ c.item.foto|default:"-" }}</td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ c.item.frete|default:"-" }}</td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ c.item.ads|default:"-" }}</td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ c.item.promo|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="text-center py-16">
+        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <h3 class="text-lg font-display font-medium text-gray-500 dark:text-gray-400 mb-2">Nenhum upload de Métricas</h3>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mb-4">Suba a primeira planilha para começar o acompanhamento.</p>
+        <a href="{% url 'anuncios:metricas_upload' cliente.pk %}" class="px-4 py-2.5 bg-brand-orange text-white text-sm rounded-lg hover:bg-brand-orange/90 transition">Upload Planilha</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if chart_labels|length > 1 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartOpts = {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: false, grid: { color: 'rgba(107,114,128,0.1)' }, ticks: { color: '#9CA3AF' } },
+            x: { grid: { display: false }, ticks: { color: '#9CA3AF' } }
+        }
+    };
+
+    new Chart(document.getElementById('chartVisitas').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Visitas',
+                data: {{ chart_visitas|safe }},
+                borderColor: '#3B82F6',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                borderWidth: 2, fill: true, tension: 0.3,
+                pointBackgroundColor: '#3B82F6', pointRadius: 4,
+            }]
+        },
+        options: chartOpts
+    });
+
+    new Chart(document.getElementById('chartVendas').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Vendas 30d',
+                data: {{ chart_vendas|safe }},
+                borderColor: '#22C55E',
+                backgroundColor: 'rgba(34,197,94,0.1)',
+                borderWidth: 2, fill: true, tension: 0.3,
+                pointBackgroundColor: '#22C55E', pointRadius: 4,
+            }]
+        },
+        options: chartOpts
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Templates de Diagnóstico — 3M Control{% endblock %}
+{% block page_title %}Templates de Diagnóstico{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Gerencie os modelos de diagnóstico</p>
+        <a href="{% url 'diagnosticos:template_criar' %}"
+           class="inline-flex items-center px-4 py-2.5 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Novo Template
+        </a>
+    </div>
+
+    {% if templates %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for tpl in templates %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5 hover:border-brand-orange/30 transition group">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ tpl.nome }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ tpl.total_perguntas }} perguntas</p>
+                    </div>
+                </div>
+                <a href="{% url 'diagnosticos:template_editar' tpl.pk %}" class="p-1.5 text-gray-500 dark:text-gray-400 hover:text-brand-orange transition opacity-0 group-hover:opacity-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </a>
+            </div>
+            {% if tpl.descricao %}
+            <p class="text-xs text-gray-400 dark:text-gray-500 line-clamp-2">{{ tpl.descricao }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-12 text-center">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Nenhum template de diagnóstico</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

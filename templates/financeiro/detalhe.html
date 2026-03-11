@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Contrato: {{ contrato.cliente.empresa }} - 3M Control{% endblock %}
+{% block page_title %}Contrato: {{ contrato.cliente.empresa }}{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'financeiro:listar' %}" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white">{{ contrato.cliente.empresa }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ contrato.plano }} &mdash; R$ {{ contrato.valor|floatformat:2 }}/mes</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4">
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Valor Mensal</p>
+            <p class="text-xl font-display font-bold text-emerald-400">R$ {{ contrato.valor|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Dia Vencimento</p>
+            <p class="text-xl font-display font-bold text-gray-900 dark:text-white">{{ contrato.dia_vencimento }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Início</p>
+            <p class="text-xl font-display font-bold text-gray-900 dark:text-white">{{ contrato.data_inicio|date:"d/m/Y" }}</p>
+        </div>
+        <div class="bg-white dark:bg-dark-100 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Assinatura Asaas</p>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1
+                {% if contrato.subscription_status == 'ativa' %}bg-emerald-500/10 text-emerald-400
+                {% elif contrato.subscription_status == 'nao_integrado' %}bg-gray-500/10 text-gray-400
+                {% else %}bg-red-500/10 text-red-400{% endif %}">
+                {{ contrato.get_subscription_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Contrato / Assinatura Digital -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-900 dark:text-white font-semibold">Contrato &amp; Assinatura Digital</h3>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                {% if contrato.status_assinatura == 'assinado' %}bg-emerald-500/10 text-emerald-400
+                {% elif contrato.status_assinatura == 'enviado' %}bg-blue-500/10 text-blue-400
+                {% elif contrato.status_assinatura == 'recusado' %}bg-red-500/10 text-red-400
+                {% else %}bg-gray-500/10 text-gray-400{% endif %}">
+                {{ contrato.get_status_assinatura_display }}
+            </span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {% if contrato.status_assinatura == 'rascunho' %}
+            <form method="post" action="{% url 'financeiro:gerar_pdf' contrato.pk %}" class="flex items-center gap-2">
+                {% csrf_token %}
+                <select name="template_id" required class="px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white">
+                    <option value="">Selecionar template...</option>
+                    {% for tmpl in templates_contrato %}
+                    <option value="{{ tmpl.pk }}">{{ tmpl.nome }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="px-4 py-2 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition whitespace-nowrap">
+                    Gerar PDF
+                </button>
+            </form>
+            {% endif %}
+
+            {% if contrato.pdf_arquivo %}
+            <a href="{{ contrato.pdf_arquivo.url }}" target="_blank" class="px-4 py-2 bg-gray-100 dark:bg-dark-200/50 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-dark-200 transition">
+                Ver PDF
+            </a>
+            {% endif %}
+
+            {% if contrato.pdf_arquivo and contrato.status_assinatura == 'rascunho' %}
+            <form method="post" action="{% url 'financeiro:enviar_assinatura' contrato.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition" onclick="return confirm('Enviar contrato para assinatura digital via Autentique?')">
+                    Enviar para Assinatura
+                </button>
+            </form>
+            {% endif %}
+
+            {% if contrato.status_assinatura == 'enviado' %}
+            <form method="post" action="{% url 'financeiro:verificar_assinatura' contrato.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">
+                    Verificar Assinatura
+                </button>
+            </form>
+            {% endif %}
+
+            <a href="{% url 'financeiro:config_templates' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200/50 text-gray-600 dark:text-gray-400 text-xs rounded-lg hover:bg-gray-200 dark:hover:bg-dark-200 transition flex items-center">
+                Gerenciar Templates
+            </a>
+        </div>
+    </div>
+
+    <!-- Asaas Actions -->
+    <div class="flex gap-2">
+        {% if contrato.subscription_status == 'nao_integrado' %}
+        <form method="post" action="{% url 'financeiro:integrar_asaas' contrato.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition" onclick="return confirm('Integrar este contrato com Asaas? Cobranças serão geradas automaticamente.')">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                Integrar com Asaas
+            </button>
+        </form>
+        {% endif %}
+        {% if contrato.asaas_subscription_id %}
+        <form method="post" action="{% url 'financeiro:sincronizar' contrato.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Sincronizar Pagamentos
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50 flex items-center justify-between">
+            <h3 class="text-gray-900 dark:text-white font-semibold">Pagamentos</h3>
+        </div>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Referencia</th>
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Valor</th>
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Método</th>
+                    <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Pago em</th>
+                    <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for pag in pagamentos %}
+                <tr id="pag-{{ pag.pk }}">
+                    <td class="px-6 py-4 text-gray-700 dark:text-gray-200">{{ pag.mes_referencia|date:"m/Y" }}</td>
+                    <td class="px-6 py-4 text-gray-700 dark:text-gray-200">R$ {{ pag.valor|floatformat:2 }}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if pag.status == 'pago' %}bg-emerald-500/10 text-emerald-400
+                            {% elif pag.status == 'atrasado' %}bg-red-500/10 text-red-400
+                            {% else %}bg-amber-500/10 text-amber-400{% endif %}">
+                            {{ pag.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs text-gray-400">{{ pag.get_metodo_pagamento_display }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-500 dark:text-gray-400">{{ pag.data_pagamento|date:"d/m/Y"|default:"--" }}</td>
+                    <td class="px-6 py-4 text-right space-x-2">
+                        {% if pag.status != 'pago' %}
+                        <button hx-post="{% url 'financeiro:marcar_pago' contrato.pk pag.pk %}" hx-target="#pag-{{ pag.pk }}" hx-swap="outerHTML"
+                                class="text-xs text-brand-orange hover:underline">Marcar Pago</button>
+                        {% endif %}
+                        {% if pag.metodo_pagamento == 'pix' or pag.asaas_payment_id %}
+                        <a href="{% url 'financeiro:ver_pix' contrato.pk pag.pk %}" class="text-xs text-blue-400 hover:underline">PIX</a>
+                        {% endif %}
+                        {% if pag.metodo_pagamento == 'boleto' or pag.asaas_payment_id %}
+                        <a href="{% url 'financeiro:ver_boleto' contrato.pk pag.pk %}" class="text-xs text-purple-400 hover:underline">Boleto</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Nenhum pagamento registrado</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% load widget_tweaks %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+        <h3 class="text-gray-900 dark:text-white font-semibold mb-4">Registrar Pagamento</h3>
+        <form method="post" action="{% url 'financeiro:adicionar_pagamento' contrato.pk %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% csrf_token %}
+            <input type="hidden" name="contrato" value="{{ contrato.pk }}">
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Referencia</label>
+                {% render_field pag_form.mes_referencia class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange" %}
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Valor</label>
+                {% render_field pag_form.valor class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange" %}
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                {% render_field pag_form.status class="w-full px-3 py-2 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange" %}
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">Registrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

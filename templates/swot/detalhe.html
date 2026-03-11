@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Análise SWOT — {{ cliente.empresa }} — 3M Control{% endblock %}
+{% block page_title %}Análise SWOT: {{ cliente.empresa }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-5xl">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <a href="{% url 'swot:listar' cliente.pk %}" class="text-xs text-gray-400 dark:text-gray-500 hover:text-brand-orange transition">&larr; Voltar</a>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white mt-1">Análise SWOT</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ cliente.empresa }} — {{ analise.data_analise|date:"d/m/Y" }} — {{ analise.consultor.get_full_name }}</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'swot:exportar_excel' analise.pk %}" class="inline-flex items-center px-3 py-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg text-sm font-medium hover:bg-emerald-500/20 transition">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Excel
+            </a>
+            <a href="{% url 'swot:exportar_pdf' analise.pk %}" class="inline-flex items-center px-3 py-2 bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/20 transition">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                PDF
+            </a>
+            <a href="{% url 'swot:editar' analise.pk %}" class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-dark-200/50 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-200 transition">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                Editar
+            </a>
+        </div>
+    </div>
+
+    <!-- Matriz SWOT 2x2 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Forças -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-emerald-200 dark:border-emerald-500/20 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 class="font-display font-bold text-emerald-600 dark:text-emerald-400">Forças</h3>
+            </div>
+            <ul class="space-y-1.5">
+                {% for item in analise.forcas %}
+                <li class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></span>
+                    {{ item }}
+                </li>
+                {% empty %}
+                <li class="text-sm text-gray-400">Nenhuma força registrada</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Fraquezas -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-red-200 dark:border-red-500/20 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <h3 class="font-display font-bold text-red-600 dark:text-red-400">Fraquezas</h3>
+            </div>
+            <ul class="space-y-1.5">
+                {% for item in analise.fraquezas %}
+                <li class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></span>
+                    {{ item }}
+                </li>
+                {% empty %}
+                <li class="text-sm text-gray-400">Nenhuma fraqueza registrada</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Oportunidades -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-blue-200 dark:border-blue-500/20 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                </div>
+                <h3 class="font-display font-bold text-blue-600 dark:text-blue-400">Oportunidades</h3>
+            </div>
+            <ul class="space-y-1.5">
+                {% for item in analise.oportunidades %}
+                <li class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 flex-shrink-0"></span>
+                    {{ item }}
+                </li>
+                {% empty %}
+                <li class="text-sm text-gray-400">Nenhuma oportunidade registrada</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Ameaças -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-amber-200 dark:border-amber-500/20 p-5">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <h3 class="font-display font-bold text-amber-600 dark:text-amber-400">Ameaças</h3>
+            </div>
+            <ul class="space-y-1.5">
+                {% for item in analise.ameacas %}
+                <li class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0"></span>
+                    {{ item }}
+                </li>
+                {% empty %}
+                <li class="text-sm text-gray-400">Nenhuma ameaça registrada</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Informações de Mercado -->
+    {% if analise.segmento_mercado or analise.publico_alvo or analise.concorrentes or analise.diferencial or analise.observacoes_mercado %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+        <h3 class="font-display font-semibold text-gray-900 dark:text-white mb-4">Informações de Mercado</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% if analise.segmento_mercado %}
+            <div>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Segmento</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200">{{ analise.segmento_mercado }}</p>
+            </div>
+            {% endif %}
+            {% if analise.publico_alvo %}
+            <div>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Público-Alvo</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200">{{ analise.publico_alvo }}</p>
+            </div>
+            {% endif %}
+            {% if analise.concorrentes %}
+            <div class="md:col-span-2">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Principais Concorrentes</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{{ analise.concorrentes }}</p>
+            </div>
+            {% endif %}
+            {% if analise.diferencial %}
+            <div class="md:col-span-2">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Diferencial Competitivo</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{{ analise.diferencial }}</p>
+            </div>
+            {% endif %}
+            {% if analise.observacoes_mercado %}
+            <div class="md:col-span-2">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Observações do Mercado</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-line">{{ analise.observacoes_mercado }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Produtos Principais -->
+    {% if analise.produtos_principais %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-700/50">
+            <h3 class="font-display font-semibold text-gray-900 dark:text-white">Produtos Principais</h3>
+        </div>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Produto</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoria</th>
+                    <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Participação</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                {% for prod in analise.produtos_principais %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                    <td class="px-5 py-3 text-gray-800 dark:text-gray-200">{{ prod.nome }}</td>
+                    <td class="px-5 py-3 text-gray-600 dark:text-gray-400">{{ prod.categoria|default:"-" }}</td>
+                    <td class="px-5 py-3 text-right font-medium text-brand-orange">{{ prod.participacao }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Observações -->
+    {% if analise.observacoes %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+        <h3 class="font-display font-semibold text-gray-900 dark:text-white mb-2">Observações Gerais</h3>
+        <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ analise.observacoes }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Configurar Etapas CRM — 3M Control{% endblock %}
+{% block page_title %}Configurar Etapas do Funil{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div>
+        <a href="{% url 'crm:kanban' %}" class="text-xs text-gray-400 hover:text-brand-orange transition">&larr; Voltar ao Kanban</a>
+    </div>
+
+    <!-- Form nova/editar etapa -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4">
+            {% if editando %}Editar: {{ editando.nome }}{% else %}Nova Etapa{% endif %}
+        </h3>
+        <form method="post" action="{% if editando %}{% url 'crm:config_etapa_editar' editando.pk %}{% else %}{% url 'crm:config_etapas' %}{% endif %}" class="space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome *</label>
+                    <input type="text" name="nome" value="{{ form.nome.value|default:'' }}" required class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cor</label>
+                    <input type="color" name="cor" value="{{ form.cor.value|default:'#3b82f6' }}" class="w-full h-[38px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-1 py-1">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
+                <input type="text" name="descricao" value="{{ form.descricao.value|default:'' }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ordem</label>
+                    <input type="number" name="ordem" value="{{ form.ordem.value|default:'0' }}" min="0" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div class="flex items-end">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_ganho" {% if form.is_ganho.value %}checked{% endif %} class="rounded border-gray-300 text-green-500 focus:ring-green-500">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Ganho</span>
+                    </label>
+                </div>
+                <div class="flex items-end">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_perdido" {% if form.is_perdido.value %}checked{% endif %} class="rounded border-gray-300 text-red-500 focus:ring-red-500">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Perdido</span>
+                    </label>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                {% if editando %}
+                <a href="{% url 'crm:config_etapas' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm">Cancelar</a>
+                {% endif %}
+                <button type="submit" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm hover:bg-orange-600 transition">
+                    {% if editando %}Atualizar{% else %}Criar Etapa{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista etapas -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 divide-y divide-gray-200 dark:divide-gray-700/50">
+        {% for etapa in etapas %}
+        <div class="flex items-center justify-between px-6 py-3">
+            <div class="flex items-center gap-3">
+                <div class="w-4 h-4 rounded-full" style="background: {{ etapa.cor }}"></div>
+                <div>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ etapa.nome }}</span>
+                    <span class="text-xs text-gray-400 ml-2">Ordem: {{ etapa.ordem }}</span>
+                    {% if etapa.is_ganho %}<span class="ml-2 px-2 py-0.5 bg-green-500/10 text-green-400 rounded-full text-xs">Ganho</span>{% endif %}
+                    {% if etapa.is_perdido %}<span class="ml-2 px-2 py-0.5 bg-red-500/10 text-red-400 rounded-full text-xs">Perdido</span>{% endif %}
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'crm:config_etapa_editar' etapa.pk %}" class="text-xs text-gray-400 hover:text-brand-orange">Editar</a>
+                <form method="post" action="{% url 'crm:config_etapa_excluir' etapa.pk %}" onsubmit="return confirm('Excluir?')">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs text-red-400 hover:text-red-500">Excluir</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+<div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+    <table class="w-full text-sm">
+        <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-700/50">
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Empresa</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Apelido ML</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Consultor</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Tipo</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">Inicio</th>
+                <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acoes</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for cliente in clientes %}
+            <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        {% if cliente.logo %}
+                        <img src="{{ cliente.logo.url }}" alt="" class="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700/50">
+                        {% else %}
+                        <div class="w-8 h-8 rounded-full bg-brand-orange/10 flex items-center justify-center text-brand-orange text-xs font-bold">
+                            {{ cliente.empresa|first|upper }}
+                        </div>
+                        {% endif %}
+                        <a href="{% url 'clientes:detalhe' cliente.pk %}" class="text-gray-900 dark:text-white hover:text-brand-orange font-medium">{{ cliente.empresa }}</a>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-gray-600 dark:text-gray-300 hidden sm:table-cell">
+                    {% if cliente.ml_nickname %}
+                    <span class="text-yellow-400">{{ cliente.ml_nickname }}</span>
+                    {% else %}
+                    <span class="text-gray-400 dark:text-gray-600">—</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ cliente.consultor.get_full_name }}</td>
+                <td class="px-6 py-4 hidden md:table-cell">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if cliente.tipo_consultoria == 'estrategica' %}bg-blue-500/10 text-blue-400{% else %}bg-purple-500/10 text-purple-400{% endif %}">
+                        {{ cliente.get_tipo_consultoria_display }}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if cliente.status == 'ativo' %}bg-emerald-500/10 text-emerald-400
+                        {% elif cliente.status == 'onboarding' %}bg-blue-500/10 text-blue-400
+                        {% elif cliente.status == 'pausado' %}bg-amber-500/10 text-amber-400
+                        {% else %}bg-red-500/10 text-red-400{% endif %}">
+                        {{ cliente.get_status_display }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-gray-500 dark:text-gray-400 hidden lg:table-cell">{{ cliente.data_inicio|date:"d/m/Y" }}</td>
+                <td class="px-6 py-4 text-right">
+                    <a href="{% url 'clientes:detalhe' cliente.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mr-2" title="Ver">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </a>
+                    {% if user.is_gestor %}
+                    <a href="{% url 'clientes:editar' cliente.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-brand-orange mr-2" title="Editar">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    <a href="{% url 'clientes:excluir' cliente.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-red-400" title="Excluir">
+                        <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="px-6 py-12 text-center">
+                    <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <p class="text-gray-500 dark:text-gray-400">Nenhum cliente encontrado</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

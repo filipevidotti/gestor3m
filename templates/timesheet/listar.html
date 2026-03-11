@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Timesheet — 3M Control{% endblock %}
+{% block page_title %}Controle de Horas{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Controle de Horas</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Total: <span class="font-semibold text-brand-orange">{{ total_horas }}h{{ total_min|stringformat:"02d" }}</span>
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'timesheet:resumo' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Resumo
+            </a>
+            <a href="{% url 'timesheet:criar' %}" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Registrar
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cliente</label>
+                <select name="cliente" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                    <option value="">Todos</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.pk }}" {% if filtros.cliente == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.empresa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="w-40">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Categoria</label>
+                <select name="categoria" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                    <option value="">Todas</option>
+                    {% for val, label in categorias %}
+                    <option value="{{ val }}" {% if filtros.categoria == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="w-36">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">De</label>
+                <input type="date" name="data_inicio" value="{{ filtros.data_inicio }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+            </div>
+            <div class="w-36">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Até</label>
+                <input type="date" name="data_fim" value="{{ filtros.data_fim }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+            </div>
+            <div>
+                <button type="submit" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">Filtrar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700/50">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-dark-200/30">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Cliente</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Horário</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Duração</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Categoria</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Descrição</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700/50">
+                    {% for r in registros %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/20 transition">
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">{{ r.data|date:"d/m/Y" }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">{{ r.cliente.empresa }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ r.hora_inicio|time:"H:i" }} — {{ r.hora_fim|time:"H:i" }}</td>
+                        <td class="px-4 py-3 text-sm font-medium text-brand-orange whitespace-nowrap">{{ r.duracao_formatada }}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300">{{ r.get_categoria_display }}</span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ r.descricao|default:"—" }}</td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <a href="{% url 'timesheet:editar' r.pk %}" class="text-gray-400 hover:text-brand-orange transition mr-2" title="Editar">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </a>
+                            <form method="post" action="{% url 'timesheet:excluir' r.pk %}" class="inline" onsubmit="return confirm('Excluir este registro?')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-gray-400 hover:text-danger transition" title="Excluir">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-4 py-12 text-center">
+                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum registro de horas encontrado</p>
+                            <a href="{% url 'timesheet:criar' %}" class="inline-block mt-3 text-sm text-brand-orange hover:text-orange-600 transition">Registrar agora</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

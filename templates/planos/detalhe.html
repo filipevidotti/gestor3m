@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ plano.titulo }} - 3M Control{% endblock %}
+{% block page_title %}{{ plano.titulo }}{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'planos:listar' plano.cliente.pk %}" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{{ plano.titulo }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ plano.cliente.empresa }} &mdash; {{ plano.get_tipo_display }}</p>
+        </div>
+        <div class="ml-auto text-right">
+            <p class="text-3xl font-display font-bold text-brand-orange">{{ plano.progresso }}%</p>
+        </div>
+    </div>
+
+    <div class="w-full bg-white dark:bg-dark-100 rounded-full h-3 border border-gray-200 dark:border-gray-700/50">
+        <div class="bg-brand-orange h-3 rounded-full transition-all" style="width: {{ plano.progresso }}%"></div>
+    </div>
+
+    <div id="itens-plano" class="space-y-2">
+        {% for item in plano.itens.all %}
+        {% include "planos/_item.html" %}
+        {% endfor %}
+    </div>
+
+    {% if not user.is_seller %}
+    <div class="bg-white dark:bg-dark-100 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50">
+        <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4">Adicionar Item</h3>
+        <form hx-post="{% url 'planos:adicionar_item' plano.pk %}" hx-target="#itens-plano" hx-swap="beforeend" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {% csrf_token %}
+            {% load widget_tweaks %}
+            <div class="md:col-span-2">
+                {% render_field item_form.descricao class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange placeholder-gray-500" placeholder="Descricao da tarefa..." %}
+            </div>
+            <div>
+                {% render_field item_form.responsavel class="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark border border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-orange" %}
+            </div>
+            <div>
+                <button type="submit" class="w-full px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">Adicionar</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

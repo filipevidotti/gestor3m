@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}{% if editing %}Editar Proposta{% else %}Nova Proposta{% endif %} — 3M Control{% endblock %}
+{% block page_title %}{% if editing %}Editar Proposta{% else %}Nova Proposta{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto" x-data="criarProposta()">
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Vínculo: cliente existente ou lead -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Identificação</h3>
+
+            <!-- Toggle: cliente ou lead -->
+            <div class="flex items-center gap-4 mb-6">
+                <button type="button" @click="modo = 'cliente'"
+                        :class="modo === 'cliente' ? 'bg-brand-orange text-white' : 'bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Cliente Existente
+                </button>
+                <button type="button" @click="modo = 'lead'"
+                        :class="modo === 'lead' ? 'bg-brand-orange text-white' : 'bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300'"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition">
+                    Novo Lead
+                </button>
+            </div>
+
+            <!-- Cliente existente -->
+            <div x-show="modo === 'cliente'" x-transition>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Selecionar Cliente</label>
+                <select name="cliente"
+                        class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                    <option value="">— Selecione —</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.pk }}" {% if proposta and proposta.cliente_id == c.pk %}selected{% endif %}>{{ c.empresa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Lead -->
+            <div x-show="modo === 'lead'" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Responsável</label>
+                    <input type="text" name="lead_nome" value="{{ proposta.lead_nome|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Loja</label>
+                    <input type="text" name="lead_loja" value="{{ proposta.lead_loja|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
+                    <input type="email" name="lead_email" value="{{ proposta.lead_email|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone</label>
+                    <input type="text" name="lead_telefone" value="{{ proposta.lead_telefone|default:'' }}"
+                           class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+        </div>
+
+        <!-- Perfil do Seller -->
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Perfil do Seller</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Seller *</label>
+                    <select name="tipo_seller" required
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        {% for value, label in tipo_seller_choices %}
+                        <option value="{{ value }}" {% if proposta and proposta.tipo_seller == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Marketplace Principal *</label>
+                    <select name="marketplace" required
+                            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-dark px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                        {% for value, label in marketplace_choices %}
+                        <option value="{{ value }}" {% if proposta and proposta.marketplace == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'propostas:listar' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                {% if editing %}Salvar{% else %}Criar e Iniciar Questionário{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function criarProposta() {
+    return {
+        modo: '{% if proposta and proposta.cliente_id %}cliente{% elif proposta and proposta.lead_nome %}lead{% else %}cliente{% endif %}'
+    }
+}
+</script>
+{% endblock %}

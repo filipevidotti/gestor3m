@@ -89,6 +89,12 @@ class GrupoWhatsApp(BaseModel):
     )
 
     sincronizado_em = models.DateTimeField("última sincronização", null=True, blank=True)
+    ultima_mensagem_enviada = models.DateTimeField(
+        "última mensagem enviada", null=True, blank=True,
+    )
+    ultima_interacao = models.DateTimeField(
+        "última interação", null=True, blank=True,
+    )
 
     objects = ActiveManager()
     all_objects = models.Manager()
@@ -101,3 +107,40 @@ class GrupoWhatsApp(BaseModel):
 
     def __str__(self):
         return self.nome
+
+    @property
+    def dias_sem_interacao(self):
+        if not self.ultima_interacao:
+            return None
+        from django.utils import timezone as tz
+        return (tz.now() - self.ultima_interacao).days
+
+
+class MensagemGrupo(BaseModel):
+    """Mensagem enviada para um grupo WhatsApp."""
+
+    grupo = models.ForeignKey(
+        GrupoWhatsApp,
+        on_delete=models.CASCADE,
+        related_name="mensagens",
+        verbose_name="grupo",
+    )
+    texto = models.TextField("mensagem")
+    enviado_por = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="enviado por",
+    )
+    enviado_em = models.DateTimeField("enviado em", auto_now_add=True)
+    sucesso = models.BooleanField("enviado com sucesso", default=True)
+    erro = models.TextField("erro", blank=True)
+
+    class Meta:
+        db_table = "core_mensagem_grupo"
+        verbose_name = "Mensagem de Grupo"
+        verbose_name_plural = "Mensagens de Grupo"
+        ordering = ["-enviado_em"]
+
+    def __str__(self):
+        return f"{self.grupo.nome} - {self.enviado_em:%d/%m %H:%M}"

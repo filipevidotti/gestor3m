@@ -14,6 +14,9 @@ urlpatterns = [
     # Grupos WhatsApp
     path("grupos/", views.grupos_whatsapp, name="grupos_whatsapp"),
     path("grupos/sincronizar/", views.grupos_sincronizar, name="grupos_sincronizar"),
+    path("grupos/enviar-bulk/", views.grupos_enviar_bulk, name="grupos_enviar_bulk"),
+    path("grupos/<int:pk>/", views.grupo_detalhe, name="grupo_detalhe"),
     path("grupos/<int:pk>/vincular/", views.grupo_vincular, name="grupo_vincular"),
     path("grupos/<int:pk>/toggle/", views.grupo_toggle_ativo, name="grupo_toggle_ativo"),
+    path("grupos/<int:pk>/enviar/", views.grupo_enviar_mensagem, name="grupo_enviar_mensagem"),
 ]

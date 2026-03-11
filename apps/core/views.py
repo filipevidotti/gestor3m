@@ -1,7 +1,9 @@
+import json as json_mod
 import logging
 
 import requests
 from django.contrib import messages
+from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -10,7 +12,7 @@ from django.views.decorators.http import require_POST
 from apps.clientes.models import Cliente
 from apps.core.decorators import consultor_required, gestor_required
 
-from .models import Configuracao, GrupoWhatsApp
+from .models import Configuracao, GrupoWhatsApp, MensagemGrupo
 
 logger = logging.getLogger(__name__)
 
@@ -342,6 +344,8 @@ def _testar_ia():
 @consultor_required
 def grupos_whatsapp(request):
     """Lista de grupos WhatsApp com filtros."""
+    from datetime import timedelta
+
     grupos = GrupoWhatsApp.objects.select_related("cliente").all()
 
     busca = request.GET.get("busca", "").strip()
@@ -360,6 +364,20 @@ def grupos_whatsapp(request):
     elif status == "inativo":
         grupos = grupos.filter(is_active=False)
 
+    interacao = request.GET.get("interacao")
+    if interacao == "sem_interacao":
+        grupos = grupos.filter(ultima_interacao__isnull=True)
+    elif interacao == "7dias":
+        limite = timezone.now() - timedelta(days=7)
+        grupos = grupos.filter(
+            models.Q(ultima_interacao__isnull=True) | models.Q(ultima_interacao__lt=limite)
+        )
+    elif interacao == "30dias":
+        limite = timezone.now() - timedelta(days=30)
+        grupos = grupos.filter(
+            models.Q(ultima_interacao__isnull=True) | models.Q(ultima_interacao__lt=limite)
+        )
+
     clientes = Cliente.objects.filter(is_active=True).order_by("empresa")
 
     return render(request, "core/grupos_whatsapp.html", {
@@ -368,6 +386,7 @@ def grupos_whatsapp(request):
         "busca": busca,
         "filtro_vinculado": vinculado,
         "filtro_status": status,
+        "filtro_interacao": interacao,
     })
 
 
@@ -460,4 +479,110 @@ def grupo_toggle_ativo(request, pk):
     else:
         grupo.restore()
         messages.success(request, f"Grupo '{grupo.nome}' ativado.")
+    return redirect("core:grupos_whatsapp")
+
+
+@consultor_required
+def grupo_detalhe(request, pk):
+    """Detalhe do grupo com histórico de mensagens e envio."""
+    grupo = get_object_or_404(GrupoWhatsApp.objects.select_related("cliente"), pk=pk)
+    mensagens_list = grupo.mensagens.select_related("enviado_por").order_by("-enviado_em")[:50]
+
+    return render(request, "core/grupo_detalhe.html", {
+        "grupo": grupo,
+        "mensagens": mensagens_list,
+    })
+
+
+@consultor_required
+@require_POST
+def grupo_enviar_mensagem(request, pk):
+    """Envia mensagem para um grupo."""
+    from apps.core.services.uazapi import UazapiClient
+
+    grupo = get_object_or_404(GrupoWhatsApp, pk=pk)
+    texto = request.POST.get("texto", "").strip()
+
+    if not texto:
+        messages.error(request, "Mensagem não pode ser vazia.")
+        return redirect("core:grupo_detalhe", pk=pk)
+
+    client = UazapiClient()
+    if not client.base_url or not client.token:
+        messages.error(request, "UAZAPI não configurada.")
+        return redirect("core:grupo_detalhe", pk=pk)
+
+    sucesso = client.enviar_mensagem_grupo(grupo.group_id, texto)
+    agora = timezone.now()
+
+    MensagemGrupo.objects.create(
+        grupo=grupo,
+        texto=texto,
+        enviado_por=request.user,
+        sucesso=sucesso,
+        erro="" if sucesso else "Falha no envio via UAZAPI",
+    )
+
+    if sucesso:
+        grupo.ultima_mensagem_enviada = agora
+        grupo.ultima_interacao = agora
+        grupo.save(update_fields=["ultima_mensagem_enviada", "ultima_interacao", "updated_at"])
+        messages.success(request, "Mensagem enviada com sucesso!")
+    else:
+        messages.error(request, "Erro ao enviar mensagem. Verifique a conexão com UAZAPI.")
+
+    return redirect("core:grupo_detalhe", pk=pk)
+
+
+@consultor_required
+@require_POST
+def grupos_enviar_bulk(request):
+    """Envia mensagem para múltiplos grupos selecionados."""
+    from apps.core.services.uazapi import UazapiClient
+
+    grupo_ids = request.POST.getlist("grupo_ids")
+    texto = request.POST.get("texto", "").strip()
+
+    if not texto:
+        messages.error(request, "Mensagem não pode ser vazia.")
+        return redirect("core:grupos_whatsapp")
+
+    if not grupo_ids:
+        messages.error(request, "Selecione pelo menos um grupo.")
+        return redirect("core:grupos_whatsapp")
+
+    client = UazapiClient()
+    if not client.base_url or not client.token:
+        messages.error(request, "UAZAPI não configurada.")
+        return redirect("core:grupos_whatsapp")
+
+    enviados = 0
+    erros = 0
+    agora = timezone.now()
+
+    grupos = GrupoWhatsApp.objects.filter(pk__in=grupo_ids, is_active=True)
+    for grupo in grupos:
+        sucesso = client.enviar_mensagem_grupo(grupo.group_id, texto)
+
+        MensagemGrupo.objects.create(
+            grupo=grupo,
+            texto=texto,
+            enviado_por=request.user,
+            sucesso=sucesso,
+            erro="" if sucesso else "Falha no envio via UAZAPI",
+        )
+
+        if sucesso:
+            grupo.ultima_mensagem_enviada = agora
+            grupo.ultima_interacao = agora
+            grupo.save(update_fields=["ultima_mensagem_enviada", "ultima_interacao", "updated_at"])
+            enviados += 1
+        else:
+            erros += 1
+
+    if enviados:
+        messages.success(request, f"Mensagem enviada para {enviados} grupo(s)!")
+    if erros:
+        messages.warning(request, f"Falha ao enviar para {erros} grupo(s).")
+
     return redirect("core:grupos_whatsapp")

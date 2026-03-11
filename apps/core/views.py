@@ -7,6 +7,7 @@ from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from apps.clientes.models import Cliente
@@ -586,3 +587,89 @@ def grupos_enviar_bulk(request):
         messages.warning(request, f"Falha ao enviar para {erros} grupo(s).")
 
     return redirect("core:grupos_whatsapp")
+
+
+# ── Webhook UAZAPI ──────────────────────────────────────────────
+
+
+@csrf_exempt
+@require_POST
+def uazapi_webhook(request):
+    """Recebe eventos da UAZAPI (mensagens recebidas, status, etc).
+
+    Configura no painel UAZAPI:
+    URL: https://gestor.3mconsultoria.com.br/webhook/uazapi/
+    """
+    try:
+        data = json_mod.loads(request.body)
+    except (json_mod.JSONDecodeError, ValueError):
+        return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
+
+    event = data.get("event", "")
+    logger.info("UAZAPI webhook recebido: %s", event)
+
+    # Mensagem recebida em grupo
+    if event in ("messages.upsert", "message", "messages"):
+        _processar_mensagem_webhook(data)
+    elif event in ("group.update", "groups.update"):
+        _processar_grupo_update_webhook(data)
+
+    return JsonResponse({"status": "ok"})
+
+
+def _processar_mensagem_webhook(data):
+    """Processa mensagem recebida — atualiza ultima_interacao do grupo."""
+    try:
+        msg_data = data.get("data", data)
+
+        if isinstance(msg_data, list):
+            msg_data = msg_data[0] if msg_data else {}
+
+        remote_jid = (
+            msg_data.get("key", {}).get("remoteJid", "")
+            or msg_data.get("remoteJid", "")
+            or msg_data.get("from", "")
+            or msg_data.get("chatId", "")
+        )
+
+        # Só processa mensagens de grupo (@g.us)
+        if "@g.us" not in remote_jid:
+            return
+
+        agora = timezone.now()
+        updated = GrupoWhatsApp.all_objects.filter(group_id=remote_jid).update(
+            ultima_interacao=agora,
+        )
+        if updated:
+            logger.info("Interação atualizada para grupo %s", remote_jid)
+
+    except Exception:
+        logger.exception("Erro ao processar webhook de mensagem")
+
+
+def _processar_grupo_update_webhook(data):
+    """Processa atualização de grupo — atualiza nome/participantes."""
+    try:
+        group_data = data.get("data", data)
+        if isinstance(group_data, list):
+            group_data = group_data[0] if group_data else {}
+
+        gid = group_data.get("JID") or group_data.get("jid") or group_data.get("id", "")
+        if not gid:
+            return
+
+        updates = {}
+        nome = group_data.get("Name") or group_data.get("subject")
+        if nome:
+            updates["nome"] = nome[:300]
+
+        size = group_data.get("ParticipantCount") or group_data.get("size")
+        if size and isinstance(size, int):
+            updates["participantes_count"] = size
+
+        if updates:
+            GrupoWhatsApp.all_objects.filter(group_id=gid).update(**updates)
+            logger.info("Grupo %s atualizado via webhook", gid)
+
+    except Exception:
+        logger.exception("Erro ao processar webhook de grupo")

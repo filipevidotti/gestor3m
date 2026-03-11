@@ -3,6 +3,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.core.views import uazapi_webhook
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("apps.dashboard.urls")),
@@ -32,6 +34,8 @@ urlpatterns = [
     path("jornadas/", include("apps.jornadas.urls")),
     path("calendario/", include("apps.calendario_promocional.urls")),
     path("sistema/", include("apps.core.urls")),
+    # Webhooks (públicos, sem auth)
+    path("webhook/uazapi/", uazapi_webhook, name="uazapi_webhook"),
 ]
 
 if settings.DEBUG:

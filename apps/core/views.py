@@ -695,52 +695,65 @@ def _parece_grupo(data):
 
 
 def _extrair_jid_mensagem(data):
-    """Extrai o JID do grupo/chat de qualquer formato de payload UAZAPI.
+    """Extrai o JID do grupo/chat do payload UAZAPI GO.
 
-    Formatos conhecidos:
-    - {key: {remoteJid: "xxx@g.us"}}
-    - {chat: {wa_chatid: "xxx@g.us"}}
-    - {data: {key: {remoteJid: ...}}}
+    Formato real:
+    - message.chatid = "120363400263815560@g.us"
+    - chat.wa_chatid = "120363400263815560@g.us"
     """
+    message = data.get("message", {})
+    chat = data.get("chat", {})
     msg_data = data.get("data", data)
     if isinstance(msg_data, list):
         msg_data = msg_data[0] if msg_data else {}
 
-    chat = data.get("chat", {})
-
     jid = (
-        # Formato UAZAPI GO: chat.wa_chatid
-        chat.get("wa_chatid", "")
-        # Formato key.remoteJid
+        # UAZAPI GO: message.chatid
+        (message.get("chatid", "") if isinstance(message, dict) else "")
+        # UAZAPI GO: chat.wa_chatid
+        or chat.get("wa_chatid", "")
+        # Formato key.remoteJid (fallback)
         or data.get("key", {}).get("remoteJid", "")
         or msg_data.get("key", {}).get("remoteJid", "")
-        # Outros formatos
         or msg_data.get("remoteJid", "")
-        or data.get("remoteJid", "")
-        or msg_data.get("from", "")
-        or data.get("from", "")
-        or msg_data.get("chatId", "")
         or data.get("chatId", "")
     )
     return jid
 
 
-def _extrair_texto_mensagem(data):
-    """Extrai o texto da mensagem do payload UAZAPI."""
-    msg_data = data.get("data", data)
-    if isinstance(msg_data, list):
-        msg_data = msg_data[0] if msg_data else {}
+def _extrair_msg_id(data):
+    """Extrai ID único da mensagem para evitar duplicatas."""
+    message = data.get("message", {})
+    if isinstance(message, dict):
+        return message.get("id", "")
+    return ""
 
-    # Tenta campo message (objeto)
-    msg_obj = data.get("message", msg_data.get("message", {}))
-    if isinstance(msg_obj, dict):
+
+def _extrair_texto_mensagem(data):
+    """Extrai o texto da mensagem do payload UAZAPI GO.
+
+    Formato real:
+    - message.content = "texto" (string) ou {text: "texto"} (objeto)
+    """
+    message = data.get("message", {})
+    if isinstance(message, dict):
+        # UAZAPI GO: message.content (pode ser string ou dict)
+        content = message.get("content", "")
+        if isinstance(content, str) and content:
+            return content
+        if isinstance(content, dict):
+            texto = content.get("text", "") or content.get("caption", "")
+            if texto:
+                return texto
+
+        # Fallback: campos tradicionais
         texto = (
-            msg_obj.get("conversation", "")
-            or msg_obj.get("extendedTextMessage", {}).get("text", "")
-            or msg_obj.get("text", "")
-            or msg_obj.get("caption", "")
-            or msg_obj.get("imageMessage", {}).get("caption", "")
-            or msg_obj.get("videoMessage", {}).get("caption", "")
+            message.get("conversation", "")
+            or message.get("text", "")
+            or message.get("caption", "")
+            or message.get("extendedTextMessage", {}).get("text", "")
+            or message.get("imageMessage", {}).get("caption", "")
+            or message.get("videoMessage", {}).get("caption", "")
         )
         if texto:
             return texto
@@ -751,42 +764,48 @@ def _extrair_texto_mensagem(data):
     if texto:
         return texto
 
-    # Texto direto no payload
-    texto = msg_data.get("text", "") or msg_data.get("body", "") or data.get("text", "")
-    return texto
+    return ""
 
 
 def _extrair_remetente(data):
-    """Extrai nome/telefone do remetente."""
-    msg_data = data.get("data", data)
-    if isinstance(msg_data, list):
-        msg_data = msg_data[0] if msg_data else {}
+    """Extrai nome/telefone do remetente do payload UAZAPI GO.
 
-    chat = data.get("chat", {})
+    Formato real:
+    - message.pushName = "João"
+    - message.senderName = "João"
+    - chat.wa_lastMessageSender = "272966663307443@lid"
+    """
     message = data.get("message", {})
+    chat = data.get("chat", {})
 
-    push_name = (
-        data.get("pushName", "")
-        or msg_data.get("pushName", "")
-        or msg_data.get("senderName", "")
-        # UAZAPI GO: chat.wa_contactName ou chat.wa_name
-        or chat.get("wa_contactName", "")
-        or chat.get("wa_name", "")
-        or chat.get("name", "")
-    )
+    push_name = ""
+    if isinstance(message, dict):
+        push_name = (
+            message.get("pushName", "")
+            or message.get("senderName", "")
+        )
 
-    participant = (
-        data.get("key", {}).get("participant", "")
-        or msg_data.get("key", {}).get("participant", "")
-        or msg_data.get("participant", "")
-        # UAZAPI GO: chat.wa_lastMessageSender
-        or chat.get("wa_lastMessageSender", "")
-        # message.key.participant
-        or (message.get("key", {}).get("participant", "") if isinstance(message, dict) else "")
-    )
+    if not push_name:
+        push_name = (
+            data.get("pushName", "")
+            or chat.get("wa_contactName", "")
+        )
 
-    # Se participant é um LID (@lid), não serve como telefone legível
-    # Mas o push_name pode não estar disponível — usar nome do chat como fallback
+    participant = ""
+    if isinstance(message, dict):
+        participant = (
+            message.get("participant", "")
+            or message.get("key", {}).get("participant", "")
+        )
+
+    if not participant:
+        participant = (
+            data.get("key", {}).get("participant", "")
+            or chat.get("wa_lastMessageSender", "")
+        )
+
+    # Se participant é um LID (@lid) e sem pushName,
+    # usar nome do grupo/chat como fallback genérico
     if not push_name and participant and "@lid" in participant:
         push_name = chat.get("wa_name", "") or chat.get("name", "")
 
@@ -799,10 +818,12 @@ def _processar_mensagem_webhook(data):
         remote_jid = _extrair_jid_mensagem(data)
         texto = _extrair_texto_mensagem(data)
         push_name, participant = _extrair_remetente(data)
+        msg_id = _extrair_msg_id(data)
 
         logger.info(
-            "UAZAPI msg: jid=%s, push=%s, participant=%s, texto=%s",
-            remote_jid, push_name, participant, texto[:100] if texto else "(sem texto)",
+            "UAZAPI msg: jid=%s, push=%s, participant=%s, id=%s, texto=%s",
+            remote_jid, push_name, participant, msg_id,
+            texto[:100] if texto else "(sem texto)",
         )
 
         # Só processa mensagens de grupo (@g.us)
@@ -819,18 +840,36 @@ def _processar_mensagem_webhook(data):
         if updated:
             logger.info("Interação atualizada para grupo %s", remote_jid)
 
+            # Anti-duplicata: verificar se já processamos esta msg_id
+            if msg_id:
+                from datetime import timedelta
+                recente = agora - timedelta(minutes=2)
+                ja_existe = MensagemGrupo.objects.filter(
+                    grupo__group_id=remote_jid,
+                    erro=msg_id,  # Usar campo erro para guardar msg_id
+                    enviado_em__gte=recente,
+                ).exists()
+                if ja_existe:
+                    logger.debug("Msg duplicada ignorada: %s", msg_id)
+                    return
+
             # Salva mensagem recebida no histórico
             grupo = GrupoWhatsApp.all_objects.filter(group_id=remote_jid).first()
             if grupo:
                 remetente_info = push_name or participant or "Desconhecido"
+                # Limpar LID do remetente_telefone
+                telefone = participant.split("@")[0] if participant else ""
+                if telefone and not telefone.replace("+", "").isdigit():
+                    telefone = ""  # LIDs não são telefones
+
                 MensagemGrupo.objects.create(
                     grupo=grupo,
                     texto=texto[:5000] if texto else f"[Mensagem de {remetente_info}]",
-                    enviado_por=None,  # Mensagem externa, não do sistema
+                    enviado_por=None,
                     sucesso=True,
-                    erro="",
+                    erro=msg_id,  # Guardar msg_id para anti-duplicata
                     remetente_nome=remetente_info[:200],
-                    remetente_telefone=participant.split("@")[0] if participant else "",
+                    remetente_telefone=telefone[:50],
                     origem="webhook",
                 )
         else:

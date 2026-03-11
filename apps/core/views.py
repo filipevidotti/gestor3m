@@ -693,21 +693,31 @@ def _parece_grupo(data):
 
 
 def _extrair_jid_mensagem(data):
-    """Extrai o JID do grupo/chat de qualquer formato de payload UAZAPI."""
-    # Formato: {data: {key: {remoteJid: ...}}}
+    """Extrai o JID do grupo/chat de qualquer formato de payload UAZAPI.
+
+    Formatos conhecidos:
+    - {key: {remoteJid: "xxx@g.us"}}
+    - {chat: {wa_chatid: "xxx@g.us"}}
+    - {data: {key: {remoteJid: ...}}}
+    """
     msg_data = data.get("data", data)
     if isinstance(msg_data, list):
         msg_data = msg_data[0] if msg_data else {}
 
-    # Tenta vários caminhos conhecidos
+    chat = data.get("chat", {})
+
     jid = (
-        msg_data.get("key", {}).get("remoteJid", "")
-        or msg_data.get("remoteJid", "")
-        or msg_data.get("from", "")
-        or msg_data.get("chatId", "")
+        # Formato UAZAPI GO: chat.wa_chatid
+        chat.get("wa_chatid", "")
+        # Formato key.remoteJid
         or data.get("key", {}).get("remoteJid", "")
+        or msg_data.get("key", {}).get("remoteJid", "")
+        # Outros formatos
+        or msg_data.get("remoteJid", "")
         or data.get("remoteJid", "")
+        or msg_data.get("from", "")
         or data.get("from", "")
+        or msg_data.get("chatId", "")
         or data.get("chatId", "")
     )
     return jid
@@ -719,8 +729,8 @@ def _extrair_texto_mensagem(data):
     if isinstance(msg_data, list):
         msg_data = msg_data[0] if msg_data else {}
 
-    # Tenta vários caminhos
-    msg_obj = msg_data.get("message", data.get("message", {}))
+    # Tenta campo message (objeto)
+    msg_obj = data.get("message", msg_data.get("message", {}))
     if isinstance(msg_obj, dict):
         texto = (
             msg_obj.get("conversation", "")
@@ -733,6 +743,12 @@ def _extrair_texto_mensagem(data):
         if texto:
             return texto
 
+    # UAZAPI GO: chat.wa_lastMessageTextVote
+    chat = data.get("chat", {})
+    texto = chat.get("wa_lastMessageTextVote", "")
+    if texto:
+        return texto
+
     # Texto direto no payload
     texto = msg_data.get("text", "") or msg_data.get("body", "") or data.get("text", "")
     return texto
@@ -744,16 +760,22 @@ def _extrair_remetente(data):
     if isinstance(msg_data, list):
         msg_data = msg_data[0] if msg_data else {}
 
+    chat = data.get("chat", {})
+
     push_name = (
-        msg_data.get("pushName", "")
-        or data.get("pushName", "")
+        data.get("pushName", "")
+        or msg_data.get("pushName", "")
         or msg_data.get("senderName", "")
+        # UAZAPI GO: chat.wa_name como fallback
+        or chat.get("wa_contactName", "")
     )
 
     participant = (
-        msg_data.get("key", {}).get("participant", "")
-        or data.get("key", {}).get("participant", "")
+        data.get("key", {}).get("participant", "")
+        or msg_data.get("key", {}).get("participant", "")
         or msg_data.get("participant", "")
+        # UAZAPI GO: chat.wa_lastMessageSender
+        or chat.get("wa_lastMessageSender", "")
     )
 
     return push_name, participant

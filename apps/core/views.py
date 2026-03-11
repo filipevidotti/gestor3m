@@ -1,17 +1,27 @@
-import json
+import logging
 
+import requests
 from django.contrib import messages
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from apps.core.decorators import gestor_required
+from apps.clientes.models import Cliente
+from apps.core.decorators import consultor_required, gestor_required
 
-from .models import Configuracao
+from .models import Configuracao, GrupoWhatsApp
+
+logger = logging.getLogger(__name__)
 
 
 # ── Ícones e descrições por categoria ──────────────────────────────
 CATEGORIA_META = {
+    "uazapi": {
+        "icone": '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
+        "cor": "green",
+        "descricao": "UAZAPI — WhatsApp API para mensagens e gestão de grupos.",
+    },
     "google": {
         "icone": '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
         "cor": "blue",
@@ -20,7 +30,7 @@ CATEGORIA_META = {
     "evolution": {
         "icone": '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
         "cor": "green",
-        "descricao": "API Evolution para envio de mensagens via WhatsApp.",
+        "descricao": "Evolution API (WhatsApp) — Descontinuado, migrar para UAZAPI.",
     },
     "brevo": {
         "icone": '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
@@ -96,7 +106,7 @@ def configuracoes(request):
 @gestor_required
 @require_POST
 def configuracao_salvar(request):
-    """Salva uma configuração individual via HTMX."""
+    """Salva uma configuração individual."""
     config_id = request.POST.get("config_id")
     valor = request.POST.get("valor", "")
 
@@ -157,32 +167,279 @@ def configuracao_excluir(request, pk):
 
 @gestor_required
 @require_POST
-def configuracao_testar(request, pk):
-    """Testa a conexão de uma integração."""
-    config = Configuracao.objects.get(pk=pk)
+def configuracao_testar_categoria(request, categoria):
+    """Testa a conexão de uma integração por categoria."""
 
-    # Testes básicos por categoria
-    resultado = {"sucesso": False, "mensagem": "Teste não implementado para esta categoria."}
+    testers = {
+        "uazapi": _testar_uazapi,
+        "google": _testar_google,
+        "brevo": _testar_brevo,
+        "asaas": _testar_asaas,
+        "autentique": _testar_autentique,
+        "ia": _testar_ia,
+        "evolution": _testar_uazapi,  # fallback
+    }
 
-    if config.categoria == "evolution":
-        from apps.core.services.evolution import EvolutionClient
-        try:
-            client = EvolutionClient()
-            # Verifica se a instância está conectada
-            resultado = {"sucesso": True, "mensagem": "Conexão Evolution OK!"}
-        except Exception as e:
-            resultado = {"sucesso": False, "mensagem": str(e)}
+    tester = testers.get(categoria)
+    if not tester:
+        messages.warning(request, f"Teste não disponível para '{categoria}'.")
+        return redirect("core:configuracoes")
 
-    elif config.categoria == "ia":
-        valor = Configuracao.get("OPENAI_API_KEY")
-        if valor and len(valor) > 10:
-            resultado = {"sucesso": True, "mensagem": "API Key configurada (validação externa necessária)."}
+    try:
+        sucesso, mensagem = tester()
+        if sucesso:
+            messages.success(request, mensagem)
         else:
-            resultado = {"sucesso": False, "mensagem": "API Key não configurada ou inválida."}
-
-    if resultado["sucesso"]:
-        messages.success(request, resultado["mensagem"])
-    else:
-        messages.error(request, resultado["mensagem"])
+            messages.error(request, mensagem)
+    except Exception as e:
+        logger.exception("Erro ao testar %s", categoria)
+        messages.error(request, f"Erro ao testar: {e}")
 
     return redirect("core:configuracoes")
+
+
+# ── Funções de teste por categoria ─────────────────────────────────
+
+
+def _testar_uazapi():
+    url = Configuracao.get("UAZAPI_URL")
+    token = Configuracao.get("UAZAPI_TOKEN")
+    if not url or not token:
+        return False, "UAZAPI_URL e UAZAPI_TOKEN não configurados."
+    try:
+        resp = requests.get(
+            f"{url.rstrip('/')}/status",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            return True, f"UAZAPI conectado! Status: {resp.status_code}"
+        return False, f"UAZAPI retornou status {resp.status_code}: {resp.text[:200]}"
+    except requests.ConnectionError:
+        return False, "Não foi possível conectar à UAZAPI. Verifique a URL."
+    except Exception as e:
+        return False, f"Erro: {e}"
+
+
+def _testar_google():
+    client_id = Configuracao.get("GOOGLE_CLIENT_ID")
+    client_secret = Configuracao.get("GOOGLE_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        return False, "GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET não configurados."
+    if len(client_id) > 10 and len(client_secret) > 10:
+        return True, "Google Calendar configurado (credenciais presentes). Conecte via Agenda > Config."
+    return False, "Credenciais parecem inválidas (muito curtas)."
+
+
+def _testar_brevo():
+    api_key = Configuracao.get("BREVO_API_KEY")
+    if not api_key:
+        return False, "BREVO_API_KEY não configurado."
+    try:
+        resp = requests.get(
+            "https://api.brevo.com/v3/account",
+            headers={"api-key": api_key, "Accept": "application/json"},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            return True, f"Brevo conectado! Conta: {data.get('email', 'OK')}"
+        return False, f"Brevo retornou status {resp.status_code}"
+    except Exception as e:
+        return False, f"Erro ao testar Brevo: {e}"
+
+
+def _testar_asaas():
+    api_key = Configuracao.get("ASAAS_API_KEY")
+    env = Configuracao.get("ASAAS_ENVIRONMENT", "sandbox")
+    if not api_key:
+        return False, "ASAAS_API_KEY não configurado."
+    base = "https://api.asaas.com/v3" if env == "production" else "https://sandbox.asaas.com/api/v3"
+    try:
+        resp = requests.get(
+            f"{base}/finance/balance",
+            headers={"access_token": api_key, "Content-Type": "application/json"},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            return True, f"Asaas conectado! Saldo: R$ {data.get('balance', '?')}"
+        return False, f"Asaas retornou status {resp.status_code}: {resp.text[:200]}"
+    except Exception as e:
+        return False, f"Erro ao testar Asaas: {e}"
+
+
+def _testar_autentique():
+    token = Configuracao.get("AUTENTIQUE_API_TOKEN")
+    if not token:
+        return False, "AUTENTIQUE_API_TOKEN não configurado."
+    try:
+        resp = requests.post(
+            "https://api.autentique.com.br/v2/graphql",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"query": "{ me { id email } }"},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            me = data.get("data", {}).get("me", {})
+            return True, f"Autentique conectado! E-mail: {me.get('email', 'OK')}"
+        return False, f"Autentique retornou status {resp.status_code}"
+    except Exception as e:
+        return False, f"Erro ao testar Autentique: {e}"
+
+
+def _testar_ia():
+    provider = Configuracao.get("IA_PROVIDER", "openai")
+    api_key = Configuracao.get("OPENAI_API_KEY")
+    if not api_key:
+        return False, "OPENAI_API_KEY não configurado."
+    try:
+        if provider == "openai":
+            resp = requests.get(
+                "https://api.openai.com/v1/models",
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                return True, "OpenAI conectado! API Key válida."
+            return False, f"OpenAI retornou status {resp.status_code}"
+        else:
+            # Anthropic
+            resp = requests.get(
+                "https://api.anthropic.com/v1/models",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                },
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                return True, "Anthropic conectado! API Key válida."
+            return False, f"Anthropic retornou status {resp.status_code}"
+    except Exception as e:
+        return False, f"Erro ao testar IA: {e}"
+
+
+# ── WhatsApp Groups ──────────────────────────────────────────────
+
+
+@consultor_required
+def grupos_whatsapp(request):
+    """Lista de grupos WhatsApp com filtros."""
+    grupos = GrupoWhatsApp.objects.select_related("cliente").all()
+
+    busca = request.GET.get("busca", "").strip()
+    if busca:
+        grupos = grupos.filter(nome__icontains=busca)
+
+    vinculado = request.GET.get("vinculado")
+    if vinculado == "sim":
+        grupos = grupos.filter(cliente__isnull=False)
+    elif vinculado == "nao":
+        grupos = grupos.filter(cliente__isnull=True)
+
+    status = request.GET.get("status")
+    if status == "ativo":
+        grupos = grupos.filter(is_active=True)
+    elif status == "inativo":
+        grupos = grupos.filter(is_active=False)
+
+    clientes = Cliente.objects.filter(is_active=True).order_by("empresa")
+
+    return render(request, "core/grupos_whatsapp.html", {
+        "grupos": grupos,
+        "clientes": clientes,
+        "busca": busca,
+        "filtro_vinculado": vinculado,
+        "filtro_status": status,
+    })
+
+
+@gestor_required
+@require_POST
+def grupos_sincronizar(request):
+    """Sincroniza grupos do WhatsApp via UAZAPI."""
+    from apps.core.services.uazapi import UazapiClient
+
+    client = UazapiClient()
+    if not client.base_url or not client.token:
+        messages.error(request, "UAZAPI não configurada. Vá em Configurações e preencha UAZAPI_URL e UAZAPI_TOKEN.")
+        return redirect("core:grupos_whatsapp")
+
+    try:
+        grupos_api = client.listar_grupos()
+    except Exception as e:
+        messages.error(request, f"Erro ao conectar com UAZAPI: {e}")
+        return redirect("core:grupos_whatsapp")
+
+    if not grupos_api:
+        messages.warning(request, "Nenhum grupo encontrado na UAZAPI.")
+        return redirect("core:grupos_whatsapp")
+
+    criados = 0
+    atualizados = 0
+    agora = timezone.now()
+
+    for g in grupos_api:
+        # Normalizar campos (a API pode usar nomes diferentes)
+        gid = g.get("id") or g.get("jid") or g.get("groupId", "")
+        nome = g.get("subject") or g.get("name") or g.get("groupName", "Sem nome")
+        desc = g.get("desc") or g.get("description", "")
+        foto = g.get("profilePicUrl") or g.get("imgUrl", "")
+        size = g.get("size") or g.get("participants", 0)
+        if isinstance(size, list):
+            size = len(size)
+
+        if not gid:
+            continue
+
+        grupo, created = GrupoWhatsApp.all_objects.update_or_create(
+            group_id=gid,
+            defaults={
+                "nome": nome[:300],
+                "descricao": desc,
+                "foto_url": foto[:200] if foto else "",
+                "participantes_count": size,
+                "sincronizado_em": agora,
+            },
+        )
+        if created:
+            criados += 1
+        else:
+            atualizados += 1
+
+    messages.success(request, f"Sincronização concluída! {criados} novos, {atualizados} atualizados.")
+    return redirect("core:grupos_whatsapp")
+
+
+@consultor_required
+@require_POST
+def grupo_vincular(request, pk):
+    """Vincula um grupo a um cliente."""
+    grupo = get_object_or_404(GrupoWhatsApp, pk=pk)
+    cliente_id = request.POST.get("cliente_id")
+
+    if cliente_id:
+        grupo.cliente_id = int(cliente_id)
+    else:
+        grupo.cliente = None
+    grupo.save(update_fields=["cliente", "updated_at"])
+
+    nome_cliente = grupo.cliente.empresa if grupo.cliente else "nenhum"
+    messages.success(request, f"Grupo '{grupo.nome}' vinculado a: {nome_cliente}")
+    return redirect("core:grupos_whatsapp")
+
+
+@consultor_required
+@require_POST
+def grupo_toggle_ativo(request, pk):
+    """Ativa/desativa um grupo."""
+    grupo = get_object_or_404(GrupoWhatsApp.all_objects, pk=pk)
+    if grupo.is_active:
+        grupo.soft_delete()
+        messages.success(request, f"Grupo '{grupo.nome}' desativado.")
+    else:
+        grupo.restore()
+        messages.success(request, f"Grupo '{grupo.nome}' ativado.")
+    return redirect("core:grupos_whatsapp")

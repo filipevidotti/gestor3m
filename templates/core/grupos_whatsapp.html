@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Grupos WhatsApp — 3M Control{% endblock %}
+{% block page_title %}Grupos WhatsApp{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Grupos WhatsApp</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Gerencie os grupos e vincule a clientes
+            </p>
+        </div>
+        <form method="post" action="{% url 'core:grupos_sincronizar' %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Sincronizar da UAZAPI
+            </button>
+        </form>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar</label>
+                <input type="text" name="busca" value="{{ busca }}"
+                       placeholder="Nome do grupo..."
+                       class="w-full rounded-lg bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-brand-orange focus:border-brand-orange placeholder-gray-400 dark:placeholder-gray-500">
+            </div>
+            <div class="w-40">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vinculação</label>
+                <select name="vinculado"
+                        class="w-full rounded-lg bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-brand-orange">
+                    <option value="">Todos</option>
+                    <option value="sim" {% if filtro_vinculado == 'sim' %}selected{% endif %}>Vinculados</option>
+                    <option value="nao" {% if filtro_vinculado == 'nao' %}selected{% endif %}>Sem cliente</option>
+                </select>
+            </div>
+            <div class="w-36">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                <select name="status"
+                        class="w-full rounded-lg bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-brand-orange">
+                    <option value="">Todos</option>
+                    <option value="ativo" {% if filtro_status == 'ativo' %}selected{% endif %}>Ativos</option>
+                    <option value="inativo" {% if filtro_status == 'inativo' %}selected{% endif %}>Inativos</option>
+                </select>
+            </div>
+            <button type="submit"
+                    class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-200/80 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                Filtrar
+            </button>
+        </form>
+    </div>
+
+    <!-- Tabela -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700/50">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-dark-200/50">
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Grupo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Participantes</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente Vinculado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-700/30">
+                    {% for grupo in grupos %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-dark-200/30 transition-colors {% if not grupo.is_active %}opacity-50{% endif %}">
+                        <!-- Grupo -->
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-green-500/10 dark:bg-green-500/20 flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ grupo.nome }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 font-mono">{{ grupo.group_id|truncatechars:30 }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <!-- Participantes -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                {{ grupo.participantes_count }}
+                            </span>
+                        </td>
+                        <!-- Cliente -->
+                        <td class="px-6 py-4" x-data="{ editando: false }">
+                            <div x-show="!editando" class="flex items-center gap-2">
+                                {% if grupo.cliente %}
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                    {{ grupo.cliente.empresa }}
+                                </span>
+                                {% else %}
+                                <span class="text-xs text-gray-400 dark:text-gray-500 italic">Não vinculado</span>
+                                {% endif %}
+                                <button @click="editando = true" class="text-gray-400 hover:text-brand-orange transition p-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                </button>
+                            </div>
+                            <form x-show="editando" x-cloak method="post" action="{% url 'core:grupo_vincular' grupo.pk %}" class="flex items-center gap-2">
+                                {% csrf_token %}
+                                <select name="cliente_id" class="rounded-lg bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 px-2 py-1 text-xs text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-brand-orange">
+                                    <option value="">— Nenhum —</option>
+                                    {% for c in clientes %}
+                                    <option value="{{ c.pk }}" {% if grupo.cliente_id == c.pk %}selected{% endif %}>{{ c.empresa }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="text-success hover:text-success/80 p-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                                <button type="button" @click="editando = false" class="text-gray-400 hover:text-gray-600 p-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </form>
+                        </td>
+                        <!-- Status -->
+                        <td class="px-6 py-4">
+                            {% if grupo.is_active %}
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-success/10 text-success">Ativo</span>
+                            {% else %}
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-500/10 text-gray-500">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <!-- Ações -->
+                        <td class="px-6 py-4 text-right">
+                            <form method="post" action="{% url 'core:grupo_toggle_ativo' grupo.pk %}" class="inline">
+                                {% csrf_token %}
+                                {% if grupo.is_active %}
+                                <button type="submit" title="Desativar grupo"
+                                        class="inline-flex items-center p-2 text-gray-400 hover:text-danger hover:bg-danger/10 rounded-lg transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                                </button>
+                                {% else %}
+                                <button type="submit" title="Ativar grupo"
+                                        class="inline-flex items-center p-2 text-gray-400 hover:text-success hover:bg-success/10 rounded-lg transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">Nenhum grupo encontrado</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Clique em "Sincronizar da UAZAPI" para importar os grupos.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Info -->
+    {% if grupos %}
+    <div class="text-xs text-gray-400 dark:text-gray-500 text-center">
+        {{ grupos|length }} grupo{{ grupos|length|pluralize:"s" }} encontrado{{ grupos|length|pluralize:"s" }}
+        {% if grupos.0.sincronizado_em %}
+         · Última sincronização: {{ grupos.0.sincronizado_em|date:"d/m/Y H:i" }}
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

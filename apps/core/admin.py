@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Configuracao
+from .models import Configuracao, GrupoWhatsApp
 
 
 @admin.register(Configuracao)
@@ -27,3 +27,13 @@ class ConfiguracaoAdmin(admin.ModelAdmin):
         return obj.valor[:80] + ("..." if len(obj.valor) > 80 else "")
 
     valor_display.short_description = "Valor"
+
+
+@admin.register(GrupoWhatsApp)
+class GrupoWhatsAppAdmin(admin.ModelAdmin):
+    list_display = ("nome", "group_id", "cliente", "participantes_count", "is_active", "sincronizado_em")
+    list_filter = ("is_active",)
+    search_fields = ("nome", "group_id", "cliente__empresa")
+    list_editable = ("is_active", "cliente")
+    raw_id_fields = ("cliente",)
+    readonly_fields = ("group_id", "sincronizado_em")

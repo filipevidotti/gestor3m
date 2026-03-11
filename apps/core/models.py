@@ -28,8 +28,9 @@ class Configuracao(models.Model):
     """Configurações globais do sistema (singleton por chave)."""
 
     class Categoria(models.TextChoices):
+        UAZAPI = "uazapi", "UAZAPI (WhatsApp)"
         GOOGLE = "google", "Google (Calendar)"
-        EVOLUTION = "evolution", "Evolution API (WhatsApp)"
+        EVOLUTION = "evolution", "Evolution API (WhatsApp) — Legado"
         BREVO = "brevo", "Brevo (E-mail)"
         ASAAS = "asaas", "Asaas (Pagamentos)"
         AUTENTIQUE = "autentique", "Autentique (Assinatura Digital)"
@@ -64,3 +65,39 @@ class Configuracao(models.Model):
             return cls.objects.get(chave=chave).valor
         except cls.DoesNotExist:
             return default
+
+
+class GrupoWhatsApp(BaseModel):
+    """Grupo WhatsApp sincronizado via UAZAPI, vinculável a um cliente."""
+
+    group_id = models.CharField(
+        "ID do grupo", max_length=100, unique=True,
+        help_text="ID retornado pela API (ex: 5511999999999-1234567890@g.us)",
+    )
+    nome = models.CharField("nome do grupo", max_length=300)
+    descricao = models.TextField("descrição", blank=True)
+    foto_url = models.URLField("foto URL", blank=True)
+    participantes_count = models.PositiveIntegerField("nº participantes", default=0)
+
+    cliente = models.ForeignKey(
+        "clientes.Cliente",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="grupos_whatsapp",
+        verbose_name="cliente vinculado",
+    )
+
+    sincronizado_em = models.DateTimeField("última sincronização", null=True, blank=True)
+
+    objects = ActiveManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        db_table = "core_grupo_whatsapp"
+        verbose_name = "Grupo WhatsApp"
+        verbose_name_plural = "Grupos WhatsApp"
+        ordering = ["nome"]
+
+    def __str__(self):
+        return self.nome

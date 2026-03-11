@@ -347,7 +347,24 @@ def grupos_whatsapp(request):
     """Lista de grupos WhatsApp com filtros."""
     from datetime import timedelta
 
-    grupos = GrupoWhatsApp.objects.select_related("cliente").all()
+    from django.db.models import OuterRef, Subquery
+
+    # Subquery: última mensagem de cada grupo
+    ultima_msg = MensagemGrupo.objects.filter(
+        grupo=OuterRef("pk"),
+    ).order_by("-enviado_em")
+
+    grupos = (
+        GrupoWhatsApp.objects.select_related("cliente")
+        .annotate(
+            ultima_msg_remetente=Subquery(ultima_msg.values("remetente_nome")[:1]),
+            ultima_msg_enviado_por_nome=Subquery(
+                ultima_msg.values("enviado_por__first_name")[:1]
+            ),
+            ultima_msg_origem=Subquery(ultima_msg.values("origem")[:1]),
+        )
+        .all()
+    )
 
     busca = request.GET.get("busca", "").strip()
     if busca:

@@ -129,6 +129,18 @@
                                 <div class="text-sm text-gray-700 dark:text-gray-300">
                                     {{ grupo.ultima_interacao|date:"d/m/Y H:i" }}
                                 </div>
+                                <!-- Quem enviou -->
+                                {% if grupo.ultima_msg_origem == "webhook" and grupo.ultima_msg_remetente %}
+                                <div class="flex items-center gap-1 mt-0.5">
+                                    <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    <span class="text-xs text-blue-500 dark:text-blue-400 truncate max-w-[120px]">{{ grupo.ultima_msg_remetente }}</span>
+                                </div>
+                                {% elif grupo.ultima_msg_origem == "sistema" %}
+                                <div class="flex items-center gap-1 mt-0.5">
+                                    <svg class="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                    <span class="text-xs text-green-500 dark:text-green-400">{{ grupo.ultima_msg_enviado_por_nome|default:"Sistema" }}</span>
+                                </div>
+                                {% endif %}
                                 {% with dias=grupo.dias_sem_interacao %}
                                 {% if dias is not None %}
                                     {% if dias > 30 %}

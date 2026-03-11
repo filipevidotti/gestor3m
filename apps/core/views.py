@@ -207,15 +207,28 @@ def _testar_uazapi():
     if not url or not token:
         return False, "UAZAPI_URL e UAZAPI_TOKEN não configurados."
     try:
+        # /status é público (health check) — testa conectividade
         resp = requests.get(
-            f"{url.rstrip('/')}/instance/status",
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            f"{url.rstrip('/')}/status",
+            headers={"token": token, "Content-Type": "application/json"},
             timeout=10,
         )
         if resp.status_code == 200:
             data = resp.json() if resp.content else {}
-            estado = data.get("state", data.get("status", "OK"))
-            return True, f"UAZAPI conectado! Estado: {estado}"
+            status_info = data.get("status", {})
+            instance = status_info.get("checked_instance", {})
+            conn = instance.get("connection_status", "unknown")
+            name = instance.get("name", "?")
+            server = status_info.get("server_status", "?")
+            return True, f"UAZAPI OK! Instância: {name}, Conexão: {conn}, Servidor: {server}"
+        # Testa endpoint autenticado para validar token
+        resp2 = requests.get(
+            f"{url.rstrip('/')}/contacts",
+            headers={"token": token},
+            timeout=10,
+        )
+        if resp2.status_code == 401:
+            return False, f"Servidor acessível mas token inválido. Verifique UAZAPI_TOKEN no painel admin da UAZAPI."
         return False, f"UAZAPI retornou status {resp.status_code}: {resp.text[:200]}"
     except requests.ConnectionError:
         return False, "Não foi possível conectar à UAZAPI. Verifique a URL."

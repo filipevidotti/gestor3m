@@ -1,8 +1,8 @@
 """
 UAZAPI WhatsApp API client.
 Docs: https://docs.uazapi.com/
-Auth: Bearer token no header Authorization.
-Endpoints confirmados via Gestor4ticket.
+Auth: header 'token' com o token da instancia.
+Base URL: https://<server> (sem instancia no path).
 """
 import logging
 import re
@@ -24,7 +24,7 @@ class UazapiClient:
         self.token = Configuracao.get("UAZAPI_TOKEN", "")
         self.session = requests.Session()
         self.session.headers.update({
-            "Authorization": f"Bearer {self.token}",
+            "token": self.token,
             "Content-Type": "application/json",
         })
 
@@ -50,11 +50,11 @@ class UazapiClient:
 
     def status_conexao(self):
         """Retorna status da conexão da instância."""
-        return self._request("GET", "/instance/status")
+        return self._request("GET", "/status")
 
     def qrcode(self):
         """Retorna QR code para conectar instância."""
-        data = self._request("GET", "/instance/qrcode")
+        data = self._request("GET", "/qrcode")
         return data.get("qrcode", "")
 
     # ── Mensagens ─────────────────────────────────────────────────
@@ -63,10 +63,7 @@ class UazapiClient:
         """Envia mensagem de texto simples."""
         telefone = formatar_telefone(telefone)
         try:
-            self._request("POST", "/message/sendText", {
-                "phone": telefone,
-                "message": texto,
-            })
+            self._request("GET", f"/message/sendText?phone={telefone}&message={texto}")
             logger.info("WhatsApp enviado para %s", telefone)
             return True
         except Exception:
@@ -76,11 +73,7 @@ class UazapiClient:
     def enviar_mensagem_grupo(self, group_id, texto):
         """Envia mensagem para um grupo WhatsApp."""
         try:
-            self._request("POST", "/message/sendText", {
-                "phone": group_id,
-                "message": texto,
-                "isGroup": True,
-            })
+            self._request("GET", f"/message/sendText?phone={group_id}&message={texto}&isGroup=true")
             logger.info("WhatsApp grupo enviado para %s", group_id)
             return True
         except Exception:
@@ -89,29 +82,20 @@ class UazapiClient:
 
     def enviar_imagem(self, telefone, url, caption=""):
         """Envia imagem com caption opcional."""
-        return self._request("POST", "/message/sendImage", {
-            "phone": formatar_telefone(telefone),
-            "image": url,
-            "caption": caption,
-        })
+        telefone = formatar_telefone(telefone)
+        return self._request("GET", f"/message/sendImage?phone={telefone}&image={url}&caption={caption}")
 
     def enviar_documento(self, telefone, url, filename=""):
         """Envia documento."""
-        return self._request("POST", "/message/sendDocument", {
-            "phone": formatar_telefone(telefone),
-            "document": url,
-            "fileName": filename,
-        })
+        telefone = formatar_telefone(telefone)
+        return self._request("GET", f"/message/sendDocument?phone={telefone}&document={url}&fileName={filename}")
 
     def enviar_botoes(self, telefone, texto, botoes):
         """Envia mensagem com botões interativos."""
-        return self._request("POST", "/message/sendButtons", {
-            "phone": formatar_telefone(telefone),
-            "title": "",
-            "message": texto,
-            "footer": "",
-            "buttons": botoes,
-        })
+        import json as json_mod
+        telefone = formatar_telefone(telefone)
+        botoes_json = json_mod.dumps(botoes)
+        return self._request("GET", f"/message/sendButtons?phone={telefone}&message={texto}&buttons={botoes_json}")
 
     # ── Grupos ────────────────────────────────────────────────────
 
@@ -121,17 +105,21 @@ class UazapiClient:
         Tenta múltiplos endpoints conhecidos da UAZAPI.
         Returns: lista de dicts com id/jid, subject/name, size, etc.
         """
-        # Tentar endpoints na ordem mais provável
         endpoints = [
-            "/group/getAllGroups",
             "/group/list",
+            "/group/getAllGroups",
             "/groups",
             "/group/fetchAllGroups",
+            "/group/all",
         ]
         for endpoint in endpoints:
             try:
                 data = self._request("GET", endpoint)
                 if data is None:
+                    continue
+                # Verifica se retornou erro 401/404
+                if isinstance(data, dict) and data.get("code") in (401, 404, 405):
+                    logger.debug("Endpoint %s retornou %s", endpoint, data.get("code"))
                     continue
                 # Normalizar resposta
                 if isinstance(data, list):
@@ -153,9 +141,7 @@ class UazapiClient:
     def info_grupo(self, group_id):
         """Busca informações de um grupo específico."""
         try:
-            return self._request("POST", "/group/groupMetadata", {
-                "groupJid": group_id,
-            })
+            return self._request("GET", f"/group/info?groupJid={group_id}")
         except Exception:
             logger.exception("Erro ao buscar grupo %s", group_id)
             return None
@@ -172,9 +158,8 @@ class UazapiClient:
     def verificar_numero(self, telefone):
         """Verifica se número está registrado no WhatsApp."""
         try:
-            data = self._request("POST", "/misc/onWhatsApp", {
-                "phone": formatar_telefone(telefone),
-            })
+            telefone = formatar_telefone(telefone)
+            data = self._request("GET", f"/misc/onWhatsApp?phone={telefone}")
             return bool(data.get("exists", False))
         except Exception:
             return False

@@ -117,7 +117,12 @@ class GrupoWhatsApp(BaseModel):
 
 
 class MensagemGrupo(BaseModel):
-    """Mensagem enviada para um grupo WhatsApp."""
+    """Mensagem de grupo WhatsApp (enviada pelo sistema ou recebida via webhook)."""
+
+    ORIGEM_CHOICES = [
+        ("sistema", "Sistema"),
+        ("webhook", "WhatsApp"),
+    ]
 
     grupo = models.ForeignKey(
         GrupoWhatsApp,
@@ -130,11 +135,23 @@ class MensagemGrupo(BaseModel):
         "accounts.User",
         on_delete=models.SET_NULL,
         null=True,
-        verbose_name="enviado por",
+        blank=True,
+        verbose_name="enviado por (sistema)",
     )
     enviado_em = models.DateTimeField("enviado em", auto_now_add=True)
     sucesso = models.BooleanField("enviado com sucesso", default=True)
     erro = models.TextField("erro", blank=True)
+
+    # Campos para mensagens recebidas via webhook
+    remetente_nome = models.CharField(
+        "nome do remetente", max_length=200, blank=True,
+    )
+    remetente_telefone = models.CharField(
+        "telefone do remetente", max_length=50, blank=True,
+    )
+    origem = models.CharField(
+        "origem", max_length=20, choices=ORIGEM_CHOICES, default="sistema",
+    )
 
     class Meta:
         db_table = "core_mensagem_grupo"

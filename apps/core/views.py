@@ -601,35 +601,144 @@ def uazapi_webhook(request):
     URL: https://gestor.3mconsultoria.com.br/webhook/uazapi/
     """
     try:
-        data = json_mod.loads(request.body)
+        body = request.body.decode("utf-8", errors="replace")
+        data = json_mod.loads(body)
     except (json_mod.JSONDecodeError, ValueError):
+        logger.warning("UAZAPI webhook: JSON inválido: %s", request.body[:500])
         return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
 
-    event = data.get("event", "")
-    logger.info("UAZAPI webhook recebido: %s", event)
+    # Log completo do payload para debug
+    logger.info("UAZAPI webhook RAW: %s", body[:2000])
 
-    # Mensagem recebida em grupo
-    if event in ("messages.upsert", "message", "messages"):
-        _processar_mensagem_webhook(data)
-    elif event in ("group.update", "groups.update"):
-        _processar_grupo_update_webhook(data)
+    event = data.get("event", "")
+
+    # UAZAPI pode enviar o evento em diferentes formatos
+    if event:
+        logger.info("UAZAPI webhook evento: %s", event)
+        if "message" in event.lower():
+            _processar_mensagem_webhook(data)
+        elif "group" in event.lower():
+            _processar_grupo_update_webhook(data)
+    else:
+        # Sem campo 'event' — tentar detectar pelo conteúdo do payload
+        logger.info("UAZAPI webhook sem campo 'event', tentando detectar tipo")
+        if _parece_mensagem(data):
+            _processar_mensagem_webhook(data)
+        elif _parece_grupo(data):
+            _processar_grupo_update_webhook(data)
+        else:
+            logger.info("UAZAPI webhook payload não reconhecido (keys: %s)", list(data.keys())[:10])
 
     return JsonResponse({"status": "ok"})
 
 
+def _parece_mensagem(data):
+    """Detecta se o payload parece ser uma mensagem."""
+    # Verifica estruturas comuns de mensagem da UAZAPI
+    if "key" in data and "remoteJid" in data.get("key", {}):
+        return True
+    if "message" in data or "messages" in data:
+        return True
+    if "data" in data:
+        inner = data["data"]
+        if isinstance(inner, dict) and "key" in inner:
+            return True
+        if isinstance(inner, list) and inner and "key" in inner[0]:
+            return True
+    # Checa campos comuns: from, chatId, remoteJid
+    if any(k in data for k in ("remoteJid", "from", "chatId", "pushName")):
+        return True
+    return False
+
+
+def _parece_grupo(data):
+    """Detecta se o payload parece ser atualização de grupo."""
+    if any(k in data for k in ("JID", "jid", "groupJid")):
+        return True
+    if "data" in data:
+        inner = data["data"]
+        if isinstance(inner, dict) and any(k in inner for k in ("JID", "jid", "groupJid")):
+            return True
+    return False
+
+
+def _extrair_jid_mensagem(data):
+    """Extrai o JID do grupo/chat de qualquer formato de payload UAZAPI."""
+    # Formato: {data: {key: {remoteJid: ...}}}
+    msg_data = data.get("data", data)
+    if isinstance(msg_data, list):
+        msg_data = msg_data[0] if msg_data else {}
+
+    # Tenta vários caminhos conhecidos
+    jid = (
+        msg_data.get("key", {}).get("remoteJid", "")
+        or msg_data.get("remoteJid", "")
+        or msg_data.get("from", "")
+        or msg_data.get("chatId", "")
+        or data.get("key", {}).get("remoteJid", "")
+        or data.get("remoteJid", "")
+        or data.get("from", "")
+        or data.get("chatId", "")
+    )
+    return jid
+
+
+def _extrair_texto_mensagem(data):
+    """Extrai o texto da mensagem do payload UAZAPI."""
+    msg_data = data.get("data", data)
+    if isinstance(msg_data, list):
+        msg_data = msg_data[0] if msg_data else {}
+
+    # Tenta vários caminhos
+    msg_obj = msg_data.get("message", data.get("message", {}))
+    if isinstance(msg_obj, dict):
+        texto = (
+            msg_obj.get("conversation", "")
+            or msg_obj.get("extendedTextMessage", {}).get("text", "")
+            or msg_obj.get("text", "")
+            or msg_obj.get("caption", "")
+            or msg_obj.get("imageMessage", {}).get("caption", "")
+            or msg_obj.get("videoMessage", {}).get("caption", "")
+        )
+        if texto:
+            return texto
+
+    # Texto direto no payload
+    texto = msg_data.get("text", "") or msg_data.get("body", "") or data.get("text", "")
+    return texto
+
+
+def _extrair_remetente(data):
+    """Extrai nome/telefone do remetente."""
+    msg_data = data.get("data", data)
+    if isinstance(msg_data, list):
+        msg_data = msg_data[0] if msg_data else {}
+
+    push_name = (
+        msg_data.get("pushName", "")
+        or data.get("pushName", "")
+        or msg_data.get("senderName", "")
+    )
+
+    participant = (
+        msg_data.get("key", {}).get("participant", "")
+        or data.get("key", {}).get("participant", "")
+        or msg_data.get("participant", "")
+    )
+
+    return push_name, participant
+
+
 def _processar_mensagem_webhook(data):
-    """Processa mensagem recebida — atualiza ultima_interacao do grupo."""
+    """Processa mensagem recebida — atualiza ultima_interacao e salva mensagem."""
     try:
-        msg_data = data.get("data", data)
+        remote_jid = _extrair_jid_mensagem(data)
+        texto = _extrair_texto_mensagem(data)
+        push_name, participant = _extrair_remetente(data)
 
-        if isinstance(msg_data, list):
-            msg_data = msg_data[0] if msg_data else {}
-
-        remote_jid = (
-            msg_data.get("key", {}).get("remoteJid", "")
-            or msg_data.get("remoteJid", "")
-            or msg_data.get("from", "")
-            or msg_data.get("chatId", "")
+        logger.info(
+            "UAZAPI msg: jid=%s, push=%s, participant=%s, texto=%s",
+            remote_jid, push_name, participant, texto[:100] if texto else "(sem texto)",
         )
 
         # Só processa mensagens de grupo (@g.us)
@@ -637,11 +746,31 @@ def _processar_mensagem_webhook(data):
             return
 
         agora = timezone.now()
+
+        # Atualiza ultima_interacao do grupo
         updated = GrupoWhatsApp.all_objects.filter(group_id=remote_jid).update(
             ultima_interacao=agora,
         )
+
         if updated:
             logger.info("Interação atualizada para grupo %s", remote_jid)
+
+            # Salva mensagem recebida no histórico
+            grupo = GrupoWhatsApp.all_objects.filter(group_id=remote_jid).first()
+            if grupo:
+                remetente_info = push_name or participant or "Desconhecido"
+                MensagemGrupo.objects.create(
+                    grupo=grupo,
+                    texto=texto[:5000] if texto else f"[Mensagem de {remetente_info}]",
+                    enviado_por=None,  # Mensagem externa, não do sistema
+                    sucesso=True,
+                    erro="",
+                    remetente_nome=remetente_info[:200],
+                    remetente_telefone=participant.split("@")[0] if participant else "",
+                    origem="webhook",
+                )
+        else:
+            logger.info("Grupo %s não encontrado no banco", remote_jid)
 
     except Exception:
         logger.exception("Erro ao processar webhook de mensagem")
@@ -654,16 +783,20 @@ def _processar_grupo_update_webhook(data):
         if isinstance(group_data, list):
             group_data = group_data[0] if group_data else {}
 
-        gid = group_data.get("JID") or group_data.get("jid") or group_data.get("id", "")
+        gid = (
+            group_data.get("JID") or group_data.get("jid")
+            or group_data.get("groupJid") or group_data.get("id", "")
+            or data.get("JID") or data.get("jid") or ""
+        )
         if not gid:
             return
 
         updates = {}
-        nome = group_data.get("Name") or group_data.get("subject")
+        nome = group_data.get("Name") or group_data.get("subject") or group_data.get("name")
         if nome:
             updates["nome"] = nome[:300]
 
-        size = group_data.get("ParticipantCount") or group_data.get("size")
+        size = group_data.get("ParticipantCount") or group_data.get("size") or group_data.get("participantCount")
         if size and isinstance(size, int):
             updates["participantes_count"] = size
 

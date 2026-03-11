@@ -30,6 +30,7 @@ urlpatterns = [
     path("crm/", include("apps.crm.urls")),
     path("ia/", include("apps.ia.urls")),
     path("jornadas/", include("apps.jornadas.urls")),
+    path("calendario/", include("apps.calendario_promocional.urls")),
 ]
 
 if settings.DEBUG:

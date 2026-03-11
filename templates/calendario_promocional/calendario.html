@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Calendário Promocional - 3M Control{% endblock %}
+{% block page_title %}Calendário Promocional{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Calendário Promocional {{ ano }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Datas promocionais do Mercado Livre e e-commerce</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="?ano={{ ano|add:'-1' }}" class="px-3 py-2 bg-white dark:bg-dark-100 border border-gray-200 dark:border-gray-700/50 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <span class="text-lg font-semibold text-gray-900 dark:text-white">{{ ano }}</span>
+            <a href="?ano={{ ano|add:'1' }}" class="px-3 py-2 bg-white dark:bg-dark-100 border border-gray-200 dark:border-gray-700/50 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+            {% if not user.is_seller %}
+            <a href="{% url 'calendario_promocional:criar' %}" class="inline-flex items-center px-4 py-2.5 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold rounded-lg transition">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nova Data
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Calendário: 12 meses -->
+        <div class="lg:col-span-3">
+            <!-- Alertas de preparo -->
+            {% if alertas %}
+            <div class="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                    <div>
+                        <h3 class="text-sm font-semibold text-amber-600 dark:text-amber-400">Hora de preparar!</h3>
+                        <div class="mt-1 space-y-1">
+                            {% for d in alertas %}
+                            <a href="{% url 'calendario_promocional:detalhe' d.pk %}" class="block text-sm text-amber-700 dark:text-amber-300 hover:underline">
+                                {{ d.nome }} — {{ d.data_inicio|date:"d/m" }} (em {{ d.data_inicio|timeuntil:hoje }})
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {% for mes in meses %}
+                <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700/50 {% if mes.numero == hoje.month and ano == hoje.year %}bg-brand-orange/10{% else %}bg-gray-50 dark:bg-dark-200/30{% endif %}">
+                        <h3 class="text-sm font-semibold {% if mes.numero == hoje.month and ano == hoje.year %}text-brand-orange{% else %}text-gray-700 dark:text-gray-200{% endif %}">
+                            {{ mes.nome }}
+                        </h3>
+                    </div>
+                    <div class="p-3 min-h-[80px]">
+                        {% if mes.datas %}
+                        <div class="space-y-2">
+                            {% for data in mes.datas %}
+                            <a href="{% url 'calendario_promocional:detalhe' data.pk %}" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200/30 transition group">
+                                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ data.cor }}"></span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-medium text-gray-800 dark:text-gray-200 truncate group-hover:text-brand-orange transition">{{ data.nome }}</p>
+                                    <p class="text-[10px] text-gray-500 dark:text-gray-400">{{ data.data_inicio|date:"d" }}{% if data.data_inicio != data.data_fim %}-{{ data.data_fim|date:"d" }}{% endif %}/{{ data.data_inicio|date:"m" }}</p>
+                                </div>
+                                {% if data.importancia == "critica" %}
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-500">!</span>
+                                {% elif data.importancia == "alta" %}
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500">A</span>
+                                {% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-xs text-gray-400 dark:text-gray-500 text-center py-4">Sem datas</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sidebar: próximas datas -->
+        <div class="space-y-6">
+            <!-- Próximas datas -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-dark-200/30">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Próximas Datas</h3>
+                </div>
+                <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+                    {% for d in proximas %}
+                    <a href="{% url 'calendario_promocional:detalhe' d.pk %}" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-200/30 transition">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold" style="background-color: {{ d.cor }}">
+                                {{ d.data_inicio|date:"d" }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ d.nome }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ d.data_inicio|date:"d/m" }} a {{ d.data_fim|date:"d/m" }}</p>
+                                <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium
+                                    {% if d.importancia == 'critica' %}bg-red-500/10 text-red-500
+                                    {% elif d.importancia == 'alta' %}bg-amber-500/10 text-amber-500
+                                    {% elif d.importancia == 'media' %}bg-blue-500/10 text-blue-400
+                                    {% else %}bg-gray-500/10 text-gray-500{% endif %}">
+                                    {{ d.get_importancia_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="px-4 py-8 text-center">
+                        <svg class="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">Nenhuma data próxima</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Legenda -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-4">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Legenda</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span> Oficial ML
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span class="w-3 h-3 rounded-full bg-blue-500"></span> E-commerce
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span class="w-3 h-3 rounded-full bg-pink-500"></span> Sazonal
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span> Personalizada
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/50 space-y-1">
+                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-500">!</span> Crítica
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-500">A</span> Alta
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

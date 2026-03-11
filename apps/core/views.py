@@ -396,6 +396,22 @@ def grupos_whatsapp(request):
             models.Q(ultima_interacao__isnull=True) | models.Q(ultima_interacao__lt=limite)
         )
 
+    # Ordenação
+    ORDEM_MAP = {
+        "nome": "nome",
+        "participantes": "participantes_count",
+        "interacao": "ultima_interacao",
+        "remetente": "ultima_msg_remetente",
+        "cliente": "cliente__empresa",
+        "status": "is_active",
+    }
+    ordem = request.GET.get("ordem", "nome")
+    direcao = request.GET.get("dir", "asc")
+    campo_ordem = ORDEM_MAP.get(ordem, "nome")
+    if direcao == "desc":
+        campo_ordem = f"-{campo_ordem}"
+    grupos = grupos.order_by(campo_ordem)
+
     clientes = Cliente.objects.filter(is_active=True).order_by("empresa")
 
     return render(request, "core/grupos_whatsapp.html", {
@@ -405,6 +421,8 @@ def grupos_whatsapp(request):
         "filtro_vinculado": vinculado,
         "filtro_status": status,
         "filtro_interacao": interacao,
+        "ordem": ordem,
+        "direcao": direcao,
     })
 
 

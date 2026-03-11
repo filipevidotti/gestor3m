@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from apps.core.views import uazapi_webhook
 
@@ -35,7 +35,8 @@ urlpatterns = [
     path("calendario/", include("apps.calendario_promocional.urls")),
     path("sistema/", include("apps.core.urls")),
     # Webhooks (públicos, sem auth)
-    path("webhook/uazapi/", uazapi_webhook, name="uazapi_webhook"),
+    # UAZAPI envia para sub-caminhos: /webhook/uazapi/messages/text, /chats, etc.
+    re_path(r"^webhook/uazapi/", uazapi_webhook, name="uazapi_webhook"),
 ]
 
 if settings.DEBUG:

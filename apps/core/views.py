@@ -614,8 +614,11 @@ def grupos_enviar_bulk(request):
 def uazapi_webhook(request):
     """Recebe eventos da UAZAPI (mensagens recebidas, status, etc).
 
-    Configura no painel UAZAPI:
-    URL: https://gestor.3mconsultoria.com.br/webhook/uazapi/
+    UAZAPI envia para sub-caminhos:
+    /webhook/uazapi/messages/text
+    /webhook/uazapi/messages/ImageMessage
+    /webhook/uazapi/chats
+    /webhook/uazapi/groups
     """
     try:
         body = request.body.decode("utf-8", errors="replace")
@@ -624,15 +627,25 @@ def uazapi_webhook(request):
         logger.warning("UAZAPI webhook: JSON inválido: %s", request.body[:500])
         return JsonResponse({"status": "error", "message": "Invalid JSON"}, status=400)
 
-    # Log completo do payload para debug
-    logger.info("UAZAPI webhook RAW: %s", body[:2000])
+    # Extrair tipo do evento pelo path da URL
+    url_path = request.path  # ex: /webhook/uazapi/messages/text
+    logger.info("UAZAPI webhook path=%s RAW: %s", url_path, body[:2000])
 
     event = data.get("event", "")
+
+    # Se não tem campo 'event', inferir pelo path da URL
+    if not event:
+        if "/messages/" in url_path:
+            event = "messages.upsert"
+        elif "/chats" in url_path:
+            event = "chats.upsert"
+        elif "/groups" in url_path:
+            event = "groups.update"
 
     # UAZAPI pode enviar o evento em diferentes formatos
     if event:
         logger.info("UAZAPI webhook evento: %s", event)
-        if "message" in event.lower():
+        if "message" in event.lower() or "chat" in event.lower():
             _processar_mensagem_webhook(data)
         elif "group" in event.lower():
             _processar_grupo_update_webhook(data)

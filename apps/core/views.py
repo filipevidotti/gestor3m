@@ -208,12 +208,14 @@ def _testar_uazapi():
         return False, "UAZAPI_URL e UAZAPI_TOKEN não configurados."
     try:
         resp = requests.get(
-            f"{url.rstrip('/')}/status",
+            f"{url.rstrip('/')}/instance/status",
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             timeout=10,
         )
         if resp.status_code == 200:
-            return True, f"UAZAPI conectado! Status: {resp.status_code}"
+            data = resp.json() if resp.content else {}
+            estado = data.get("state", data.get("status", "OK"))
+            return True, f"UAZAPI conectado! Estado: {estado}"
         return False, f"UAZAPI retornou status {resp.status_code}: {resp.text[:200]}"
     except requests.ConnectionError:
         return False, "Não foi possível conectar à UAZAPI. Verifique a URL."

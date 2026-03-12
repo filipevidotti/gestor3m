@@ -104,22 +104,39 @@
 
         <!-- Horários de Trabalho -->
         <div class="mt-6 bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
-            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white mb-4">Horários de Trabalho</h3>
+            <h3 class="text-lg font-display font-bold text-gray-900 dark:text-white mb-2">Horários de Trabalho</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Configure múltiplas faixas por dia (ex: manhã e tarde).</p>
             <div class="space-y-3">
                 <template x-for="dia in dias" :key="dia.value">
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-dark/50">
-                        <label class="flex items-center gap-2 w-40">
-                            <input type="checkbox" :name="'dia_' + dia.value + '_ativo'" value="1"
-                                   x-model="dia.ativo"
-                                   class="w-4 h-4 text-brand-orange bg-gray-100 dark:bg-dark border-gray-300 dark:border-gray-700 rounded focus:ring-brand-orange">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300" x-text="dia.label"></span>
-                        </label>
-                        <div class="flex items-center gap-2" x-show="dia.ativo" x-transition>
-                            <input type="time" :name="'dia_' + dia.value + '_inicio'" x-model="dia.inicio"
-                                   class="bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
-                            <span class="text-gray-400 text-sm">até</span>
-                            <input type="time" :name="'dia_' + dia.value + '_fim'" x-model="dia.fim"
-                                   class="bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                    <div class="p-3 rounded-lg bg-gray-50 dark:bg-dark/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" :name="'dia_' + dia.value + '_ativo'" value="1"
+                                       x-model="dia.ativo"
+                                       class="w-4 h-4 text-brand-orange bg-gray-100 dark:bg-dark border-gray-300 dark:border-gray-700 rounded focus:ring-brand-orange">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300" x-text="dia.label"></span>
+                            </label>
+                            <button type="button" x-show="dia.ativo" @click="dia.faixas.push({inicio: '14:00', fim: '18:00'})"
+                                    class="text-xs text-brand-orange hover:text-brand-orange/80 font-medium flex items-center gap-1 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Adicionar faixa
+                            </button>
+                        </div>
+                        <div x-show="dia.ativo" x-transition class="space-y-2 ml-6">
+                            <template x-for="(faixa, fi) in dia.faixas" :key="fi">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-400 w-14" x-text="fi === 0 ? 'Manhã' : fi === 1 ? 'Tarde' : 'Faixa ' + (fi+1)"></span>
+                                    <input type="time" :name="'dia_' + dia.value + '_inicio'" x-model="faixa.inicio"
+                                           class="bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                                    <span class="text-gray-400 text-sm">até</span>
+                                    <input type="time" :name="'dia_' + dia.value + '_fim'" x-model="faixa.fim"
+                                           class="bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange">
+                                    <button type="button" x-show="dia.faixas.length > 1" @click="dia.faixas.splice(fi, 1)"
+                                            class="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </template>
@@ -139,8 +156,12 @@
 <script>
 function agendaConfig() {
     const horarios = {
-        {% for dia, horario in horarios.items %}
-        {{ dia }}: { inicio: "{{ horario.hora_inicio|time:'H:i' }}", fim: "{{ horario.hora_fim|time:'H:i' }}" },
+        {% for dia, faixas in horarios.items %}
+        {{ dia }}: [
+            {% for h in faixas %}
+            { inicio: "{{ h.hora_inicio|time:'H:i' }}", fim: "{{ h.hora_fim|time:'H:i' }}" },
+            {% endfor %}
+        ],
         {% endfor %}
     };
     const labels = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo'];
@@ -149,8 +170,7 @@ function agendaConfig() {
             value: i,
             label: label,
             ativo: i in horarios,
-            inicio: horarios[i] ? horarios[i].inicio : '09:00',
-            fim: horarios[i] ? horarios[i].fim : '18:00',
+            faixas: horarios[i] ? [...horarios[i]] : [{inicio: '09:00', fim: '12:00'}],
         }))
     };
 }

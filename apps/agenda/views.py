@@ -75,25 +75,33 @@ def agenda_config(request):
         config.grupo_notificacao_id = int(grupo_id) if grupo_id else None
         config.save()
 
-        # Salvar horários de trabalho
+        # Salvar horários de trabalho (múltiplas faixas por dia)
         HorarioTrabalho.objects.filter(config=config).delete()
         for dia in range(7):
             ativo = request.POST.get(f"dia_{dia}_ativo")
-            inicio = request.POST.get(f"dia_{dia}_inicio")
-            fim = request.POST.get(f"dia_{dia}_fim")
-            if ativo and inicio and fim:
-                HorarioTrabalho.objects.create(
-                    config=config,
-                    dia_semana=dia,
-                    hora_inicio=inicio,
-                    hora_fim=fim,
-                    ativo=True,
-                )
+            if not ativo:
+                continue
+            # Coletar todas as faixas do dia
+            inicios = request.POST.getlist(f"dia_{dia}_inicio")
+            fins = request.POST.getlist(f"dia_{dia}_fim")
+            for inicio, fim in zip(inicios, fins):
+                if inicio and fim:
+                    HorarioTrabalho.objects.create(
+                        config=config,
+                        dia_semana=dia,
+                        hora_inicio=inicio,
+                        hora_fim=fim,
+                        ativo=True,
+                    )
 
         messages.success(request, "Configuração salva com sucesso!")
         return redirect("agenda:config")
 
-    horarios = {h.dia_semana: h for h in config.horarios.filter(ativo=True)}
+    # Agrupar horários por dia (múltiplas faixas)
+    horarios_raw = config.horarios.filter(ativo=True).order_by("dia_semana", "hora_inicio")
+    horarios = {}
+    for h in horarios_raw:
+        horarios.setdefault(h.dia_semana, []).append(h)
     google_conectado = bool(config.google_token)
     link_publico = request.build_absolute_uri(f"/agenda/c/{config.slug}/")
 
@@ -564,15 +572,13 @@ def publico_horarios(request, slug):
     data_selecionada = date.fromisoformat(data_str)
     dia_semana = data_selecionada.weekday()
 
-    horario = config.horarios.filter(dia_semana=dia_semana, ativo=True).first()
-    if not horario:
+    faixas = list(config.horarios.filter(dia_semana=dia_semana, ativo=True).order_by("hora_inicio"))
+    if not faixas:
         return JsonResponse({"slots": []})
 
-    # Gerar slots
+    # Gerar slots para todas as faixas do dia
     duracao = config.duracao_padrao
     slots = []
-    current = datetime.combine(data_selecionada, horario.hora_inicio)
-    fim = datetime.combine(data_selecionada, horario.hora_fim)
     tz = timezone.get_current_timezone()
 
     # Horário mínimo de antecedência
@@ -602,23 +608,27 @@ def publico_horarios(request, slug):
         for g_start, g_end in google_busy:
             ocupados.append((g_start, g_end))
 
-    while current + timedelta(minutes=duracao) <= fim:
-        slot_inicio = timezone.make_aware(current, tz)
-        slot_fim = slot_inicio + timedelta(minutes=duracao)
+    for faixa in faixas:
+        current = datetime.combine(data_selecionada, faixa.hora_inicio)
+        fim = datetime.combine(data_selecionada, faixa.hora_fim)
 
-        disponivel = True
-        if slot_inicio < minimo:
-            disponivel = False
-        else:
-            for oc_inicio, oc_fim in ocupados:
-                if slot_inicio < oc_fim and slot_fim > oc_inicio:
-                    disponivel = False
-                    break
+        while current + timedelta(minutes=duracao) <= fim:
+            slot_inicio = timezone.make_aware(current, tz)
+            slot_fim = slot_inicio + timedelta(minutes=duracao)
 
-        if disponivel:
-            slots.append(current.strftime("%H:%M"))
+            disponivel = True
+            if slot_inicio < minimo:
+                disponivel = False
+            else:
+                for oc_inicio, oc_fim in ocupados:
+                    if slot_inicio < oc_fim and slot_fim > oc_inicio:
+                        disponivel = False
+                        break
 
-        current += timedelta(minutes=duracao)
+            if disponivel:
+                slots.append(current.strftime("%H:%M"))
+
+            current += timedelta(minutes=duracao)
 
     return JsonResponse({"slots": slots})
 

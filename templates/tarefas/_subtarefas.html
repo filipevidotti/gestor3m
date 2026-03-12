@@ -1,0 +1,66 @@
+<div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="check-square" class="w-4 h-4 text-gray-400"></i> Subtarefas
+            {% with prog=tarefa.progresso_subtarefas %}
+            {% if prog %}
+            <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">({{ prog.concluidas }}/{{ prog.total }})</span>
+            {% endif %}
+            {% endwith %}
+        </h3>
+    </div>
+
+    {% with prog=tarefa.progresso_subtarefas %}
+    {% if prog %}
+    <div class="w-full bg-gray-200 dark:bg-dark-200 rounded-full h-1.5 mb-4">
+        <div class="h-1.5 rounded-full transition-all {% if prog.percentual == 100 %}bg-green-500{% else %}bg-brand-orange{% endif %}" style="width: {{ prog.percentual }}%"></div>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Lista -->
+    <div class="space-y-1.5 mb-4">
+        {% for sub in tarefa.subtarefas.all %}
+        <div class="flex items-center gap-3 group py-1.5 px-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark/50 transition">
+            <form hx-post="{% url 'tarefas:toggle_subtarefa' sub.pk %}"
+                  hx-target="#subtarefas-container"
+                  hx-swap="innerHTML">
+                {% csrf_token %}
+                <button type="submit" class="w-5 h-5 rounded border-2 flex items-center justify-center transition
+                    {% if sub.concluida %}bg-green-500 border-green-500{% else %}border-gray-300 dark:border-gray-600 hover:border-brand-orange{% endif %}">
+                    {% if sub.concluida %}
+                    <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                    {% endif %}
+                </button>
+            </form>
+            <span class="flex-1 text-sm {% if sub.concluida %}text-gray-400 dark:text-gray-500 line-through{% else %}text-gray-700 dark:text-gray-300{% endif %}">{{ sub.titulo }}</span>
+            {% if sub.responsavel %}
+            <span class="text-[10px] text-gray-400 dark:text-gray-500">{{ sub.responsavel.get_short_name }}</span>
+            {% endif %}
+            <form hx-post="{% url 'tarefas:excluir_subtarefa' sub.pk %}"
+                  hx-target="#subtarefas-container"
+                  hx-swap="innerHTML"
+                  class="opacity-0 group-hover:opacity-100 transition">
+                {% csrf_token %}
+                <button type="submit" class="text-gray-400 hover:text-red-500 transition">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Add subtarefa -->
+    <form hx-post="{% url 'tarefas:adicionar_subtarefa' tarefa.pk %}"
+          hx-target="#subtarefas-container"
+          hx-swap="innerHTML"
+          class="flex items-center gap-2">
+        {% csrf_token %}
+        <input type="text" name="titulo" placeholder="Adicionar subtarefa..."
+               required
+               class="flex-1 bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+        <button type="submit" class="px-3 py-2 bg-brand-orange/10 text-brand-orange rounded-lg text-sm font-medium hover:bg-brand-orange/20 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+    </form>
+</div>

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Configurar Etapas — 3M Control{% endblock %}
+{% block page_title %}Configurar Etapas do Kanban{% endblock %}
+
+{% block content %}
+<div class="space-y-6 max-w-3xl">
+    <div class="flex items-center justify-between">
+        <a href="{% url 'tarefas:kanban' %}" class="text-xs text-gray-500 dark:text-gray-400 hover:text-brand-orange">&larr; Voltar ao Kanban</a>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'tarefas:etiqueta_config' %}" class="px-3 py-1.5 bg-white dark:bg-dark-100 text-gray-500 dark:text-gray-400 rounded-lg text-xs border border-gray-200 dark:border-gray-700/50 hover:border-gray-600 transition">
+                <i data-lucide="tag" class="w-3.5 h-3.5 inline -mt-0.5"></i> Etiquetas
+            </a>
+            <a href="{% url 'tarefas:tipo_config' %}" class="px-3 py-1.5 bg-white dark:bg-dark-100 text-gray-500 dark:text-gray-400 rounded-lg text-xs border border-gray-200 dark:border-gray-700/50 hover:border-gray-600 transition">
+                <i data-lucide="clipboard" class="w-3.5 h-3.5 inline -mt-0.5"></i> Tipos
+            </a>
+        </div>
+    </div>
+
+    <!-- Etapas cadastradas -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700/50">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white">Etapas do Kanban</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Defina as colunas do seu kanban de tarefas</p>
+        </div>
+        <div class="divide-y divide-gray-200 dark:divide-gray-700/30">
+            {% for etapa in etapas %}
+            <div class="px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-400 dark:text-gray-500 w-6">{{ etapa.ordem }}</span>
+                    <span class="w-4 h-4 rounded-full" style="background: {{ etapa.cor }}"></span>
+                    <p class="text-sm text-gray-900 dark:text-white font-medium">{{ etapa.nome }}</p>
+                    {% if etapa.is_concluido %}
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/10 text-green-500">Conclusão</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ etapa.tarefas.count }} tarefas</span>
+                    <a href="{% url 'tarefas:etapa_config_editar' etapa.pk %}" class="text-gray-400 hover:text-brand-orange transition">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </a>
+                    <form method="post" action="{% url 'tarefas:etapa_config_excluir' etapa.pk %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-400 hover:text-red-400 transition" onclick="return confirm('Remover esta etapa?')">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="px-6 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">Nenhuma etapa cadastrada</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Nova etapa -->
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4">Nova Etapa</h3>
+        <form method="post" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            {% csrf_token %}
+            <div class="md:col-span-2">
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nome *</label>
+                <input type="text" name="nome" required class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange" placeholder="Ex: Em Revisão">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cor</label>
+                <input type="color" name="cor" value="#6366f1" class="w-full h-[38px] bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+                <input type="number" name="ordem" value="{{ etapas.count }}" min="0" class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange">
+            </div>
+            <div class="flex flex-col gap-2">
+                <label class="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <input type="checkbox" name="is_concluido" class="rounded border-gray-300 text-brand-orange focus:ring-brand-orange"> Conclusão
+                </label>
+                <button type="submit" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

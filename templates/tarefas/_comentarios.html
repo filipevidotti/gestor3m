@@ -1,0 +1,45 @@
+<div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+    <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <i data-lucide="message-circle" class="w-4 h-4 text-gray-400"></i> Comentários
+        {% if tarefa.comentarios.count %}
+        <span class="text-xs text-gray-400 dark:text-gray-500 font-normal">({{ tarefa.comentarios.count }})</span>
+        {% endif %}
+    </h3>
+
+    <!-- Lista de comentarios -->
+    <div class="space-y-4 mb-4">
+        {% for com in tarefa.comentarios.all %}
+        <div class="flex items-start gap-3">
+            <span class="w-8 h-8 rounded-full bg-brand-orange/20 text-brand-orange flex items-center justify-center text-xs font-bold flex-shrink-0">{{ com.autor.first_name|first }}</span>
+            <div class="flex-1 bg-gray-50 dark:bg-dark rounded-lg p-3 border border-gray-200 dark:border-gray-700/50">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ com.autor.get_full_name }}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ com.created_at|timesince }} atrás</span>
+                </div>
+                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ com.texto }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-2">Nenhum comentário ainda.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Form novo comentario -->
+    <form hx-post="{% url 'tarefas:adicionar_comentario' tarefa.pk %}"
+          hx-target="#comentarios-container"
+          hx-swap="innerHTML"
+          class="flex items-start gap-3">
+        {% csrf_token %}
+        <span class="w-8 h-8 rounded-full bg-gray-200 dark:bg-dark-200 text-gray-500 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{{ request.user.first_name|first }}</span>
+        <div class="flex-1">
+            <textarea name="texto" rows="2" placeholder="Adicionar comentário..."
+                      required
+                      class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-brand-orange focus:border-brand-orange resize-none"></textarea>
+            <div class="flex justify-end mt-2">
+                <button type="submit" class="px-4 py-1.5 bg-brand-orange text-white rounded-lg text-xs font-medium hover:bg-brand-orange/90 transition inline-flex items-center gap-1.5">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i> Comentar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

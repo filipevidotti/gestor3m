@@ -5,6 +5,110 @@
 
 {% block content %}
 <div class="max-w-3xl">
-    {% include "components/_form.html" %}
+    <a href="{{ cancel_url }}" class="text-xs text-gray-500 dark:text-gray-400 hover:text-brand-orange mb-4 inline-block">&larr; Voltar</a>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 space-y-4">
+            <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-2">{{ form_title }}</h3>
+
+            <!-- Titulo -->
+            <div>
+                <label for="id_titulo" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Título *</label>
+                <input type="text" name="titulo" id="id_titulo" value="{{ form.titulo.value|default:'' }}" required
+                       class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                       placeholder="Ex: Preparar relatório mensal">
+                {% if form.titulo.errors %}<p class="mt-1 text-xs text-red-500">{{ form.titulo.errors.0 }}</p>{% endif %}
+            </div>
+
+            <!-- Descricao -->
+            <div>
+                <label for="id_descricao" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição</label>
+                <textarea name="descricao" id="id_descricao" rows="3"
+                          class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange focus:border-brand-orange resize-none"
+                          placeholder="Detalhes da tarefa (opcional)...">{{ form.descricao.value|default:'' }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Responsavel -->
+                <div>
+                    <label for="id_responsavel" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Responsável *</label>
+                    <select name="responsavel" id="id_responsavel" required
+                            class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Selecione...</option>
+                        {% for opt in form.responsavel %}{{ opt }}{% endfor %}
+                    </select>
+                    {% if form.responsavel.errors %}<p class="mt-1 text-xs text-red-500">{{ form.responsavel.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Cliente -->
+                <div>
+                    <label for="id_cliente" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cliente <span class="text-gray-400">(opcional)</span></label>
+                    <select name="cliente" id="id_cliente"
+                            class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Sem cliente</option>
+                        {% for opt in form.cliente %}{{ opt }}{% endfor %}
+                    </select>
+                </div>
+
+                <!-- Etapa -->
+                <div>
+                    <label for="id_etapa" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Etapa</label>
+                    <select name="etapa" id="id_etapa"
+                            class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange">
+                        {% for opt in form.etapa %}{{ opt }}{% endfor %}
+                    </select>
+                </div>
+
+                <!-- Prioridade -->
+                <div>
+                    <label for="id_prioridade" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Prioridade</label>
+                    <select name="prioridade" id="id_prioridade"
+                            class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange">
+                        {% for opt in form.prioridade %}{{ opt }}{% endfor %}
+                    </select>
+                </div>
+
+                <!-- Tipo -->
+                <div>
+                    <label for="id_tipo" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo</label>
+                    <select name="tipo" id="id_tipo"
+                            class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange">
+                        <option value="">Sem tipo</option>
+                        {% for opt in form.tipo %}{{ opt }}{% endfor %}
+                    </select>
+                </div>
+
+                <!-- Prazo -->
+                <div>
+                    <label for="id_prazo" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Prazo</label>
+                    <input type="date" name="prazo" id="id_prazo" value="{{ form.prazo.value|default:'' }}"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-2 focus:ring-brand-orange">
+                </div>
+            </div>
+
+            <!-- Etiquetas -->
+            {% if form.etiquetas.field.queryset.count %}
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Etiquetas</label>
+                <div class="flex flex-wrap gap-2">
+                    {% for checkbox in form.etiquetas %}
+                    <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-brand-orange transition text-sm">
+                        {{ checkbox.tag }}
+                        <span>{{ checkbox.choice_label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{{ cancel_url }}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">Cancelar</a>
+            <button type="submit" class="px-6 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition inline-flex items-center gap-1.5">
+                <i data-lucide="save" class="w-4 h-4"></i> Salvar
+            </button>
+        </div>
+    </form>
 </div>
 {% endblock %}

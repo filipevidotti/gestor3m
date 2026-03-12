@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}{{ tarefa.titulo|default:"Tarefa" }} — 3M Control{% endblock %}
+{% block page_title %}Detalhes da Tarefa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{% url 'tarefas:kanban' %}" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                {% if tarefa.etapa %}
+                <span class="px-2.5 py-1 rounded-full text-xs font-medium text-white" style="background: {{ tarefa.etapa.cor }}">{{ tarefa.etapa.nome }}</span>
+                {% endif %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+                    {% if tarefa.prioridade == 'urgente' %}bg-red-500/10 text-red-400
+                    {% elif tarefa.prioridade == 'alta' %}bg-amber-500/10 text-amber-400
+                    {% elif tarefa.prioridade == 'media' %}bg-blue-500/10 text-blue-400
+                    {% else %}bg-gray-500/10 text-gray-400{% endif %}">
+                    {{ tarefa.get_prioridade_display }}
+                </span>
+            </div>
+            <h1 class="text-xl font-display font-bold text-gray-900 dark:text-white">{{ tarefa.titulo|default:tarefa.descricao|truncatechars:100 }}</h1>
+            {% if tarefa.etiquetas.all %}
+            <div class="flex flex-wrap gap-1.5 mt-2">
+                {% for etq in tarefa.etiquetas.all %}
+                <span class="px-2 py-0.5 rounded text-xs font-medium text-white" style="background: {{ etq.cor }}">{{ etq.nome }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'tarefas:editar' tarefa.pk %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition inline-flex items-center gap-1.5">
+                <i data-lucide="pencil" class="w-4 h-4"></i> Editar
+            </a>
+            <a href="{% url 'tarefas:excluir' tarefa.pk %}" class="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg text-sm font-medium hover:bg-red-500/20 transition inline-flex items-center gap-1.5">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content (2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Descricao -->
+            {% if tarefa.descricao %}
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-gray-400"></i> Descrição
+                </h3>
+                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ tarefa.descricao }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Subtarefas -->
+            <div id="subtarefas-container">
+                {% include "tarefas/_subtarefas.html" %}
+            </div>
+
+            <!-- Comentarios -->
+            <div id="comentarios-container">
+                {% include "tarefas/_comentarios.html" %}
+            </div>
+
+            <!-- Atividade -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i> Atividade
+                </h3>
+                <div class="space-y-3">
+                    {% for ativ in tarefa.atividades.all %}
+                    <div class="flex items-start gap-3">
+                        <div class="w-7 h-7 rounded-full bg-gray-100 dark:bg-dark-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            {% if ativ.tipo == 'criacao' %}
+                            <i data-lucide="plus" class="w-3.5 h-3.5 text-green-500"></i>
+                            {% elif ativ.tipo == 'mudanca_etapa' %}
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-blue-500"></i>
+                            {% elif ativ.tipo == 'comentario' %}
+                            <i data-lucide="message-circle" class="w-3.5 h-3.5 text-purple-500"></i>
+                            {% elif ativ.tipo == 'subtarefa' %}
+                            <i data-lucide="check-square" class="w-3.5 h-3.5 text-amber-500"></i>
+                            {% else %}
+                            <i data-lucide="edit" class="w-3.5 h-3.5 text-gray-400"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-700 dark:text-gray-300">
+                                <span class="font-medium text-gray-900 dark:text-white">{{ ativ.autor.get_short_name|default:"Sistema" }}</span>
+                                {{ ativ.descricao }}
+                            </p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ ativ.created_at|timesince }} atrás</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhuma atividade registrada.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar (1/3) -->
+        <div class="space-y-4">
+            <!-- Info Card -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-4">Informações</h3>
+                <div class="space-y-3">
+                    <!-- Responsavel -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Responsável</span>
+                        <span class="text-sm text-gray-900 dark:text-white font-medium flex items-center gap-1.5">
+                            <span class="w-5 h-5 rounded-full bg-brand-orange/20 text-brand-orange flex items-center justify-center text-[10px] font-bold">{{ tarefa.responsavel.first_name|first }}</span>
+                            {{ tarefa.responsavel.get_full_name }}
+                        </span>
+                    </div>
+                    <!-- Criado por -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Criado por</span>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ tarefa.criado_por.get_full_name }}</span>
+                    </div>
+                    <!-- Cliente -->
+                    {% if tarefa.cliente %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Cliente</span>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ tarefa.cliente.empresa }}</span>
+                    </div>
+                    {% endif %}
+                    <!-- Tipo -->
+                    {% if tarefa.tipo %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Tipo</span>
+                        <span class="text-xs px-2 py-0.5 rounded" style="background: {{ tarefa.tipo.cor }}20; color: {{ tarefa.tipo.cor }}">{{ tarefa.tipo.nome }}</span>
+                    </div>
+                    {% endif %}
+                    <!-- Prazo -->
+                    {% if tarefa.prazo %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Prazo</span>
+                        <span class="text-sm font-medium {% if tarefa.prazo < hoje %}text-red-400{% else %}text-gray-700 dark:text-gray-300{% endif %}">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5 inline -mt-0.5 mr-0.5"></i>
+                            {{ tarefa.prazo|date:"d/m/Y" }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    <!-- Criado em -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Criado em</span>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ tarefa.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% if tarefa.concluido_em %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Concluído em</span>
+                        <span class="text-sm text-green-500 font-medium">{{ tarefa.concluido_em|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-5">
+                <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white mb-3">Mover para</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for etapa in etapas %}
+                    {% if etapa.pk != tarefa.etapa_id %}
+                    <form method="post" action="{% url 'tarefas:kanban_mover' %}"
+                          onsubmit="return moverEtapa(this, {{ tarefa.pk }}, {{ etapa.pk }})">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium border transition hover:shadow-sm"
+                                style="border-color: {{ etapa.cor }}40; color: {{ etapa.cor }}; background: {{ etapa.cor }}10">
+                            {{ etapa.nome }}
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function moverEtapa(form, tarefaId, etapaId) {
+    event.preventDefault();
+    const response = await fetch('{% url "tarefas:kanban_mover" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ tarefa_id: tarefaId, etapa_id: etapaId })
+    });
+    if (response.ok) {
+        location.reload();
+    }
+    return false;
+}
+</script>
+{% endblock %}

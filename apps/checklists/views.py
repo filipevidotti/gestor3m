@@ -166,6 +166,7 @@ def criar(request, cliente_pk):
             prioridade = request.POST.get("tarefa_prioridade", "media")
             prazo = request.POST.get("tarefa_prazo") or None
             Tarefa.objects.create(
+                titulo=descricao[:200],
                 cliente=cliente,
                 criado_por=request.user,
                 responsavel=request.user,

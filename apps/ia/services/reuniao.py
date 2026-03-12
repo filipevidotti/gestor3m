@@ -152,6 +152,7 @@ def criar_tarefas_da_reuniao(reuniao, acoes):
             responsavel = reuniao.consultor
 
         tarefa = Tarefa.objects.create(
+            titulo=acao["descricao"][:200],
             cliente=reuniao.cliente,
             criado_por=reuniao.consultor,
             responsavel=responsavel,

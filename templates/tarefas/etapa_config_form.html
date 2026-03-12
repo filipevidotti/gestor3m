@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Editar Etapa — 3M Control{% endblock %}
+{% block page_title %}Editar Etapa{% endblock %}
+
+{% block content %}
+<div class="max-w-xl">
+    <a href="{% url 'tarefas:etapa_config' %}" class="text-xs text-gray-500 dark:text-gray-400 hover:text-brand-orange mb-4 inline-block">&larr; Voltar</a>
+
+    <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6">
+        <h3 class="text-lg font-display font-semibold text-gray-900 dark:text-white mb-4">Editar: {{ etapa.nome }}</h3>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nome *</label>
+                <input type="text" name="nome" value="{{ form.nome.value }}" required class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cor</label>
+                    <input type="color" name="cor" value="{{ form.cor.value }}" class="w-full h-[38px] bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ordem</label>
+                    <input type="number" name="ordem" value="{{ form.ordem.value }}" min="0" class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Ícone</label>
+                <input type="text" name="icone" value="{{ form.icone.value }}" class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange" placeholder="circle, check-circle, loader...">
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input type="checkbox" name="is_concluido" {% if form.is_concluido.value %}checked{% endif %} class="rounded border-gray-300 text-brand-orange focus:ring-brand-orange">
+                Etapa de conclusão (marca tarefas como concluídas)
+            </label>
+            <div class="flex justify-end gap-3 pt-2">
+                <a href="{% url 'tarefas:etapa_config' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition">Cancelar</a>
+                <button type="submit" class="px-4 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

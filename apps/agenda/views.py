@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.accounts.models import User
 from apps.clientes.models import Cliente
 from apps.core.decorators import consultor_required
 
@@ -170,8 +171,12 @@ def agenda_criar(request):
     """Cria um novo agendamento manualmente (interno)."""
     if request.user.is_gestor:
         clientes = Cliente.objects.all()
+        consultores = User.objects.filter(
+            role__in=[User.Role.CONSULTOR, User.Role.GESTOR], is_active=True
+        )
     else:
         clientes = Cliente.objects.filter(consultor=request.user)
+        consultores = User.objects.filter(pk=request.user.pk)
 
     if request.method == "POST":
         data_str = request.POST.get("data", "")
@@ -182,10 +187,15 @@ def agenda_criar(request):
         duracao = int(request.POST.get("duracao", 60) or 60)
         observacao = request.POST.get("observacao", "").strip()
         cliente_id = request.POST.get("cliente", "")
+        consultor_id = request.POST.get("consultor", "")
 
         if not all([data_str, horario_str, nome]):
             messages.error(request, "Preencha data, horário e nome.")
             return redirect("agenda:criar")
+
+        consultor = request.user
+        if consultor_id and request.user.is_gestor:
+            consultor = User.objects.filter(pk=consultor_id).first() or request.user
 
         tz = timezone.get_current_timezone()
         data_hora = timezone.make_aware(
@@ -193,7 +203,7 @@ def agenda_criar(request):
         )
 
         agendamento = Agendamento.objects.create(
-            consultor=request.user,
+            consultor=consultor,
             data_hora=data_hora,
             duracao=duracao,
             nome_cliente=nome,
@@ -204,7 +214,7 @@ def agenda_criar(request):
         )
 
         # Criar evento no Google Calendar
-        config = ConfiguracaoAgenda.objects.filter(consultor=request.user).first()
+        config = ConfiguracaoAgenda.objects.filter(consultor=consultor).first()
         if config and config.google_token:
             event_id = criar_evento(config, agendamento)
             if event_id:
@@ -217,6 +227,7 @@ def agenda_criar(request):
     config = ConfiguracaoAgenda.objects.filter(consultor=request.user).first()
     return render(request, "agenda/criar.html", {
         "clientes": clientes,
+        "consultores": consultores,
         "config": config,
         "duracao_padrao": config.duracao_padrao if config else 60,
     })
@@ -225,12 +236,16 @@ def agenda_criar(request):
 @consultor_required
 def agenda_editar(request, pk):
     """Edita um agendamento existente."""
-    agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
-
     if request.user.is_gestor:
+        agendamento = get_object_or_404(Agendamento, pk=pk)
         clientes = Cliente.objects.all()
+        consultores = User.objects.filter(
+            role__in=[User.Role.CONSULTOR, User.Role.GESTOR], is_active=True
+        )
     else:
+        agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
         clientes = Cliente.objects.filter(consultor=request.user)
+        consultores = User.objects.filter(pk=request.user.pk)
 
     if request.method == "POST":
         data_str = request.POST.get("data", "")
@@ -241,10 +256,14 @@ def agenda_editar(request, pk):
         duracao = int(request.POST.get("duracao", 60) or 60)
         observacao = request.POST.get("observacao", "").strip()
         cliente_id = request.POST.get("cliente", "")
+        consultor_id = request.POST.get("consultor", "")
 
         if not all([data_str, horario_str, nome]):
             messages.error(request, "Preencha data, horário e nome.")
             return redirect("agenda:editar", pk=pk)
+
+        if consultor_id and request.user.is_gestor:
+            agendamento.consultor = User.objects.filter(pk=consultor_id).first() or agendamento.consultor
 
         tz = timezone.get_current_timezone()
         agendamento.data_hora = timezone.make_aware(
@@ -264,6 +283,7 @@ def agenda_editar(request, pk):
     return render(request, "agenda/editar.html", {
         "agendamento": agendamento,
         "clientes": clientes,
+        "consultores": consultores,
     })
 
 
@@ -272,10 +292,12 @@ def agenda_followup(request):
     """Painel de follow-up: acompanhar confirmações de agendamentos futuros."""
     agora = timezone.now()
     agendamentos = Agendamento.objects.filter(
-        consultor=request.user,
         status=Agendamento.Status.CONFIRMADO,
         data_hora__gte=agora,
-    ).select_related("cliente").order_by("data_hora")
+    ).select_related("cliente", "consultor").order_by("data_hora")
+
+    if not request.user.is_gestor:
+        agendamentos = agendamentos.filter(consultor=request.user)
 
     total = agendamentos.count()
     confirmados = agendamentos.filter(confirmado_pelo_cliente=True).count()
@@ -293,7 +315,10 @@ def agenda_followup(request):
 @require_POST
 def agenda_toggle_confirmacao(request, pk):
     """Toggle confirmação do cliente."""
-    agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
+    if request.user.is_gestor:
+        agendamento = get_object_or_404(Agendamento, pk=pk)
+    else:
+        agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
     agendamento.confirmado_pelo_cliente = not agendamento.confirmado_pelo_cliente
     agendamento.save(update_fields=["confirmado_pelo_cliente", "updated_at"])
 
@@ -309,10 +334,13 @@ def agenda_toggle_confirmacao(request, pk):
 @consultor_required
 @require_POST
 def agenda_enviar_mensagem(request, pk):
-    """Envia mensagem de confirmação via WhatsApp para o cliente."""
+    """Envia mensagem de confirmação via WhatsApp para o cliente, consultor e grupo."""
     from .tasks import enviar_confirmacao_agendamento
 
-    agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
+    if request.user.is_gestor:
+        agendamento = get_object_or_404(Agendamento, pk=pk)
+    else:
+        agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
 
     if not agendamento.telefone_cliente:
         messages.error(request, "Este agendamento não possui telefone cadastrado.")

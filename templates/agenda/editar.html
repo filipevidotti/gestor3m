@@ -17,6 +17,16 @@
         <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 space-y-4">
             <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Dados da Reunião</h3>
 
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Consultor Responsável *</label>
+                <select name="consultor" required
+                        class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    {% for c in consultores %}
+                    <option value="{{ c.pk }}" {% if c.pk == agendamento.consultor_id %}selected{% endif %}>{{ c.get_full_name }} ({{ c.get_role_display }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Data *</label>

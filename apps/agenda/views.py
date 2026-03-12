@@ -16,6 +16,7 @@ from .google_calendar import (
     criar_evento,
     deletar_evento,
     get_flow,
+    listar_eventos,
 )
 from .models import Agendamento, ConfiguracaoAgenda, HorarioTrabalho
 
@@ -111,6 +112,7 @@ def agenda_eventos_json(request):
             "backgroundColor": STATUS_COLORS.get(ag.status, "#6B7280"),
             "borderColor": STATUS_COLORS.get(ag.status, "#6B7280"),
             "extendedProps": {
+                "source": "local",
                 "email": ag.email_cliente,
                 "telefone": ag.telefone_cliente,
                 "status": ag.status,
@@ -119,6 +121,45 @@ def agenda_eventos_json(request):
                 "observacao": ag.observacao,
             },
         })
+
+    # Importar eventos do Google Calendar
+    config = ConfiguracaoAgenda.objects.filter(consultor=request.user).first()
+    if config and config.google_token and start and end:
+        google_event_ids = set(
+            Agendamento.objects.filter(
+                consultor=request.user,
+                google_event_id__isnull=False,
+            ).exclude(google_event_id="").values_list("google_event_id", flat=True)
+        )
+
+        tz = timezone.get_current_timezone()
+        try:
+            dt_start = timezone.make_aware(datetime.fromisoformat(start[:10]), tz)
+            dt_end = timezone.make_aware(datetime.fromisoformat(end[:10]) + timedelta(days=1), tz)
+        except (ValueError, TypeError):
+            dt_start = dt_end = None
+
+        if dt_start and dt_end:
+            google_events = listar_eventos(config, dt_start, dt_end)
+            for ge in google_events:
+                if ge.get("id") in google_event_ids:
+                    continue
+                g_start = ge.get("start", {})
+                g_end = ge.get("end", {})
+                events.append({
+                    "id": f"google_{ge.get('id', '')}",
+                    "title": ge.get("summary", "(Sem título)"),
+                    "start": g_start.get("dateTime", g_start.get("date", "")),
+                    "end": g_end.get("dateTime", g_end.get("date", "")),
+                    "backgroundColor": "#4285F4",
+                    "borderColor": "#4285F4",
+                    "extendedProps": {
+                        "source": "google",
+                        "status": "google",
+                        "status_display": "Google Calendar",
+                        "observacao": ge.get("description", ""),
+                    },
+                })
 
     return JsonResponse(events, safe=False)
 

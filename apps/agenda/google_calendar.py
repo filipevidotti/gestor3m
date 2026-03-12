@@ -132,6 +132,29 @@ def deletar_evento(config, google_event_id):
         logger.exception("Erro ao deletar evento do Google Calendar")
 
 
+def listar_eventos(config, data_inicio, data_fim):
+    """Retorna lista de eventos do Google Calendar no período."""
+    service = get_calendar_service(config)
+    if not service:
+        return []
+
+    calendar_id = config.google_calendar_id or "primary"
+
+    try:
+        result = service.events().list(
+            calendarId=calendar_id,
+            timeMin=data_inicio.isoformat(),
+            timeMax=data_fim.isoformat(),
+            singleEvents=True,
+            orderBy="startTime",
+            maxResults=250,
+        ).execute()
+        return result.get("items", [])
+    except Exception:
+        logger.exception("Erro ao listar eventos do Google Calendar")
+        return []
+
+
 def buscar_eventos_ocupados(config, data_inicio, data_fim):
     """Consulta freebusy do Google Calendar para verificar horários ocupados."""
     service = get_calendar_service(config)

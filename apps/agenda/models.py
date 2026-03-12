@@ -38,8 +38,8 @@ class ConfiguracaoAgenda(BaseModel):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base = slugify(self.consultor.get_full_name())
-            slug = base
+            base = slugify(self.consultor.get_full_name()) or slugify(self.consultor.username)
+            slug = base or "agenda"
             n = 1
             while ConfiguracaoAgenda.objects.filter(slug=slug).exclude(pk=self.pk).exists():
                 slug = f"{base}-{n}"

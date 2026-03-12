@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from apps.accounts.models import User
 from apps.clientes.models import Cliente
 from apps.core.decorators import consultor_required
+from apps.core.models import GrupoWhatsApp
 
 from .google_calendar import (
     HAS_GOOGLE,
@@ -21,6 +22,35 @@ from .google_calendar import (
     listar_eventos,
 )
 from .models import Agendamento, ConfiguracaoAgenda, HorarioTrabalho
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _notificar_grupo_novo_agendamento(config, agendamento):
+    """Envia notificação ao grupo WhatsApp configurado quando há novo agendamento."""
+    if not config.grupo_notificacao_id or not config.grupo_notificacao.group_id:
+        return
+    from apps.core.services.uazapi import enviar_mensagem_grupo
+
+    data = agendamento.data_hora
+    texto = (
+        f"📅 *Novo Agendamento!*\n\n"
+        f"👤 *Cliente:* {agendamento.nome_cliente}\n"
+        f"📆 *Data:* {data.strftime('%d/%m/%Y')}\n"
+        f"🕐 *Horário:* {data.strftime('%H:%M')}\n"
+        f"⏱ *Duração:* {agendamento.duracao} minutos\n"
+        f"👨‍💼 *Consultor:* {agendamento.consultor.get_full_name()}\n"
+    )
+    if agendamento.telefone_cliente:
+        texto += f"📱 *Telefone:* {agendamento.telefone_cliente}\n"
+    if agendamento.observacao:
+        texto += f"📝 *Assunto:* {agendamento.observacao}\n"
+    texto += f"\n_3M Consultoria_"
+
+    enviar_mensagem_grupo(config.grupo_notificacao.group_id, texto)
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +71,8 @@ def agenda_config(request):
         config.duracao_padrao = int(request.POST.get("duracao_padrao", 60))
         config.antecedencia_minima = int(request.POST.get("antecedencia_minima", 24))
         config.dias_visiveis = int(request.POST.get("dias_visiveis", 14))
+        grupo_id = request.POST.get("grupo_notificacao", "")
+        config.grupo_notificacao_id = int(grupo_id) if grupo_id else None
         config.save()
 
         # Salvar horários de trabalho
@@ -65,6 +97,8 @@ def agenda_config(request):
     google_conectado = bool(config.google_token)
     link_publico = request.build_absolute_uri(f"/agenda/c/{config.slug}/")
 
+    grupos_whatsapp = GrupoWhatsApp.objects.filter(is_active=True).order_by("nome")
+
     return render(request, "agenda/config.html", {
         "config": config,
         "horarios": horarios,
@@ -72,6 +106,7 @@ def agenda_config(request):
         "google_conectado": google_conectado,
         "link_publico": link_publico,
         "has_google": HAS_GOOGLE,
+        "grupos_whatsapp": grupos_whatsapp,
     })
 
 
@@ -220,6 +255,10 @@ def agenda_criar(request):
             if event_id:
                 agendamento.google_event_id = event_id
                 agendamento.save(update_fields=["google_event_id"])
+
+        # Notificar grupo WhatsApp configurado
+        if config:
+            _notificar_grupo_novo_agendamento(config, agendamento)
 
         messages.success(request, "Agendamento criado com sucesso!")
         return redirect("agenda:visualizar")
@@ -632,6 +671,9 @@ def publico_agendar(request, slug):
         if event_id:
             agendamento.google_event_id = event_id
             agendamento.save(update_fields=["google_event_id"])
+
+    # Notificar grupo WhatsApp configurado
+    _notificar_grupo_novo_agendamento(config, agendamento)
 
     return render(request, "agenda/publico_confirmado.html", {
         "agendamento": agendamento,

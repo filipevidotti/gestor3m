@@ -83,6 +83,18 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grupo WhatsApp para Notificações</label>
+                <select name="grupo_notificacao"
+                        class="w-full bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange">
+                    <option value="">— Nenhum (não notificar) —</option>
+                    {% for grupo in grupos_whatsapp %}
+                    <option value="{{ grupo.pk }}" {% if config.grupo_notificacao_id == grupo.pk %}selected{% endif %}>{{ grupo.nome }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Grupo que receberá aviso quando um novo agendamento for feito pela página pública.</p>
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição (exibida na página pública)</label>
                 <textarea name="descricao" rows="3"
                           class="w-full bg-gray-50 dark:bg-dark border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"

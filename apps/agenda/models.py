@@ -28,6 +28,17 @@ class ConfiguracaoAgenda(BaseModel):
         "ID do calendário Google", max_length=300, blank=True
     )
 
+    # Notificações
+    grupo_notificacao = models.ForeignKey(
+        "core.GrupoWhatsApp",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="agendas_notificacao",
+        verbose_name="grupo WhatsApp para notificações",
+        help_text="Grupo que receberá aviso quando um novo agendamento for feito",
+    )
+
     class Meta:
         db_table = "agenda_configuracoes"
         verbose_name = "Configuração de Agenda"

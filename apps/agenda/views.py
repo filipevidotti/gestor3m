@@ -268,6 +268,65 @@ def agenda_editar(request, pk):
 
 
 @consultor_required
+def agenda_followup(request):
+    """Painel de follow-up: acompanhar confirmações de agendamentos futuros."""
+    agora = timezone.now()
+    agendamentos = Agendamento.objects.filter(
+        consultor=request.user,
+        status=Agendamento.Status.CONFIRMADO,
+        data_hora__gte=agora,
+    ).select_related("cliente").order_by("data_hora")
+
+    total = agendamentos.count()
+    confirmados = agendamentos.filter(confirmado_pelo_cliente=True).count()
+    pendentes = total - confirmados
+
+    return render(request, "agenda/followup.html", {
+        "agendamentos": agendamentos,
+        "total": total,
+        "confirmados": confirmados,
+        "pendentes": pendentes,
+    })
+
+
+@consultor_required
+@require_POST
+def agenda_toggle_confirmacao(request, pk):
+    """Toggle confirmação do cliente."""
+    agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
+    agendamento.confirmado_pelo_cliente = not agendamento.confirmado_pelo_cliente
+    agendamento.save(update_fields=["confirmado_pelo_cliente", "updated_at"])
+
+    status_text = "confirmado" if agendamento.confirmado_pelo_cliente else "pendente"
+    messages.success(request, f"Agendamento marcado como {status_text}.")
+
+    next_url = request.POST.get("next", "")
+    if next_url:
+        return redirect(next_url)
+    return redirect("agenda:followup")
+
+
+@consultor_required
+@require_POST
+def agenda_enviar_mensagem(request, pk):
+    """Envia mensagem de confirmação via WhatsApp para o cliente."""
+    from .tasks import enviar_confirmacao_agendamento
+
+    agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
+
+    if not agendamento.telefone_cliente:
+        messages.error(request, "Este agendamento não possui telefone cadastrado.")
+    else:
+        enviar_confirmacao_agendamento.delay(agendamento.pk)
+        messages.success(request, f"Mensagem de confirmação sendo enviada para {agendamento.nome_cliente}.")
+
+    next_url = request.POST.get("next", "")
+    if next_url:
+        return redirect(next_url)
+    return redirect("agenda:followup")
+
+
+@consultor_required
 def agenda_agendamentos(request):
     """Lista de agendamentos com filtros."""
     agendamentos = Agendamento.objects.filter(

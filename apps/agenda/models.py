@@ -118,6 +118,13 @@ class Agendamento(BaseModel):
     status = models.CharField(
         "status", max_length=20, choices=Status.choices, default=Status.CONFIRMADO
     )
+    confirmado_pelo_cliente = models.BooleanField(
+        "confirmado pelo cliente", default=False
+    )
+    lembrete_enviado = models.BooleanField("lembrete enviado", default=False)
+    mensagem_enviada_em = models.DateTimeField(
+        "mensagem enviada em", null=True, blank=True
+    )
     token_cancelamento = models.UUIDField(
         "token cancelamento", default=uuid.uuid4, unique=True, editable=False
     )

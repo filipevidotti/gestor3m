@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Editar Agendamento — 3M Control{% endblock %}
+{% block page_title %}Editar Agendamento{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl space-y-6">
+    <div class="flex items-center gap-3">
+        <a href="{% url 'agenda:visualizar' %}" class="text-gray-400 hover:text-brand-orange transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Editar Agendamento</h1>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 space-y-4">
+            <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Dados da Reunião</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Data *</label>
+                    <input type="date" name="data" required value="{{ agendamento.data_hora|date:'Y-m-d' }}"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Horário *</label>
+                    <input type="time" name="horario" required value="{{ agendamento.data_hora|date:'H:i' }}"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Duração (minutos)</label>
+                <select name="duracao"
+                        class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    <option value="30" {% if agendamento.duracao == 30 %}selected{% endif %}>30 minutos</option>
+                    <option value="45" {% if agendamento.duracao == 45 %}selected{% endif %}>45 minutos</option>
+                    <option value="60" {% if agendamento.duracao == 60 %}selected{% endif %}>60 minutos</option>
+                    <option value="90" {% if agendamento.duracao == 90 %}selected{% endif %}>90 minutos</option>
+                    <option value="120" {% if agendamento.duracao == 120 %}selected{% endif %}>120 minutos</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-gray-700/50 p-6 space-y-4">
+            <h3 class="text-sm font-display font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Participante</h3>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Cliente (opcional)</label>
+                <select name="cliente"
+                        class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                    <option value="">— Sem vínculo com cliente —</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.pk }}" {% if agendamento.cliente_id == c.pk %}selected{% endif %}>{{ c.empresa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nome *</label>
+                <input type="text" name="nome" required value="{{ agendamento.nome_cliente }}"
+                       class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">E-mail</label>
+                    <input type="email" name="email" value="{{ agendamento.email_cliente }}"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Telefone</label>
+                    <input type="text" name="telefone" value="{{ agendamento.telefone_cliente }}"
+                           class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Observação</label>
+                <textarea name="observacao" rows="3"
+                          class="w-full bg-gray-50 dark:bg-dark border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white px-3 py-2 text-sm focus:ring-brand-orange focus:border-brand-orange">{{ agendamento.observacao }}</textarea>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'agenda:visualizar' %}" class="px-4 py-2 bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-300 transition">Cancelar</a>
+            <button type="submit" class="px-6 py-2 bg-brand-orange text-white rounded-lg text-sm font-medium hover:bg-brand-orange/90 transition">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

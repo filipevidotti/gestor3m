@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.clientes.models import Cliente
 from apps.core.decorators import consultor_required
 
 from .google_calendar import (
@@ -162,6 +163,108 @@ def agenda_eventos_json(request):
                 })
 
     return JsonResponse(events, safe=False)
+
+
+@consultor_required
+def agenda_criar(request):
+    """Cria um novo agendamento manualmente (interno)."""
+    if request.user.is_gestor:
+        clientes = Cliente.objects.all()
+    else:
+        clientes = Cliente.objects.filter(consultor=request.user)
+
+    if request.method == "POST":
+        data_str = request.POST.get("data", "")
+        horario_str = request.POST.get("horario", "")
+        nome = request.POST.get("nome", "").strip()
+        email = request.POST.get("email", "").strip()
+        telefone = request.POST.get("telefone", "").strip()
+        duracao = int(request.POST.get("duracao", 60) or 60)
+        observacao = request.POST.get("observacao", "").strip()
+        cliente_id = request.POST.get("cliente", "")
+
+        if not all([data_str, horario_str, nome]):
+            messages.error(request, "Preencha data, horário e nome.")
+            return redirect("agenda:criar")
+
+        tz = timezone.get_current_timezone()
+        data_hora = timezone.make_aware(
+            datetime.strptime(f"{data_str} {horario_str}", "%Y-%m-%d %H:%M"), tz
+        )
+
+        agendamento = Agendamento.objects.create(
+            consultor=request.user,
+            data_hora=data_hora,
+            duracao=duracao,
+            nome_cliente=nome,
+            email_cliente=email or "",
+            telefone_cliente=telefone,
+            observacao=observacao,
+            cliente_id=int(cliente_id) if cliente_id else None,
+        )
+
+        # Criar evento no Google Calendar
+        config = ConfiguracaoAgenda.objects.filter(consultor=request.user).first()
+        if config and config.google_token:
+            event_id = criar_evento(config, agendamento)
+            if event_id:
+                agendamento.google_event_id = event_id
+                agendamento.save(update_fields=["google_event_id"])
+
+        messages.success(request, "Agendamento criado com sucesso!")
+        return redirect("agenda:visualizar")
+
+    config = ConfiguracaoAgenda.objects.filter(consultor=request.user).first()
+    return render(request, "agenda/criar.html", {
+        "clientes": clientes,
+        "config": config,
+        "duracao_padrao": config.duracao_padrao if config else 60,
+    })
+
+
+@consultor_required
+def agenda_editar(request, pk):
+    """Edita um agendamento existente."""
+    agendamento = get_object_or_404(Agendamento, pk=pk, consultor=request.user)
+
+    if request.user.is_gestor:
+        clientes = Cliente.objects.all()
+    else:
+        clientes = Cliente.objects.filter(consultor=request.user)
+
+    if request.method == "POST":
+        data_str = request.POST.get("data", "")
+        horario_str = request.POST.get("horario", "")
+        nome = request.POST.get("nome", "").strip()
+        email = request.POST.get("email", "").strip()
+        telefone = request.POST.get("telefone", "").strip()
+        duracao = int(request.POST.get("duracao", 60) or 60)
+        observacao = request.POST.get("observacao", "").strip()
+        cliente_id = request.POST.get("cliente", "")
+
+        if not all([data_str, horario_str, nome]):
+            messages.error(request, "Preencha data, horário e nome.")
+            return redirect("agenda:editar", pk=pk)
+
+        tz = timezone.get_current_timezone()
+        agendamento.data_hora = timezone.make_aware(
+            datetime.strptime(f"{data_str} {horario_str}", "%Y-%m-%d %H:%M"), tz
+        )
+        agendamento.duracao = duracao
+        agendamento.nome_cliente = nome
+        agendamento.email_cliente = email or ""
+        agendamento.telefone_cliente = telefone
+        agendamento.observacao = observacao
+        agendamento.cliente_id = int(cliente_id) if cliente_id else None
+        agendamento.save()
+
+        messages.success(request, "Agendamento atualizado!")
+        return redirect("agenda:visualizar")
+
+    return render(request, "agenda/editar.html", {
+        "agendamento": agendamento,
+        "clientes": clientes,
+    })
 
 
 @consultor_required

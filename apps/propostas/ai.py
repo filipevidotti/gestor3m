@@ -2,12 +2,18 @@
 
 import logging
 
-from decouple import config
 from openai import OpenAI
+
+from apps.core.models import Configuracao
 
 logger = logging.getLogger(__name__)
 
-client = OpenAI(api_key=config("OPENAI_API_KEY", default=""))
+
+def _get_client():
+    """Retorna cliente OpenAI com chave do banco de dados."""
+    api_key = Configuracao.get("OPENAI_API_KEY", "")
+    return OpenAI(api_key=api_key)
+
 
 MODEL = "gpt-4o"
 
@@ -119,6 +125,7 @@ Gere o texto da PROPOSTA COMERCIAL detalhada para este seller.
 def _chamar_openai(prompt: str) -> str:
     """Chama a API OpenAI e retorna o texto gerado."""
     try:
+        client = _get_client()
         response = client.chat.completions.create(
             model=MODEL,
             messages=[

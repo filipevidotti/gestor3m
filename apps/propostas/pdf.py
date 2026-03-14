@@ -2,6 +2,7 @@
 
 import os
 import re
+from decimal import Decimal
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -10,50 +11,86 @@ from django.utils.html import escape
 
 
 def _limpar_markdown(texto):
-    """Remove formatação markdown e converte em HTML limpo com parágrafos."""
+    """Remove formatação markdown."""
     if not texto:
         return ""
-    # Remove **bold** e *italic*
     texto = re.sub(r'\*\*(.+?)\*\*', r'\1', texto)
     texto = re.sub(r'\*(.+?)\*', r'\1', texto)
-    # Remove headers ##
     texto = re.sub(r'^#{1,3}\s*', '', texto, flags=re.MULTILINE)
-    # Remove bullet points - e *
     texto = re.sub(r'^\s*[-*]\s+', '• ', texto, flags=re.MULTILINE)
     return texto
 
 
-def _texto_para_paragrafos(texto):
-    """Converte texto limpo em parágrafos HTML."""
+def _extrair_topicos(texto, max_topicos=5):
+    """Extrai tópicos principais do texto para exibição compacta."""
     if not texto:
-        return ""
+        return []
     texto = _limpar_markdown(texto)
-    paragrafos = [p.strip() for p in texto.split('\n') if p.strip()]
-    html_parts = []
-    for p in paragrafos:
-        p_escaped = escape(p)
-        # Detectar se parece um título numerado (ex: "1. Otimização de Anúncios:")
-        if re.match(r'^\d+\.?\s', p):
-            html_parts.append(f'<p class="item-titulo">{p_escaped}</p>')
-        elif p.startswith('•'):
-            html_parts.append(f'<p class="item-bullet">{p_escaped}</p>')
-        else:
-            html_parts.append(f'<p>{p_escaped}</p>')
-    return '\n'.join(html_parts)
+    linhas = [l.strip() for l in texto.split('\n') if l.strip()]
+    topicos = []
+    titulo_atual = None
+
+    for linha in linhas:
+        # Detectar título numerado: "1. Algo:" ou "1. Algo"
+        match = re.match(r'^(\d+)\.\s*(.+?)(?:\s*:(.*))?$', linha)
+        if match:
+            if titulo_atual and len(topicos) < max_topicos:
+                topicos.append(titulo_atual)
+            desc = (match.group(3) or "").strip()
+            titulo_atual = {"titulo": match.group(2).strip().rstrip(':'), "desc": desc}
+        elif titulo_atual and not titulo_atual["desc"]:
+            # Primeira linha após título vira descrição
+            titulo_atual["desc"] = linha[:120]
+        elif linha.startswith('•') and titulo_atual:
+            if not titulo_atual["desc"]:
+                titulo_atual["desc"] = linha.lstrip('• ')[:120]
+
+    if titulo_atual and len(topicos) < max_topicos:
+        topicos.append(titulo_atual)
+
+    # Se não conseguiu extrair tópicos numerados, pegar parágrafos
+    if not topicos:
+        for linha in linhas[:max_topicos]:
+            if len(linha) > 15:
+                partes = linha.split('.', 1)
+                if len(partes) == 2 and len(partes[0]) < 60:
+                    topicos.append({"titulo": partes[0].strip(), "desc": partes[1].strip()[:100]})
+                else:
+                    topicos.append({"titulo": linha[:50], "desc": linha[50:150] if len(linha) > 50 else ""})
+
+    return topicos[:max_topicos]
+
+
+def _formatar_valor(valor):
+    """Formata valor monetário: 2500.00 → 2.500,00"""
+    if not valor:
+        return "0,00"
+    try:
+        v = Decimal(str(valor))
+        inteiro = int(v)
+        centavos = int((v - inteiro) * 100)
+        # Formatar com ponto como separador de milhares
+        inteiro_fmt = f"{inteiro:,}".replace(",", ".")
+        return f"{inteiro_fmt},{centavos:02d}"
+    except Exception:
+        return str(valor)
 
 
 def gerar_proposta_pdf(proposta):
     """Gera PDF profissional da proposta no formato de apresentação."""
     import weasyprint
 
-    # Caminho absoluto das imagens da apresentação
     img_path = os.path.join(settings.BASE_DIR, "static", "img", "apresentacao")
     logo_path = os.path.join(settings.BASE_DIR, "static", "img", "logo-branca.png")
 
-    # Processar textos: limpar markdown e converter em HTML
-    diagnostico_html = _texto_para_paragrafos(proposta.diagnostico_ia)
-    proposicao_html = _texto_para_paragrafos(proposta.proposicao_valor)
-    comercial_html = _texto_para_paragrafos(proposta.proposta_comercial)
+    # Extrair tópicos compactos dos textos
+    topicos_diagnostico = _extrair_topicos(proposta.diagnostico_ia, 4)
+    topicos_proposicao = _extrair_topicos(proposta.proposicao_valor, 4)
+    topicos_comercial = _extrair_topicos(proposta.proposta_comercial, 5)
+
+    # Formatar valores monetários
+    valor_mensalidade_fmt = _formatar_valor(proposta.valor_mensalidade)
+    valor_setup_fmt = _formatar_valor(proposta.valor_setup)
 
     html_string = render_to_string("propostas/_report_pdf.html", {
         "proposta": proposta,
@@ -61,9 +98,11 @@ def gerar_proposta_pdf(proposta):
         "metricas": proposta.metricas or {},
         "img_path": img_path,
         "logo_path": logo_path,
-        "diagnostico_html": diagnostico_html,
-        "proposicao_html": proposicao_html,
-        "comercial_html": comercial_html,
+        "topicos_diagnostico": topicos_diagnostico,
+        "topicos_proposicao": topicos_proposicao,
+        "topicos_comercial": topicos_comercial,
+        "valor_mensalidade_fmt": valor_mensalidade_fmt,
+        "valor_setup_fmt": valor_setup_fmt,
     })
 
     pdf = weasyprint.HTML(

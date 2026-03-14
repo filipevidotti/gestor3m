@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <style>
-    @page {
-        size: 1280px 720px;
-        margin: 0;
-    }
+    @page { size: 1280px 720px; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
         font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
@@ -15,234 +12,187 @@
         print-color-adjust: exact;
     }
 
-    /* ─── Slide fixo (imagem full page) ─── */
     .slide-img {
-        width: 1280px;
-        height: 720px;
+        width: 1280px; height: 720px;
         page-break-after: always;
         overflow: hidden;
     }
-    .slide-img img {
-        width: 1280px;
-        height: 720px;
-        object-fit: cover;
-        display: block;
-    }
+    .slide-img img { width: 1280px; height: 720px; object-fit: cover; display: block; }
 
-    /* ─── Slide dinâmico ─── */
     .slide {
-        width: 1280px;
-        height: 720px;
+        width: 1280px; height: 720px;
         page-break-after: always;
         position: relative;
         overflow: hidden;
-        padding: 50px 70px;
+        padding: 45px 60px;
     }
 
     .bg-dark { background: linear-gradient(180deg, #0F0F0F 0%, #1a1a1a 100%); }
-    .bg-dark-warm { background: linear-gradient(180deg, #1a0a0a 0%, #2d1215 100%); }
     .bg-gradient { background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%); }
 
-    /* ─── Tipografia ─── */
-    .title {
-        font-size: 34px;
-        font-weight: 800;
-        line-height: 1.15;
-        margin-bottom: 5px;
+    .bar {
+        position: absolute; left: 0; top: 0;
+        width: 8px; height: 100%;
+        background: linear-gradient(180deg, #8C103C 0%, #FE8103 100%);
     }
+    .logo { position: absolute; top: 25px; right: 40px; }
+    .logo img { height: 45px; width: auto; }
+
+    .title { font-size: 32px; font-weight: 800; line-height: 1.15; margin-bottom: 4px; }
     .t-orange { color: #FE8103; }
     .t-white { color: #fff; }
 
-    /* ─── Barra lateral ─── */
-    .bar {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 8px;
-        height: 100%;
-        background: linear-gradient(180deg, #8C103C 0%, #FE8103 100%);
-    }
-
-    /* ─── Logo ─── */
-    .logo {
-        position: absolute;
-        top: 28px;
-        right: 45px;
-    }
-    .logo img { height: 48px; width: auto; }
-
-    /* ─── Badge cliente ─── */
     .badge {
         display: inline-block;
         background: rgba(254,129,3,0.12);
         border: 1px solid rgba(254,129,3,0.3);
         border-radius: 6px;
-        padding: 4px 12px;
-        font-size: 12px;
-        color: #FE8103;
-        font-weight: 600;
-        margin-bottom: 14px;
-    }
-
-    /* ─── Texto formatado ─── */
-    .content p {
-        font-size: 13px;
-        line-height: 1.65;
-        color: rgba(255,255,255,0.82);
-        margin-bottom: 6px;
-    }
-    .content .item-titulo {
-        font-weight: 700;
-        color: #FE8103;
-        font-size: 13.5px;
-        margin-top: 10px;
-        margin-bottom: 3px;
-    }
-    .content .item-bullet {
-        padding-left: 12px;
-        font-size: 12.5px;
-        color: rgba(255,255,255,0.75);
-        margin-bottom: 3px;
-    }
-
-    /* ─── 2 colunas ─── */
-    .cols {
-        column-count: 2;
-        column-gap: 35px;
+        padding: 3px 10px;
+        font-size: 11px; color: #FE8103; font-weight: 600;
+        margin-bottom: 12px;
     }
 
     /* ─── Métricas ─── */
-    .m-row {
-        display: flex;
-        gap: 14px;
-        margin-bottom: 16px;
-    }
+    .m-row { display: flex; gap: 12px; margin-bottom: 14px; }
     .m-card {
-        flex: 1;
-        text-align: center;
+        flex: 1; text-align: center;
         background: rgba(254,129,3,0.08);
         border: 1px solid rgba(254,129,3,0.2);
-        border-radius: 10px;
-        padding: 14px 8px;
+        border-radius: 10px; padding: 12px 8px;
     }
-    .m-val { font-size: 26px; font-weight: 800; color: #FE8103; }
-    .m-val-g { font-size: 26px; font-weight: 800; color: #22C55E; }
-    .m-lbl { font-size: 9.5px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-top: 3px; letter-spacing: 0.5px; }
+    .m-val { font-size: 24px; font-weight: 800; color: #FE8103; }
+    .m-val-g { font-size: 24px; font-weight: 800; color: #22C55E; }
+    .m-lbl { font-size: 9px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-top: 2px; letter-spacing: 0.5px; }
 
-    .o-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .o-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .o-item {
-        width: calc(50% - 5px);
+        width: calc(50% - 4px);
         background: rgba(34,197,94,0.06);
         border: 1px solid rgba(34,197,94,0.15);
-        border-radius: 8px;
-        padding: 10px 14px;
+        border-radius: 7px; padding: 8px 12px;
     }
-    .o-lbl { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; }
-    .o-val { font-size: 18px; font-weight: 700; color: #22C55E; margin-top: 2px; }
+    .o-lbl { font-size: 9px; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+    .o-val { font-size: 16px; font-weight: 700; color: #22C55E; margin-top: 1px; }
 
-    /* ─── Slide investimento com imagem de fundo ─── */
-    .slide-invest {
-        width: 1280px;
-        height: 720px;
-        page-break-after: always;
+    /* ─── Slide único: 3 colunas de tópicos ─── */
+    .three-cols {
+        display: flex;
+        gap: 24px;
+        height: 540px;
+    }
+    .col-section {
+        flex: 1;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+        padding: 22px 20px;
         position: relative;
         overflow: hidden;
-        background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%);
     }
-    .invest-content {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-        padding: 40px 80px;
+    .col-section::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        border-radius: 14px 14px 0 0;
     }
-    .invest-logo { margin-bottom: 12px; }
-    .invest-logo img { height: 55px; width: auto; }
-    .invest-title {
-        font-size: 32px;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    .col-diag::before { background: #FE8103; }
+    .col-prop::before { background: #D83341; }
+    .col-esco::before { background: #8C103C; }
+
+    .col-icon {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; margin-bottom: 10px;
+    }
+    .col-icon-diag { background: rgba(254,129,3,0.15); color: #FE8103; }
+    .col-icon-prop { background: rgba(216,51,65,0.15); color: #D83341; }
+    .col-icon-esco { background: rgba(140,16,60,0.15); color: #8C103C; }
+
+    .col-title {
+        font-size: 16px; font-weight: 800;
+        margin-bottom: 3px;
+    }
+    .col-subtitle {
+        font-size: 10px; color: rgba(255,255,255,0.4);
+        text-transform: uppercase; letter-spacing: 0.5px;
+        margin-bottom: 14px;
+    }
+
+    .topic {
+        display: flex; gap: 10px;
+        margin-bottom: 12px;
+        align-items: flex-start;
+    }
+    .topic-dot {
+        width: 8px; height: 8px; min-width: 8px;
+        border-radius: 50%;
+        margin-top: 5px;
+    }
+    .dot-orange { background: #FE8103; }
+    .dot-red { background: #D83341; }
+    .dot-wine { background: #8C103C; }
+
+    .topic-text {}
+    .topic-title {
+        font-size: 12.5px; font-weight: 700;
+        color: #fff; line-height: 1.3;
         margin-bottom: 2px;
     }
-    .invest-sub {
-        font-size: 16px;
-        color: rgba(255,255,255,0.7);
-        font-style: italic;
-        margin-bottom: 10px;
+    .topic-desc {
+        font-size: 11px; color: rgba(255,255,255,0.5);
+        line-height: 1.4;
     }
-    .invest-preco {
-        font-size: 72px;
-        font-weight: 900;
-        color: #fff;
-        line-height: 1;
-        margin-bottom: 4px;
+
+    /* ─── Investimento ─── */
+    .slide-invest {
+        width: 1280px; height: 720px;
+        page-break-after: always;
+        position: relative; overflow: hidden;
+        background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%);
     }
-    .invest-label {
-        font-size: 14px;
-        color: rgba(255,255,255,0.6);
-        margin-bottom: 12px;
-    }
-    .invest-setup {
+    .inv { text-align: center; padding: 35px 80px; }
+    .inv-logo { margin-bottom: 8px; }
+    .inv-logo img { height: 50px; width: auto; }
+    .inv-title { font-size: 30px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+    .inv-sub { font-size: 15px; color: rgba(255,255,255,0.7); font-style: italic; margin-bottom: 8px; }
+    .inv-price { font-size: 68px; font-weight: 900; line-height: 1; margin-bottom: 2px; }
+    .inv-label { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 10px; }
+    .inv-setup {
         display: inline-block;
         background: rgba(255,255,255,0.12);
         border: 1px solid rgba(255,255,255,0.2);
         border-radius: 8px;
-        padding: 6px 18px;
-        font-size: 14px;
-        color: rgba(255,255,255,0.8);
-        margin-bottom: 14px;
+        padding: 5px 16px; font-size: 13px;
+        color: rgba(255,255,255,0.8); margin-bottom: 14px;
     }
-    .invest-setup strong { color: #fff; }
+    .inv-setup strong { color: #fff; }
 
-    /* ─── Grid de serviços no investimento ─── */
     .svc-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
+        display: flex; flex-wrap: wrap; gap: 10px;
         justify-content: center;
-        max-width: 960px;
-        margin: 0 auto;
+        max-width: 960px; margin: 0 auto;
     }
     .svc-card {
         background: rgba(255,255,255,0.12);
         border: 1.5px solid rgba(255,255,255,0.25);
         border-radius: 12px;
-        padding: 12px 18px;
+        padding: 11px 16px;
         width: calc(33.33% - 8px);
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        display: flex; align-items: center; gap: 10px;
     }
-    .svc-check {
-        width: 24px;
-        height: 24px;
-        min-width: 24px;
+    .svc-chk {
+        width: 22px; height: 22px; min-width: 22px;
         background: rgba(255,255,255,0.9);
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #D83341;
-        font-size: 14px;
-        font-weight: bold;
+        display: flex; align-items: center; justify-content: center;
+        color: #D83341; font-size: 13px; font-weight: bold;
     }
-    .svc-name {
-        font-size: 13px;
-        font-weight: 700;
-        color: #fff;
-        line-height: 1.3;
-    }
-    .svc-desc {
-        font-size: 10px;
-        color: rgba(255,255,255,0.6);
-    }
+    .svc-name { font-size: 12.5px; font-weight: 700; color: #fff; line-height: 1.3; }
+    .svc-desc { font-size: 10px; color: rgba(255,255,255,0.6); }
 
-    .cond-box {
-        margin-top: 10px;
-        font-size: 12px;
-        color: rgba(255,255,255,0.55);
-        font-style: italic;
-    }
+    .cond-box { margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.5); font-style: italic; }
 
     .slide-last { page-break-after: avoid; }
 </style>
@@ -287,7 +237,7 @@
         </div>
     </div>
 
-    <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Oportunidades Identificadas</div>
+    <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Oportunidades Identificadas</div>
 
     <div class="o-grid">
         <div class="o-item">
@@ -310,59 +260,90 @@
 </div>
 {% endif %}
 
-<!-- Diagnóstico IA -->
-{% if diagnostico_html %}
+<!-- Slide Único: Diagnóstico + Proposição + Escopo -->
 <div class="slide bg-dark">
     <div class="bar"></div>
     <div class="logo"><img src="file://{{ logo_path }}"></div>
-    <div class="title"><span class="t-white">DIAGNÓSTICO</span><br><span class="t-orange">DA OPERAÇÃO</span></div>
-    <div class="badge">{{ proposta.nome_display }}</div>
-    <div class="content cols">{{ diagnostico_html|safe }}</div>
-</div>
-{% endif %}
-
-<!-- Proposição de Valor -->
-{% if proposicao_html %}
-<div class="slide bg-dark-warm">
-    <div class="bar"></div>
-    <div class="logo"><img src="file://{{ logo_path }}"></div>
-    <div class="title"><span class="t-white">POR QUE A</span><br><span class="t-orange">3M CONSULTORIA?</span></div>
-    <div class="badge">Proposta personalizada para {{ proposta.nome_display }}</div>
-    <div class="content">{{ proposicao_html|safe }}</div>
-</div>
-{% endif %}
-
-<!-- Escopo de Trabalho -->
-{% if comercial_html %}
-<div class="slide bg-dark">
-    <div class="bar"></div>
-    <div class="logo"><img src="file://{{ logo_path }}"></div>
-    <div class="title"><span class="t-white">ESCOPO DE</span><br><span class="t-orange">TRABALHO</span></div>
+    <div class="title" style="margin-bottom:10px;">
+        <span class="t-white">SUA PROPOSTA</span>
+        <span class="t-orange">PERSONALIZADA</span>
+    </div>
     <div class="badge">{{ proposta.nome_display }} · {{ proposta.get_marketplace_display }}</div>
-    <div class="content cols">{{ comercial_html|safe }}</div>
+
+    <div class="three-cols">
+        <!-- Coluna 1: Diagnóstico -->
+        <div class="col-section col-diag">
+            <div class="col-icon col-icon-diag">🔍</div>
+            <div class="col-title t-orange">Diagnóstico</div>
+            <div class="col-subtitle">Análise da operação</div>
+
+            {% for t in topicos_diagnostico %}
+            <div class="topic">
+                <div class="topic-dot dot-orange"></div>
+                <div class="topic-text">
+                    <div class="topic-title">{{ t.titulo }}</div>
+                    {% if t.desc %}<div class="topic-desc">{{ t.desc }}</div>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Coluna 2: Por que a 3M -->
+        <div class="col-section col-prop">
+            <div class="col-icon col-icon-prop">🎯</div>
+            <div class="col-title" style="color:#D83341;">Por que a 3M?</div>
+            <div class="col-subtitle">Nossa proposta de valor</div>
+
+            {% for t in topicos_proposicao %}
+            <div class="topic">
+                <div class="topic-dot dot-red"></div>
+                <div class="topic-text">
+                    <div class="topic-title">{{ t.titulo }}</div>
+                    {% if t.desc %}<div class="topic-desc">{{ t.desc }}</div>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Coluna 3: Escopo -->
+        <div class="col-section col-esco">
+            <div class="col-icon col-icon-esco">📋</div>
+            <div class="col-title" style="color:#fff;">Escopo de Trabalho</div>
+            <div class="col-subtitle">Frentes de atuação</div>
+
+            {% for t in topicos_comercial %}
+            <div class="topic">
+                <div class="topic-dot dot-wine"></div>
+                <div class="topic-text">
+                    <div class="topic-title">{{ t.titulo }}</div>
+                    {% if t.desc %}<div class="topic-desc">{{ t.desc }}</div>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
-{% endif %}
 
 <!-- Investimento + Serviços -->
 <div class="slide-invest">
-    <div class="invest-content">
-        <div class="invest-logo"><img src="file://{{ logo_path }}"></div>
-        <div class="invest-title">PROPOSTA DE CONSULTORIA</div>
-        <div class="invest-title">{{ proposta.get_marketplace_display|upper }}</div>
-        <div class="invest-sub">Plano Estratégico de Crescimento</div>
+    <div class="inv">
+        <div class="inv-logo"><img src="file://{{ logo_path }}"></div>
+        <div class="inv-title">PROPOSTA DE CONSULTORIA</div>
+        <div class="inv-title">{{ proposta.get_marketplace_display|upper }}</div>
+        <div class="inv-sub">Plano Estratégico de Crescimento</div>
 
-        <div class="invest-preco">R$ {{ proposta.valor_mensalidade|floatformat:2 }}</div>
-        <div class="invest-label">mensalidade</div>
+        <div class="inv-price">R$ {{ valor_mensalidade_fmt }}</div>
+        <div class="inv-label">mensalidade</div>
 
         {% if proposta.valor_setup %}
-        <div class="invest-setup">Setup (única vez): <strong>R$ {{ proposta.valor_setup|floatformat:2 }}</strong></div>
+        <div class="inv-setup">Setup (única vez): <strong>R$ {{ valor_setup_fmt }}</strong></div>
         {% endif %}
 
         {% if servicos %}
         <div class="svc-grid">
             {% for ps in servicos %}
             <div class="svc-card">
-                <div class="svc-check">✓</div>
+                <div class="svc-chk">✓</div>
                 <div>
                     <div class="svc-name">{{ ps.servico.nome }}</div>
                     {% if ps.descricao_custom %}<div class="svc-desc">{{ ps.descricao_custom }}</div>{% endif %}

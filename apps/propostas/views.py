@@ -374,3 +374,20 @@ def publico_responder(request, token):
         messages.info(request, "Resposta registrada. Obrigado pelo feedback.")
 
     return redirect("propostas:publico", token=token)
+
+
+def publico_pdf(request, token):
+    """Download PDF da proposta via link público."""
+    from .pdf import gerar_proposta_pdf
+
+    proposta = get_object_or_404(
+        Proposta.objects.select_related("cliente", "consultor")
+        .prefetch_related("servicos_incluidos__servico"),
+        token=token,
+        status__in=[
+            Proposta.Status.ENVIADO,
+            Proposta.Status.ACEITO,
+            Proposta.Status.RECUSADO,
+        ],
+    )
+    return gerar_proposta_pdf(proposta)

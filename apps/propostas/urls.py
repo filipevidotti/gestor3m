@@ -37,4 +37,5 @@ urlpatterns = [
     # Link público (sem auth)
     path("p/<uuid:token>/", views.publico, name="publico"),
     path("p/<uuid:token>/responder/", views.publico_responder, name="publico_responder"),
+    path("p/<uuid:token>/pdf/", views.publico_pdf, name="publico_pdf"),
 ]

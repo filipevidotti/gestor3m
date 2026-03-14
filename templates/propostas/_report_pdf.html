@@ -1,423 +1,437 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        @page {
-            size: A4;
-            margin: 1.5cm 2cm;
-        }
-        @page :first {
-            margin-top: 0;
-        }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
-            color: #1a1a2e;
-            line-height: 1.6;
-        }
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: 1280px 720px;
+        margin: 0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        color: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 
-        /* ─── Cover Page ─── */
-        .cover {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%);
-            color: white;
-            margin: -1.5cm -2cm 0 -2cm;
-            padding: 4cm 3cm;
-            page-break-after: always;
-        }
-        .cover h1 {
-            font-size: 36pt;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .cover .subtitle {
-            font-size: 16pt;
-            opacity: 0.9;
-            margin-bottom: 40px;
-        }
-        .cover .client-name {
-            font-size: 22pt;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .cover .meta {
-            font-size: 11pt;
-            opacity: 0.8;
-        }
-        .cover .brand {
-            margin-top: 60px;
-            font-size: 12pt;
-            opacity: 0.7;
-        }
+    /* ─── Slide fixo (imagem full page) ─── */
+    .slide-img {
+        width: 1280px;
+        height: 720px;
+        page-break-after: always;
+        overflow: hidden;
+        position: relative;
+    }
+    .slide-img img {
+        width: 1280px;
+        height: 720px;
+        object-fit: cover;
+        display: block;
+    }
 
-        /* ─── Page header ─── */
-        .page-header {
-            background: linear-gradient(135deg, #8C103C, #D83341, #FE8103);
-            color: white;
-            padding: 12px 20px;
-            margin: -1.5cm -2cm 20px -2cm;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .page-header h2 {
-            font-size: 14pt;
-        }
-        .page-header .brand-small {
-            font-size: 9pt;
-            opacity: 0.8;
-        }
+    /* ─── Slide dinâmico ─── */
+    .slide-dynamic {
+        width: 1280px;
+        height: 720px;
+        page-break-after: always;
+        position: relative;
+        overflow: hidden;
+        padding: 55px 80px;
+    }
 
-        /* ─── Section ─── */
-        .section {
-            margin-bottom: 20px;
-            page-break-inside: avoid;
-        }
-        .section-title {
-            font-size: 13pt;
-            font-weight: bold;
-            color: #8C103C;
-            border-bottom: 2px solid #FE8103;
-            padding-bottom: 4px;
-            margin-bottom: 10px;
-        }
-        .section-subtitle {
-            font-size: 11pt;
-            font-weight: bold;
-            color: #D83341;
-            margin-bottom: 6px;
-            margin-top: 12px;
-        }
-        .text-block {
-            font-size: 10pt;
-            color: #333;
-            line-height: 1.7;
-            text-align: justify;
-        }
+    .bg-dark {
+        background: linear-gradient(180deg, #0F0F0F 0%, #1a1a1a 100%);
+    }
+    .bg-gradient-brand {
+        background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%);
+    }
+    .bg-dark-warm {
+        background: linear-gradient(180deg, #1a0a0a 0%, #2d1215 100%);
+    }
 
-        /* ─── Score Card ─── */
-        .score-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .score-grid td {
-            width: 33.33%;
-            text-align: center;
-            padding: 15px;
-            vertical-align: top;
-        }
-        .score-value {
-            font-size: 28pt;
-            font-weight: bold;
-            color: #FE8103;
-        }
-        .score-label {
-            font-size: 9pt;
-            color: #666;
-            text-transform: uppercase;
-            margin-top: 4px;
-        }
+    /* ─── Tipografia ─── */
+    .title {
+        font-size: 36px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        line-height: 1.15;
+        margin-bottom: 6px;
+    }
+    .title-orange { color: #FE8103; }
+    .title-white { color: #ffffff; }
 
-        /* ─── Metrics Grid ─── */
-        .metrics-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        .metrics-grid td {
-            width: 50%;
-            padding: 10px 15px;
-            vertical-align: top;
-            border: 1px solid #e2e8f0;
-        }
-        .metric-label {
-            font-size: 9pt;
-            color: #666;
-            text-transform: uppercase;
-        }
-        .metric-value {
-            font-size: 16pt;
-            font-weight: bold;
-            color: #1a1a2e;
-            margin-top: 2px;
-        }
-        .metric-value.highlight {
-            color: #FE8103;
-        }
-        .metric-value.green {
-            color: #059669;
-        }
+    .subtitle {
+        font-size: 18px;
+        font-weight: 400;
+        color: rgba(255,255,255,0.6);
+        margin-bottom: 25px;
+    }
 
-        /* ─── Services Table ─── */
-        .services-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10pt;
-            margin-bottom: 15px;
-        }
-        .services-table th {
-            background-color: #f8fafc;
-            color: #64748b;
-            font-size: 9pt;
-            text-transform: uppercase;
-            padding: 8px 12px;
-            text-align: left;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        .services-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .services-table .valor {
-            text-align: right;
-            font-weight: bold;
-            color: #FE8103;
-            font-size: 11pt;
-        }
+    .text-body {
+        font-size: 15px;
+        line-height: 1.7;
+        color: rgba(255,255,255,0.85);
+    }
 
-        /* ─── Investment Box ─── */
-        .investment-box {
-            background: linear-gradient(135deg, #8C103C, #D83341);
-            color: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .investment-box h3 {
-            text-align: center;
-            font-size: 14pt;
-            margin-bottom: 15px;
-        }
-        .investment-grid {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .investment-grid td {
-            width: 50%;
-            text-align: center;
-            padding: 10px;
-        }
-        .investment-label {
-            font-size: 9pt;
-            opacity: 0.8;
-        }
-        .investment-value {
-            font-size: 22pt;
-            font-weight: bold;
-        }
+    /* ─── Barra lateral laranja ─── */
+    .sidebar-bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 8px;
+        height: 100%;
+        background: linear-gradient(180deg, #8C103C 0%, #FE8103 100%);
+    }
 
-        /* ─── Footer ─── */
-        .footer {
-            margin-top: 30px;
-            padding-top: 10px;
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-            font-size: 8pt;
-            color: #94a3b8;
-        }
+    /* ─── Logo canto superior direito ─── */
+    .logo-corner {
+        position: absolute;
+        top: 30px;
+        right: 50px;
+    }
+    .logo-corner img {
+        height: 50px;
+        width: auto;
+    }
 
-        /* ─── Page break ─── */
-        .page-break {
-            page-break-before: always;
-        }
+    /* ─── Nome do cliente badge ─── */
+    .cliente-badge {
+        display: inline-block;
+        background: rgba(254, 129, 3, 0.15);
+        border: 1px solid rgba(254, 129, 3, 0.3);
+        border-radius: 8px;
+        padding: 5px 14px;
+        font-size: 13px;
+        color: #FE8103;
+        font-weight: 600;
+        margin-bottom: 18px;
+    }
 
-        /* ─── Conditions ─── */
-        .conditions {
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            border-radius: 6px;
-            padding: 12px 15px;
-            font-size: 10pt;
-            color: #92400e;
-            margin-top: 15px;
-        }
-        .conditions strong {
-            color: #78350f;
-        }
-    </style>
+    /* ─── Conteúdo análise em 2 colunas ─── */
+    .analise-content {
+        column-count: 2;
+        column-gap: 40px;
+        font-size: 13.5px;
+        line-height: 1.7;
+        color: rgba(255,255,255,0.85);
+    }
+
+    /* ─── Investimento ─── */
+    .invest-box {
+        text-align: center;
+        padding-top: 10px;
+    }
+    .invest-marketplace {
+        font-size: 28px;
+        font-weight: 800;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .invest-plano {
+        font-size: 17px;
+        color: rgba(255,255,255,0.7);
+        font-style: italic;
+        margin-bottom: 12px;
+    }
+    .invest-preco {
+        font-size: 60px;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+    .invest-preco-label {
+        font-size: 15px;
+        color: rgba(255,255,255,0.6);
+        margin-bottom: 18px;
+    }
+
+    /* ─── Setup badge ─── */
+    .setup-badge {
+        display: inline-block;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 8px;
+        padding: 7px 18px;
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+        margin-bottom: 18px;
+    }
+    .setup-badge strong { color: #fff; }
+
+    /* ─── Check items (serviços) ─── */
+    .check-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 15px;
+        max-width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .check-item {
+        background: rgba(255,255,255,0.1);
+        border: 1.5px solid rgba(254, 129, 3, 0.4);
+        border-radius: 12px;
+        padding: 12px 16px;
+        width: calc(33.33% - 8px);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .check-icon {
+        width: 22px;
+        height: 22px;
+        min-width: 22px;
+        background: #FE8103;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 13px;
+        font-weight: bold;
+    }
+    .check-item .label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #fff;
+        line-height: 1.3;
+    }
+    .check-item .label-desc {
+        font-weight: 400;
+        font-size: 10.5px;
+        color: rgba(255,255,255,0.55);
+    }
+
+    /* ─── Condições ─── */
+    .condicoes-box {
+        margin-top: 12px;
+        text-align: center;
+        font-size: 13px;
+        color: rgba(255,255,255,0.6);
+        font-style: italic;
+    }
+
+    /* ─── Métricas grid ─── */
+    .metricas-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    .metrica-card {
+        flex: 1;
+        text-align: center;
+        background: rgba(254,129,3,0.08);
+        border: 1px solid rgba(254,129,3,0.2);
+        border-radius: 10px;
+        padding: 14px 10px;
+    }
+    .metrica-valor {
+        font-size: 26px;
+        font-weight: 800;
+        color: #FE8103;
+    }
+    .metrica-valor-green {
+        font-size: 26px;
+        font-weight: 800;
+        color: #22C55E;
+    }
+    .metrica-label {
+        font-size: 10px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        margin-top: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    /* ─── Oportunidades table ─── */
+    .oport-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .oport-item {
+        width: calc(50% - 6px);
+        background: rgba(34,197,94,0.06);
+        border: 1px solid rgba(34,197,94,0.15);
+        border-radius: 8px;
+        padding: 12px 16px;
+    }
+    .oport-item .oport-label {
+        font-size: 11px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+    }
+    .oport-item .oport-valor {
+        font-size: 20px;
+        font-weight: 700;
+        color: #22C55E;
+        margin-top: 2px;
+    }
+
+    /* ─── Último slide sem page-break ─── */
+    .slide-last { page-break-after: avoid; }
+</style>
 </head>
 <body>
 
-    <!-- PAGE 1: Cover -->
-    <div class="cover">
-        <h1>Proposta Comercial</h1>
-        <div class="subtitle">Consultoria Especializada em Marketplace</div>
-        <div class="client-name">{{ proposta.nome_display }}</div>
-        <div class="meta">
-            {{ proposta.get_tipo_seller_display }} — {{ proposta.get_marketplace_display }}
+<!-- ════════ SLIDES FIXOS: INSTITUCIONAL ════════ -->
+
+<div class="slide-img"><img src="file://{{ img_path }}/1.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/2.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/3.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/4.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/5.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/6.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/7.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/8.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/9.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/10.jpg"></div>
+<div class="slide-img"><img src="file://{{ img_path }}/11.jpg"></div>
+
+
+<!-- ════════ SLIDES DINÂMICOS ════════ -->
+
+<!-- Slide: Métricas / Score -->
+{% if metricas %}
+<div class="slide-dynamic bg-dark">
+    <div class="sidebar-bar"></div>
+    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
+
+    <div class="title">
+        <span class="title-white">DIAGNÓSTICO</span><br>
+        <span class="title-orange">RÁPIDO</span>
+    </div>
+    <div class="cliente-badge">{{ proposta.nome_display }} · {{ proposta.get_marketplace_display }}</div>
+
+    <div class="metricas-row">
+        <div class="metrica-card">
+            <div class="metrica-valor">{{ metricas.score_total|default:"—" }}/100</div>
+            <div class="metrica-label">Score de Maturidade</div>
         </div>
-        <div class="meta">
-            Consultor: {{ proposta.consultor.get_full_name }}
-            {% if proposta.data_envio %}· {{ proposta.data_envio|date:"d/m/Y" }}{% endif %}
+        <div class="metrica-card">
+            <div class="metrica-valor-green">R$ {{ metricas.potencial_total|floatformat:0|default:"—" }}</div>
+            <div class="metrica-label">Potencial Mensal</div>
         </div>
-        <div class="brand">3M Consultoria · www.3mconsultoria.com.br</div>
+        <div class="metrica-card">
+            <div class="metrica-valor">{{ metricas.economia_tempo|floatformat:0|default:"—" }}h</div>
+            <div class="metrica-label">Economia Tempo / Semana</div>
+        </div>
     </div>
 
-    <!-- PAGE 2: Score + Métricas -->
-    <div class="page-header">
-        <h2>Diagnóstico Rápido</h2>
-        <span class="brand-small">3M Consultoria</span>
-    </div>
+    <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Oportunidades Identificadas</div>
 
-    <div class="section">
-        <table class="score-grid">
-            <tr>
-                <td>
-                    <div class="score-value">{{ metricas.score_total|default:"—" }}</div>
-                    <div class="score-label">Score de Maturidade</div>
-                </td>
-                <td>
-                    <div class="score-value" style="color: #059669;">R$ {{ metricas.potencial_total|floatformat:0|default:"—" }}</div>
-                    <div class="score-label">Potencial Mensal</div>
-                </td>
-                <td>
-                    <div class="score-value">{{ metricas.economia_tempo|floatformat:0|default:"—" }}h</div>
-                    <div class="score-label">Economia de Tempo / Semana</div>
-                </td>
-            </tr>
-        </table>
+    <div class="oport-grid">
+        <div class="oport-item">
+            <div class="oport-label">Ganho com Conversão</div>
+            <div class="oport-valor">R$ {{ metricas.ganho_conversao|floatformat:2|default:"0,00" }}/mês</div>
+        </div>
+        <div class="oport-item">
+            <div class="oport-label">Economia em Ads</div>
+            <div class="oport-valor">R$ {{ metricas.economia_ads|floatformat:2|default:"0,00" }}/mês</div>
+        </div>
+        <div class="oport-item">
+            <div class="oport-label">Economia em Logística</div>
+            <div class="oport-valor">R$ {{ metricas.economia_logistica|floatformat:2|default:"0,00" }}/mês</div>
+        </div>
+        <div class="oport-item">
+            <div class="oport-label">Ganho com Precificação</div>
+            <div class="oport-valor">R$ {{ metricas.ganho_precificacao|floatformat:2|default:"0,00" }}/mês</div>
+        </div>
     </div>
+</div>
+{% endif %}
 
-    <div class="section">
-        <div class="section-title">Oportunidades Identificadas</div>
-        <table class="metrics-grid">
-            <tr>
-                <td>
-                    <div class="metric-label">Ganho com Conversão</div>
-                    <div class="metric-value green">R$ {{ metricas.ganho_conversao|floatformat:2|default:"0,00" }}</div>
-                </td>
-                <td>
-                    <div class="metric-label">Economia em Ads</div>
-                    <div class="metric-value green">R$ {{ metricas.economia_ads|floatformat:2|default:"0,00" }}</div>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="metric-label">Economia em Logística</div>
-                    <div class="metric-value green">R$ {{ metricas.economia_logistica|floatformat:2|default:"0,00" }}</div>
-                </td>
-                <td>
-                    <div class="metric-label">Ganho com Precificação</div>
-                    <div class="metric-value green">R$ {{ metricas.ganho_precificacao|floatformat:2|default:"0,00" }}</div>
-                </td>
-            </tr>
-        </table>
-    </div>
+<!-- Slide: Diagnóstico IA -->
+{% if proposta.diagnostico_ia %}
+<div class="slide-dynamic bg-dark">
+    <div class="sidebar-bar"></div>
+    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
 
-    <!-- PAGE 3: Diagnóstico IA -->
-    {% if proposta.diagnostico_ia %}
-    <div class="page-break"></div>
-    <div class="page-header">
-        <h2>Diagnóstico da Operação</h2>
-        <span class="brand-small">3M Consultoria</span>
+    <div class="title">
+        <span class="title-white">DIAGNÓSTICO</span><br>
+        <span class="title-orange">DA OPERAÇÃO</span>
     </div>
-    <div class="section">
-        <div class="text-block">{{ proposta.diagnostico_ia|linebreaksbr }}</div>
-    </div>
-    {% endif %}
+    <div class="cliente-badge">{{ proposta.nome_display }}</div>
 
-    <!-- PAGE 4: Proposição de Valor -->
-    {% if proposta.proposicao_valor %}
-    <div class="page-break"></div>
-    <div class="page-header">
-        <h2>Proposição de Valor</h2>
-        <span class="brand-small">3M Consultoria</span>
-    </div>
-    <div class="section">
-        <div class="text-block">{{ proposta.proposicao_valor|linebreaksbr }}</div>
-    </div>
-    {% endif %}
+    <div class="analise-content">{{ proposta.diagnostico_ia }}</div>
+</div>
+{% endif %}
 
-    <!-- PAGE 5: Proposta Comercial -->
-    {% if proposta.proposta_comercial %}
-    <div class="page-break"></div>
-    <div class="page-header">
-        <h2>Proposta Comercial</h2>
-        <span class="brand-small">3M Consultoria</span>
-    </div>
-    <div class="section">
-        <div class="text-block">{{ proposta.proposta_comercial|linebreaksbr }}</div>
-    </div>
-    {% endif %}
+<!-- Slide: Proposição de Valor -->
+{% if proposta.proposicao_valor %}
+<div class="slide-dynamic bg-dark-warm">
+    <div class="sidebar-bar"></div>
+    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
 
-    <!-- PAGE 6: Serviços + Investimento -->
-    <div class="page-break"></div>
-    <div class="page-header">
-        <h2>Investimento</h2>
-        <span class="brand-small">3M Consultoria</span>
+    <div class="title">
+        <span class="title-white">POR QUE A</span><br>
+        <span class="title-orange">3M CONSULTORIA?</span>
     </div>
+    <div class="cliente-badge">Proposta personalizada para {{ proposta.nome_display }}</div>
 
-    {% if servicos %}
-    <div class="section">
-        <div class="section-title">Serviços Incluídos</div>
-        <table class="services-table">
-            <thead>
-                <tr>
-                    <th>Serviço</th>
-                    <th>Descrição</th>
-                    <th style="text-align: right;">Valor</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ps in servicos %}
-                <tr>
-                    <td><strong>{{ ps.servico.nome }}</strong></td>
-                    <td>{{ ps.descricao_custom|default:ps.servico.descricao|default:"-" }}</td>
-                    <td class="valor">R$ {{ ps.valor|floatformat:2 }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% endif %}
+    <div class="text-body">{{ proposta.proposicao_valor }}</div>
+</div>
+{% endif %}
 
-    <div class="investment-box">
-        <h3>Resumo do Investimento</h3>
-        <table class="investment-grid">
-            <tr>
-                <td>
-                    <div class="investment-label">Setup (única vez)</div>
-                    <div class="investment-value">R$ {{ proposta.valor_setup|floatformat:2 }}</div>
-                </td>
-                <td>
-                    <div class="investment-label">Mensalidade</div>
-                    <div class="investment-value">R$ {{ proposta.valor_mensalidade|floatformat:2 }}</div>
-                </td>
-            </tr>
-        </table>
-    </div>
+<!-- Slide: Escopo de Trabalho -->
+{% if proposta.proposta_comercial %}
+<div class="slide-dynamic bg-dark">
+    <div class="sidebar-bar"></div>
+    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
 
-    {% if proposta.condicoes_especiais %}
-    <div class="conditions">
-        <strong>Condições Especiais:</strong><br>
-        {{ proposta.condicoes_especiais|linebreaksbr }}
+    <div class="title">
+        <span class="title-white">ESCOPO DE</span><br>
+        <span class="title-orange">TRABALHO</span>
     </div>
-    {% endif %}
+    <div class="cliente-badge">{{ proposta.nome_display }} · {{ proposta.get_marketplace_display }}</div>
 
-    {% if proposta.data_expiracao %}
-    <div class="section" style="margin-top: 20px;">
-        <p style="text-align: center; font-size: 10pt; color: #666;">
-            Esta proposta é válida até <strong>{{ proposta.data_expiracao|date:"d/m/Y" }}</strong>.
-        </p>
-    </div>
-    {% endif %}
+    <div class="analise-content">{{ proposta.proposta_comercial }}</div>
+</div>
+{% endif %}
 
-    <!-- Footer -->
-    <div class="footer">
-        Proposta gerada por 3M Control — 3M Consultoria — www.3mconsultoria.com.br
+<!-- Slide: Investimento + Serviços -->
+<div class="slide-dynamic bg-gradient-brand">
+    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
+
+    <div class="invest-box">
+        <div class="invest-marketplace">PROPOSTA DE CONSULTORIA</div>
+        <div class="invest-marketplace">{{ proposta.get_marketplace_display|upper }}</div>
+        <div class="invest-plano">Plano Estratégico de Crescimento</div>
+
+        <div class="invest-preco">R$ {{ proposta.valor_mensalidade|floatformat:"0" }},00</div>
+        <div class="invest-preco-label">mensalidade</div>
+
+        {% if proposta.valor_setup %}
+        <div class="setup-badge">Setup (única vez): <strong>R$ {{ proposta.valor_setup|floatformat:"0" }},00</strong></div>
+        {% endif %}
+
+        {% if servicos %}
+        <div class="check-grid">
+            {% for ps in servicos %}
+            <div class="check-item">
+                <div class="check-icon">✓</div>
+                <div>
+                    <div class="label">{{ ps.servico.nome }}</div>
+                    {% if ps.descricao_custom %}<div class="label-desc">{{ ps.descricao_custom }}</div>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if proposta.condicoes_especiais %}
+        <div class="condicoes-box">{{ proposta.condicoes_especiais }}</div>
+        {% endif %}
     </div>
+</div>
+
+<!-- Slide: Contato (fixo) -->
+<div class="slide-img slide-last"><img src="file://{{ img_path }}/14.jpg"></div>
 
 </body>
 </html>

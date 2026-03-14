@@ -88,8 +88,16 @@ def listar(request):
             | Q(cliente__empresa__icontains=busca)
         )
 
+    # Filtro por data
+    data_inicio = request.GET.get("data_inicio")
+    data_fim = request.GET.get("data_fim")
+    if data_inicio:
+        qs = qs.filter(created_at__date__gte=data_inicio)
+    if data_fim:
+        qs = qs.filter(created_at__date__lte=data_fim)
+
     return render(request, "propostas/listar.html", {
-        "propostas": qs,
+        "propostas": qs.order_by("-created_at"),
         "status_choices": Proposta.Status.choices,
         "status_atual": status or "",
     })

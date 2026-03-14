@@ -48,15 +48,27 @@ def _extrair_topicos(texto, max_topicos=5):
     if titulo_atual and len(topicos) < max_topicos:
         topicos.append(titulo_atual)
 
-    # Se não conseguiu extrair tópicos numerados, pegar parágrafos
+    # Se não conseguiu extrair tópicos numerados, extrair frases do texto
     if not topicos:
-        for linha in linhas[:max_topicos]:
-            if len(linha) > 15:
-                partes = linha.split('.', 1)
-                if len(partes) == 2 and len(partes[0]) < 60:
-                    topicos.append({"titulo": partes[0].strip(), "desc": partes[1].strip()[:100]})
+        # Juntar tudo e separar por frases (ponto seguido de espaço e maiúscula)
+        texto_inteiro = ' '.join(linhas)
+        frases = re.split(r'(?<=\.)\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])', texto_inteiro)
+        for frase in frases:
+            frase = frase.strip()
+            if len(frase) < 15:
+                continue
+            # Título = primeira frase curta, descrição = continuação
+            if len(frase) <= 80:
+                topicos.append({"titulo": frase, "desc": ""})
+            else:
+                # Cortar no primeiro ponto dentro dos primeiros 80 chars
+                corte = frase.find('.', 20)
+                if 0 < corte <= 80:
+                    topicos.append({"titulo": frase[:corte + 1], "desc": frase[corte + 1:].strip()[:120]})
                 else:
-                    topicos.append({"titulo": linha[:50], "desc": linha[50:150] if len(linha) > 50 else ""})
+                    topicos.append({"titulo": frase[:70] + "...", "desc": ""})
+            if len(topicos) >= max_topicos:
+                break
 
     return topicos[:max_topicos]
 

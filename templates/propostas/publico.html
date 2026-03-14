@@ -29,6 +29,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
+{% load proposta_filters %}
 <body class="min-h-full bg-gray-50 text-gray-800 font-body">
 
     <!-- Header -->
@@ -87,7 +88,7 @@
         {% if proposta.diagnostico_ia %}
         <div class="bg-white rounded-xl border border-gray-200 p-6">
             <h3 class="text-xl font-display font-bold text-brand-dark mb-3">Diagnóstico</h3>
-            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.diagnostico_ia|linebreaksbr }}</div>
+            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.diagnostico_ia|limpar_md }}</div>
         </div>
         {% endif %}
 
@@ -95,7 +96,7 @@
         {% if proposta.proposicao_valor %}
         <div class="bg-white rounded-xl border border-gray-200 p-6">
             <h3 class="text-xl font-display font-bold text-brand-dark mb-3">Nossa Proposição de Valor</h3>
-            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.proposicao_valor|linebreaksbr }}</div>
+            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.proposicao_valor|limpar_md }}</div>
         </div>
         {% endif %}
 
@@ -103,7 +104,7 @@
         {% if proposta.proposta_comercial %}
         <div class="bg-white rounded-xl border border-gray-200 p-6">
             <h3 class="text-xl font-display font-bold text-brand-dark mb-3">Proposta Comercial</h3>
-            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.proposta_comercial|linebreaksbr }}</div>
+            <div class="text-sm text-gray-700 leading-relaxed">{{ proposta.proposta_comercial|limpar_md }}</div>
         </div>
         {% endif %}
 

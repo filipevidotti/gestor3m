@@ -21,7 +21,6 @@
         height: 720px;
         page-break-after: always;
         overflow: hidden;
-        position: relative;
     }
     .slide-img img {
         width: 1280px;
@@ -31,51 +30,31 @@
     }
 
     /* ─── Slide dinâmico ─── */
-    .slide-dynamic {
+    .slide {
         width: 1280px;
         height: 720px;
         page-break-after: always;
         position: relative;
         overflow: hidden;
-        padding: 55px 80px;
+        padding: 50px 70px;
     }
 
-    .bg-dark {
-        background: linear-gradient(180deg, #0F0F0F 0%, #1a1a1a 100%);
-    }
-    .bg-gradient-brand {
-        background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%);
-    }
-    .bg-dark-warm {
-        background: linear-gradient(180deg, #1a0a0a 0%, #2d1215 100%);
-    }
+    .bg-dark { background: linear-gradient(180deg, #0F0F0F 0%, #1a1a1a 100%); }
+    .bg-dark-warm { background: linear-gradient(180deg, #1a0a0a 0%, #2d1215 100%); }
+    .bg-gradient { background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%); }
 
     /* ─── Tipografia ─── */
     .title {
-        font-size: 36px;
+        font-size: 34px;
         font-weight: 800;
-        letter-spacing: -0.5px;
         line-height: 1.15;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
     }
-    .title-orange { color: #FE8103; }
-    .title-white { color: #ffffff; }
+    .t-orange { color: #FE8103; }
+    .t-white { color: #fff; }
 
-    .subtitle {
-        font-size: 18px;
-        font-weight: 400;
-        color: rgba(255,255,255,0.6);
-        margin-bottom: 25px;
-    }
-
-    .text-body {
-        font-size: 15px;
-        line-height: 1.7;
-        color: rgba(255,255,255,0.85);
-    }
-
-    /* ─── Barra lateral laranja ─── */
-    .sidebar-bar {
+    /* ─── Barra lateral ─── */
+    .bar {
         position: absolute;
         left: 0;
         top: 0;
@@ -84,203 +63,193 @@
         background: linear-gradient(180deg, #8C103C 0%, #FE8103 100%);
     }
 
-    /* ─── Logo canto superior direito ─── */
-    .logo-corner {
+    /* ─── Logo ─── */
+    .logo {
         position: absolute;
-        top: 30px;
-        right: 50px;
+        top: 28px;
+        right: 45px;
     }
-    .logo-corner img {
-        height: 50px;
-        width: auto;
-    }
+    .logo img { height: 48px; width: auto; }
 
-    /* ─── Nome do cliente badge ─── */
-    .cliente-badge {
+    /* ─── Badge cliente ─── */
+    .badge {
         display: inline-block;
-        background: rgba(254, 129, 3, 0.15);
-        border: 1px solid rgba(254, 129, 3, 0.3);
-        border-radius: 8px;
-        padding: 5px 14px;
-        font-size: 13px;
+        background: rgba(254,129,3,0.12);
+        border: 1px solid rgba(254,129,3,0.3);
+        border-radius: 6px;
+        padding: 4px 12px;
+        font-size: 12px;
         color: #FE8103;
         font-weight: 600;
-        margin-bottom: 18px;
+        margin-bottom: 14px;
     }
 
-    /* ─── Conteúdo análise em 2 colunas ─── */
-    .analise-content {
-        column-count: 2;
-        column-gap: 40px;
-        font-size: 13.5px;
-        line-height: 1.7;
-        color: rgba(255,255,255,0.85);
-    }
-
-    /* ─── Investimento ─── */
-    .invest-box {
-        text-align: center;
-        padding-top: 10px;
-    }
-    .invest-marketplace {
-        font-size: 28px;
-        font-weight: 800;
-        color: #fff;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .invest-plano {
-        font-size: 17px;
-        color: rgba(255,255,255,0.7);
-        font-style: italic;
-        margin-bottom: 12px;
-    }
-    .invest-preco {
-        font-size: 60px;
-        font-weight: 900;
-        color: #fff;
-        line-height: 1;
+    /* ─── Texto formatado ─── */
+    .content p {
+        font-size: 13px;
+        line-height: 1.65;
+        color: rgba(255,255,255,0.82);
         margin-bottom: 6px;
     }
-    .invest-preco-label {
-        font-size: 15px;
-        color: rgba(255,255,255,0.6);
-        margin-bottom: 18px;
+    .content .item-titulo {
+        font-weight: 700;
+        color: #FE8103;
+        font-size: 13.5px;
+        margin-top: 10px;
+        margin-bottom: 3px;
     }
-
-    /* ─── Setup badge ─── */
-    .setup-badge {
-        display: inline-block;
-        background: rgba(255,255,255,0.15);
-        border: 1px solid rgba(255,255,255,0.25);
-        border-radius: 8px;
-        padding: 7px 18px;
-        font-size: 14px;
-        color: rgba(255,255,255,0.8);
-        margin-bottom: 18px;
-    }
-    .setup-badge strong { color: #fff; }
-
-    /* ─── Check items (serviços) ─── */
-    .check-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: center;
-        margin-top: 15px;
-        max-width: 1000px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .check-item {
-        background: rgba(255,255,255,0.1);
-        border: 1.5px solid rgba(254, 129, 3, 0.4);
-        border-radius: 12px;
-        padding: 12px 16px;
-        width: calc(33.33% - 8px);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .check-icon {
-        width: 22px;
-        height: 22px;
-        min-width: 22px;
-        background: #FE8103;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 13px;
-        font-weight: bold;
-    }
-    .check-item .label {
+    .content .item-bullet {
+        padding-left: 12px;
         font-size: 12.5px;
-        font-weight: 600;
-        color: #fff;
-        line-height: 1.3;
-    }
-    .check-item .label-desc {
-        font-weight: 400;
-        font-size: 10.5px;
-        color: rgba(255,255,255,0.55);
+        color: rgba(255,255,255,0.75);
+        margin-bottom: 3px;
     }
 
-    /* ─── Condições ─── */
-    .condicoes-box {
-        margin-top: 12px;
-        text-align: center;
-        font-size: 13px;
-        color: rgba(255,255,255,0.6);
-        font-style: italic;
+    /* ─── 2 colunas ─── */
+    .cols {
+        column-count: 2;
+        column-gap: 35px;
     }
 
-    /* ─── Métricas grid ─── */
-    .metricas-row {
+    /* ─── Métricas ─── */
+    .m-row {
         display: flex;
-        gap: 16px;
-        margin-bottom: 20px;
+        gap: 14px;
+        margin-bottom: 16px;
     }
-    .metrica-card {
+    .m-card {
         flex: 1;
         text-align: center;
         background: rgba(254,129,3,0.08);
         border: 1px solid rgba(254,129,3,0.2);
         border-radius: 10px;
-        padding: 14px 10px;
+        padding: 14px 8px;
     }
-    .metrica-valor {
-        font-size: 26px;
-        font-weight: 800;
-        color: #FE8103;
-    }
-    .metrica-valor-green {
-        font-size: 26px;
-        font-weight: 800;
-        color: #22C55E;
-    }
-    .metrica-label {
-        font-size: 10px;
-        color: rgba(255,255,255,0.5);
-        text-transform: uppercase;
-        margin-top: 4px;
-        letter-spacing: 0.5px;
-    }
+    .m-val { font-size: 26px; font-weight: 800; color: #FE8103; }
+    .m-val-g { font-size: 26px; font-weight: 800; color: #22C55E; }
+    .m-lbl { font-size: 9.5px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-top: 3px; letter-spacing: 0.5px; }
 
-    /* ─── Oportunidades table ─── */
-    .oport-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .oport-item {
-        width: calc(50% - 6px);
+    .o-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .o-item {
+        width: calc(50% - 5px);
         background: rgba(34,197,94,0.06);
         border: 1px solid rgba(34,197,94,0.15);
         border-radius: 8px;
-        padding: 12px 16px;
+        padding: 10px 14px;
     }
-    .oport-item .oport-label {
-        font-size: 11px;
-        color: rgba(255,255,255,0.5);
+    .o-lbl { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+    .o-val { font-size: 18px; font-weight: 700; color: #22C55E; margin-top: 2px; }
+
+    /* ─── Slide investimento com imagem de fundo ─── */
+    .slide-invest {
+        width: 1280px;
+        height: 720px;
+        page-break-after: always;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #8C103C 0%, #D83341 50%, #FE8103 100%);
+    }
+    .invest-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 40px 80px;
+    }
+    .invest-logo { margin-bottom: 12px; }
+    .invest-logo img { height: 55px; width: auto; }
+    .invest-title {
+        font-size: 32px;
+        font-weight: 900;
         text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
     }
-    .oport-item .oport-valor {
-        font-size: 20px;
+    .invest-sub {
+        font-size: 16px;
+        color: rgba(255,255,255,0.7);
+        font-style: italic;
+        margin-bottom: 10px;
+    }
+    .invest-preco {
+        font-size: 72px;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+    .invest-label {
+        font-size: 14px;
+        color: rgba(255,255,255,0.6);
+        margin-bottom: 12px;
+    }
+    .invest-setup {
+        display: inline-block;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 6px 18px;
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+        margin-bottom: 14px;
+    }
+    .invest-setup strong { color: #fff; }
+
+    /* ─── Grid de serviços no investimento ─── */
+    .svc-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        max-width: 960px;
+        margin: 0 auto;
+    }
+    .svc-card {
+        background: rgba(255,255,255,0.12);
+        border: 1.5px solid rgba(255,255,255,0.25);
+        border-radius: 12px;
+        padding: 12px 18px;
+        width: calc(33.33% - 8px);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .svc-check {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        background: rgba(255,255,255,0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #D83341;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    .svc-name {
+        font-size: 13px;
         font-weight: 700;
-        color: #22C55E;
-        margin-top: 2px;
+        color: #fff;
+        line-height: 1.3;
+    }
+    .svc-desc {
+        font-size: 10px;
+        color: rgba(255,255,255,0.6);
     }
 
-    /* ─── Último slide sem page-break ─── */
+    .cond-box {
+        margin-top: 10px;
+        font-size: 12px;
+        color: rgba(255,255,255,0.55);
+        font-style: italic;
+    }
+
     .slide-last { page-break-after: avoid; }
 </style>
 </head>
 <body>
 
-<!-- ════════ SLIDES FIXOS: INSTITUCIONAL ════════ -->
-
+<!-- ════════ SLIDES FIXOS ════════ -->
 <div class="slide-img"><img src="file://{{ img_path }}/1.jpg"></div>
 <div class="slide-img"><img src="file://{{ img_path }}/2.jpg"></div>
 <div class="slide-img"><img src="file://{{ img_path }}/3.jpg"></div>
@@ -293,131 +262,110 @@
 <div class="slide-img"><img src="file://{{ img_path }}/10.jpg"></div>
 <div class="slide-img"><img src="file://{{ img_path }}/11.jpg"></div>
 
-
 <!-- ════════ SLIDES DINÂMICOS ════════ -->
 
-<!-- Slide: Métricas / Score -->
+<!-- Métricas / Score -->
 {% if metricas %}
-<div class="slide-dynamic bg-dark">
-    <div class="sidebar-bar"></div>
-    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
+<div class="slide bg-dark">
+    <div class="bar"></div>
+    <div class="logo"><img src="file://{{ logo_path }}"></div>
+    <div class="title"><span class="t-white">DIAGNÓSTICO</span><br><span class="t-orange">RÁPIDO</span></div>
+    <div class="badge">{{ proposta.nome_display }} · {{ proposta.get_marketplace_display }}</div>
 
-    <div class="title">
-        <span class="title-white">DIAGNÓSTICO</span><br>
-        <span class="title-orange">RÁPIDO</span>
-    </div>
-    <div class="cliente-badge">{{ proposta.nome_display }} · {{ proposta.get_marketplace_display }}</div>
-
-    <div class="metricas-row">
-        <div class="metrica-card">
-            <div class="metrica-valor">{{ metricas.score_total|default:"—" }}/100</div>
-            <div class="metrica-label">Score de Maturidade</div>
+    <div class="m-row">
+        <div class="m-card">
+            <div class="m-val">{{ metricas.score_total|default:"—" }}/100</div>
+            <div class="m-lbl">Score de Maturidade</div>
         </div>
-        <div class="metrica-card">
-            <div class="metrica-valor-green">R$ {{ metricas.potencial_total|floatformat:0|default:"—" }}</div>
-            <div class="metrica-label">Potencial Mensal</div>
+        <div class="m-card">
+            <div class="m-val-g">R$ {{ metricas.potencial_total|floatformat:0|default:"—" }}</div>
+            <div class="m-lbl">Potencial Mensal</div>
         </div>
-        <div class="metrica-card">
-            <div class="metrica-valor">{{ metricas.economia_tempo|floatformat:0|default:"—" }}h</div>
-            <div class="metrica-label">Economia Tempo / Semana</div>
+        <div class="m-card">
+            <div class="m-val">{{ metricas.economia_tempo|floatformat:0|default:"—" }}h</div>
+            <div class="m-lbl">Economia Tempo / Semana</div>
         </div>
     </div>
 
-    <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Oportunidades Identificadas</div>
+    <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Oportunidades Identificadas</div>
 
-    <div class="oport-grid">
-        <div class="oport-item">
-            <div class="oport-label">Ganho com Conversão</div>
-            <div class="oport-valor">R$ {{ metricas.ganho_conversao|floatformat:2|default:"0,00" }}/mês</div>
+    <div class="o-grid">
+        <div class="o-item">
+            <div class="o-lbl">Ganho com Conversão</div>
+            <div class="o-val">R$ {{ metricas.ganho_conversao|floatformat:2|default:"0,00" }}/mês</div>
         </div>
-        <div class="oport-item">
-            <div class="oport-label">Economia em Ads</div>
-            <div class="oport-valor">R$ {{ metricas.economia_ads|floatformat:2|default:"0,00" }}/mês</div>
+        <div class="o-item">
+            <div class="o-lbl">Economia em Ads</div>
+            <div class="o-val">R$ {{ metricas.economia_ads|floatformat:2|default:"0,00" }}/mês</div>
         </div>
-        <div class="oport-item">
-            <div class="oport-label">Economia em Logística</div>
-            <div class="oport-valor">R$ {{ metricas.economia_logistica|floatformat:2|default:"0,00" }}/mês</div>
+        <div class="o-item">
+            <div class="o-lbl">Economia em Logística</div>
+            <div class="o-val">R$ {{ metricas.economia_logistica|floatformat:2|default:"0,00" }}/mês</div>
         </div>
-        <div class="oport-item">
-            <div class="oport-label">Ganho com Precificação</div>
-            <div class="oport-valor">R$ {{ metricas.ganho_precificacao|floatformat:2|default:"0,00" }}/mês</div>
+        <div class="o-item">
+            <div class="o-lbl">Ganho com Precificação</div>
+            <div class="o-val">R$ {{ metricas.ganho_precificacao|floatformat:2|default:"0,00" }}/mês</div>
         </div>
     </div>
 </div>
 {% endif %}
 
-<!-- Slide: Diagnóstico IA -->
-{% if proposta.diagnostico_ia %}
-<div class="slide-dynamic bg-dark">
-    <div class="sidebar-bar"></div>
-    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
-
-    <div class="title">
-        <span class="title-white">DIAGNÓSTICO</span><br>
-        <span class="title-orange">DA OPERAÇÃO</span>
-    </div>
-    <div class="cliente-badge">{{ proposta.nome_display }}</div>
-
-    <div class="analise-content">{{ proposta.diagnostico_ia }}</div>
+<!-- Diagnóstico IA -->
+{% if diagnostico_html %}
+<div class="slide bg-dark">
+    <div class="bar"></div>
+    <div class="logo"><img src="file://{{ logo_path }}"></div>
+    <div class="title"><span class="t-white">DIAGNÓSTICO</span><br><span class="t-orange">DA OPERAÇÃO</span></div>
+    <div class="badge">{{ proposta.nome_display }}</div>
+    <div class="content cols">{{ diagnostico_html|safe }}</div>
 </div>
 {% endif %}
 
-<!-- Slide: Proposição de Valor -->
-{% if proposta.proposicao_valor %}
-<div class="slide-dynamic bg-dark-warm">
-    <div class="sidebar-bar"></div>
-    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
-
-    <div class="title">
-        <span class="title-white">POR QUE A</span><br>
-        <span class="title-orange">3M CONSULTORIA?</span>
-    </div>
-    <div class="cliente-badge">Proposta personalizada para {{ proposta.nome_display }}</div>
-
-    <div class="text-body">{{ proposta.proposicao_valor }}</div>
+<!-- Proposição de Valor -->
+{% if proposicao_html %}
+<div class="slide bg-dark-warm">
+    <div class="bar"></div>
+    <div class="logo"><img src="file://{{ logo_path }}"></div>
+    <div class="title"><span class="t-white">POR QUE A</span><br><span class="t-orange">3M CONSULTORIA?</span></div>
+    <div class="badge">Proposta personalizada para {{ proposta.nome_display }}</div>
+    <div class="content">{{ proposicao_html|safe }}</div>
 </div>
 {% endif %}
 
-<!-- Slide: Escopo de Trabalho -->
-{% if proposta.proposta_comercial %}
-<div class="slide-dynamic bg-dark">
-    <div class="sidebar-bar"></div>
-    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
-
-    <div class="title">
-        <span class="title-white">ESCOPO DE</span><br>
-        <span class="title-orange">TRABALHO</span>
-    </div>
-    <div class="cliente-badge">{{ proposta.nome_display }} · {{ proposta.get_marketplace_display }}</div>
-
-    <div class="analise-content">{{ proposta.proposta_comercial }}</div>
+<!-- Escopo de Trabalho -->
+{% if comercial_html %}
+<div class="slide bg-dark">
+    <div class="bar"></div>
+    <div class="logo"><img src="file://{{ logo_path }}"></div>
+    <div class="title"><span class="t-white">ESCOPO DE</span><br><span class="t-orange">TRABALHO</span></div>
+    <div class="badge">{{ proposta.nome_display }} · {{ proposta.get_marketplace_display }}</div>
+    <div class="content cols">{{ comercial_html|safe }}</div>
 </div>
 {% endif %}
 
-<!-- Slide: Investimento + Serviços -->
-<div class="slide-dynamic bg-gradient-brand">
-    <div class="logo-corner"><img src="file://{{ logo_path }}"></div>
+<!-- Investimento + Serviços -->
+<div class="slide-invest">
+    <div class="invest-content">
+        <div class="invest-logo"><img src="file://{{ logo_path }}"></div>
+        <div class="invest-title">PROPOSTA DE CONSULTORIA</div>
+        <div class="invest-title">{{ proposta.get_marketplace_display|upper }}</div>
+        <div class="invest-sub">Plano Estratégico de Crescimento</div>
 
-    <div class="invest-box">
-        <div class="invest-marketplace">PROPOSTA DE CONSULTORIA</div>
-        <div class="invest-marketplace">{{ proposta.get_marketplace_display|upper }}</div>
-        <div class="invest-plano">Plano Estratégico de Crescimento</div>
-
-        <div class="invest-preco">R$ {{ proposta.valor_mensalidade|floatformat:"0" }},00</div>
-        <div class="invest-preco-label">mensalidade</div>
+        <div class="invest-preco">R$ {{ proposta.valor_mensalidade|floatformat:2 }}</div>
+        <div class="invest-label">mensalidade</div>
 
         {% if proposta.valor_setup %}
-        <div class="setup-badge">Setup (única vez): <strong>R$ {{ proposta.valor_setup|floatformat:"0" }},00</strong></div>
+        <div class="invest-setup">Setup (única vez): <strong>R$ {{ proposta.valor_setup|floatformat:2 }}</strong></div>
         {% endif %}
 
         {% if servicos %}
-        <div class="check-grid">
+        <div class="svc-grid">
             {% for ps in servicos %}
-            <div class="check-item">
-                <div class="check-icon">✓</div>
+            <div class="svc-card">
+                <div class="svc-check">✓</div>
                 <div>
-                    <div class="label">{{ ps.servico.nome }}</div>
-                    {% if ps.descricao_custom %}<div class="label-desc">{{ ps.descricao_custom }}</div>{% endif %}
+                    <div class="svc-name">{{ ps.servico.nome }}</div>
+                    {% if ps.descricao_custom %}<div class="svc-desc">{{ ps.descricao_custom }}</div>{% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -425,12 +373,12 @@
         {% endif %}
 
         {% if proposta.condicoes_especiais %}
-        <div class="condicoes-box">{{ proposta.condicoes_especiais }}</div>
+        <div class="cond-box">{{ proposta.condicoes_especiais }}</div>
         {% endif %}
     </div>
 </div>
 
-<!-- Slide: Contato (fixo) -->
+<!-- Contato -->
 <div class="slide-img slide-last"><img src="file://{{ img_path }}/14.jpg"></div>
 
 </body>
